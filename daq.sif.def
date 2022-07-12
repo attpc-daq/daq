@@ -1,0 +1,13 @@
+BootStrap: docker
+From: ubuntu
+
+%post
+    apt-get update
+    apt-get install -y python3 python3-pip
+    pip install sitcpy
+    cd /opt/sitcpy
+    python3 setup.py sdist
+    pip install dist/sitcpy-0.1.1.tar.gz
+    
+%files
+    sitcpy /opt/sitcpy
