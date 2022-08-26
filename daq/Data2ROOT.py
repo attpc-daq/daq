@@ -1,6 +1,7 @@
 import threading
 import os
 import time
+from tokenize import Double
 import ROOT
 import numpy as np
 
@@ -11,12 +12,16 @@ class ROOTSaver(threading.Thread):
         self._path = "./output"
         self._prefix = 'Data'
         self._name = None
-        self._events = 100
+        self._memory = 1*1024*1024*1024 #1Gb
         self._state = 'stopped'
         self._queue = queue
         self._rootfile = None
         self._roottree = None
-        self._data = None
+        self._FE_ID = 0
+        self._channel_index = 0
+        self._timestamp = 0.
+        self._event_id = 0
+        self._waveform = None
 
     @property
     def state(self):
@@ -30,6 +35,12 @@ class ROOTSaver(threading.Thread):
         t = time.localtime()
         timestr = str(t.tm_year)+"{:02}".format(t.tm_mon)+"{:02}".format(t.tm_mday)+"{:02}".format(t.tm_hour)+"{:02}".format(t.tm_min)+"{:02}".format(t.tm_sec)
         return timestr
+    
+    def init(self):
+        self._FE_ID = 0
+        self._channel_index = 0
+        self._timestamp = 0.
+        self._event_id = 0
 
     def create_rootfile(self):
         if not os.path.exists(self._path):
@@ -37,8 +48,12 @@ class ROOTSaver(threading.Thread):
         self.update_file_pathname()
         self._rootfile = ROOT.TFile(self._name,'recreate')
         self._roottree = ROOT.TTree('RawData','RawData')
-        self._data = np.array([1])
-        self._roottree.Branch('data',self._data, 'data/I')
+        self._roottree.Branch('FE_ID',self._FE_ID, 'FE_ID/I')
+        self._roottree.Branch('channel_index',self._channel_index, 'channel_index/I')
+        self._roottree.Branch('timestamp',self._timestamp, 'timestamp/D')
+        self._roottree.Branch('event_id',self._event_id, 'event_id/I')
+        self._waveform = np.zeros(1024,dtype=int)
+        self._roottree.Branch('waveform',self._waveform, 'waveform[1024]/I')
 
     def close_rootfile(self):
         self._rootfile.cd()
@@ -53,14 +68,52 @@ class ROOTSaver(threading.Thread):
             if self._rootfile == None :
                 self.create_rootfile()
             if not self._queue.empty():
-                tmp = self._queue.get(True, 0.01)
-                self._data = 10
-                self._roottree.Fill()
-                if self._roottree.GetEntries() > self._events:
+                temp = self._queue.get(True, 0.01)
+                length_byte = len(temp)
+                count = 0
+                
+                # find the first header
+                while(count<length_byte):
+                    if(temp[count]==0x5a and (temp[count+1]&0xE0)==0x40):
+                        self._timestamp = (temp[count+4]<<40) + (temp[count+5]<<32) + (temp[count+6]<<24) + (temp[count+7]<<16) + (temp[count+8]<<8) + temp[count+9]
+                        self._event_id  = (temp[count+10]<<24) + (temp[count+11]<<16) + (temp[count+12]<<8) + temp[count+13]
+                        count += 20   
+                        break
+                    else:
+                        count += 1
+                # Decode
+                while(count<length_byte):
+                    if(temp[count]==0x5a):
+                        if((temp[count+1]&0xE0)==0x40):
+                            if(count+13>length_byte):
+                                count += 20
+                            else:
+                                self._timestamp = (temp[count+4]<<40) + (temp[count+5]<<32) + (temp[count+6]<<24) + (temp[count+7]<<16) + (temp[count+8]<<8) + temp[count+9]
+                                self._event_id  = (temp[count+10]<<24) + (temp[count+11]<<16) + (temp[count+12]<<8) + temp[count+13]
+                                count += 20                         
+                        elif((temp[count+1]&0xE0)==0x20):
+                            count += 12                            
+                        elif((temp[count+1]&0xE0)==0x00):
+                            if(count+7+2048>length_byte):
+                                count += 2060
+                            else:
+                                self._FE_ID=temp[count+3]
+                                self._channel_index=temp[count+4]
+                                for i in range(0,1024):
+                                    self._waveform[i] = ((temp[count+6+i*2]<<8) + temp[count+7+i*2])&0b0000111111111111
+                                count += 2060  
+                                self._roottree.Fill()                             
+                        else:
+                            count += 1
+                    else:
+                        count += 1
+                
+                self._memory -= length_byte
+                if self._memory<=0:
                     self.close_rootfile()
 
-    def set_rootfile_events(self, n):
-        self._events = n
+    def set_rootfile_events(self, n): #输入量n以Gb为单位
+        self._memory = n*1024*1024*1024
     
     def set_rootfile_prefix(self, prefix):
         self._prefix = prefix
@@ -70,224 +123,3 @@ class ROOTSaver(threading.Thread):
 
     def update_file_pathname(self):
         self._name = os.path.join(self._path, self._prefix+self.timestr()+'.root')
-
-
-
-
-
-
-
-
-
-
-# class Handler(object):
-#     """
-#     Class for processing the DAQ data.
-#     Setup to the DaqClient class constructor.
-#     """
-
-#     NOT_STARTED = "---------- --:--:--.------"
-#     ZERO_DURATION = "0:00:00.000000"
-
-#     def __init__(self, data_unit=8):
-#         """
-#         Simple rate measurement for the default.
-#         """
-#         # TODO: DAQ中以外で意味を持たないフィールドは、1つのオブジェクトにまとめる
-#         self._start_time = None
-#         self._end_time = None
-#         self._current = None  # current time
-#         self._data_bytes = 0
-#         # TODO: このレベルのクラスでデータ長を持たせるべきなのか？
-#         self._data_unit = data_unit
-
-#         self._raw_data_queue = None  # raw event data save queue
-#         self._run_no = 0
-#         self._raw_no = 0  # raw file divide no.
-#         self._raw_data_basedir = None
-#         self._raw_file_prefix = "raw%06u_%03u"  # raw file name format
-#         self._raw_file_unit = 1024  # file divide unit in Mbytes.(1GB)
-#         self._raw_file_name = None  # current name
-#         self._raw_current_size = 0
-#         # TODO: Stateへ置き換え？
-#         self._continue_raw_thread = False
-#         self._raw_save_thread = None
-
-#     def get_data_unit(self):
-#         return self._data_unit
-
-#     def on_daq_start(self):
-#         self._raw_data_queue = Utils.Queue()
-#         self._continue_raw_thread = True
-#         #if self._raw_data_queue is not None:
-#         #    self._continue_raw_thread = True
-#         #    self._raw_no = 0  # #21 reset divided file No.
-#         #    self._raw_save_thread = threading.Thread(
-#         #        target=self._raw_save_worker)
-#         #    self._raw_save_thread.start()
-#         #    Utils.LOGGER.debug("Started raw event data save worker.")
-#         #else:
-#         #    Utils.LOGGER.debug("Did not start raw event data save worker.")
-#         #self._current = datetime.datetime.now()
-#         #self._start_time = self._current
-#         #self._end_time = None
-#         #self._data_bytes = 0
-
-#     def on_daq_stop(self):
-#         """
-#         Called when DAQ is stopping.
-#         """
-#         duration = Utils.total_seconds(self._current - self._start_time)
-#         if duration >= 0:
-#             self._end_time = self._current
-#             print("Handler.on_daq_stop is called.")
-#             print("bytes:%s bytes" % self._data_bytes)
-#             print("duration:%s " % (self._end_time - self._start_time))
-#             if duration > 0:
-#                 print("MBps:%s " % (self._data_bytes /
-#                                     duration / 1000000))
-#                 print("Gbps:%s " % (self._data_bytes * 8 /
-#                                     duration / 1000000000))
-#                 print("Mbps:%s " % (self._data_bytes * 8 /
-#                                     duration / 1000000))
-#         if self._raw_data_queue is not None:
-#             while not self._raw_data_queue.empty():  # 生データ保存用のデータqueueが空になるまで待ちます。
-#                 time.sleep(0.2)
-#                 Utils.LOGGER.info("Waiting for raw data writing...%s" % self._raw_data_queue.qsize())
-#             self._continue_raw_thread = False
-#             self._raw_save_thread.join(0.2)
-
-#     def create_stat_list(self):
-#         """
-#         Returns received rate information list
-#         """
-#         stat_list = []
-#         start_time = self.NOT_STARTED
-#         end_time = self.NOT_STARTED
-#         duration = self.ZERO_DURATION
-#         cps = 0.0
-#         if self._current is not None:
-#             start_time = str(self._start_time)
-#             secs = Utils.total_seconds(self._current - self._start_time)
-#             if secs > 0:
-#                 duration = str(self._current - self._start_time)
-#                 cps = (self._data_bytes / self._data_unit) / secs
-#         if self._end_time is not None:
-#             end_time = str(self._end_time)
-#             duration = str(self._end_time - self._start_time)
-
-#         stat_list.append("start time=%s" % start_time)
-#         stat_list.append("end time=%s" % end_time)
-#         stat_list.append("duration=%s" % duration)
-#         stat_list.append("events=%s" % str(self._data_bytes / self._data_unit))
-#         stat_list.append("cps=%g" % cps)
-#         stat_list.append("bytes=%s" % self._data_bytes)
-#         if self._raw_data_queue is None:
-#             stat_list.append("raw data save=off")
-#         else:
-#             stat_list.append("raw data queue=%d" %
-#                              self._raw_data_queue.qsize())
-
-#         return stat_list
-
-#     def on_daq_running(self):
-#         """
-#         Override for DAQ running.
-#         """
-#         self._current = datetime.datetime.now()
-
-#     def on_daq_data(self, byte_data):
-#         """
-#         :type byte_data: bytes
-#         :param byte_data: Received data.
-#         """
-#         self._data_bytes += len(byte_data)
-#         self._current = datetime.datetime.now()
-#         self.queue_raw_data(byte_data)  # save raw data if activated.
-
-#     def on_daq_error(self, error_exception):
-#         """
-#         Called when error detected by the thread class.
-#         """
-#         Utils.LOGGER.error("DEBUG:daq error %s DAQ error stop. self=%s1",
-#                      str(error_exception), self)
-#         self.on_daq_stop()
-#         Utils.LOGGER.info("Daq stop called.")
-
-#     def set_raw_save(self, on_off, run_no, base_dir):
-#         """
-#         Set raw event data save function on or off.
-
-#         :param on_off: True for on, False for off.
-#         :param run_no: Measurement run no as integer.
-#         :param base_dir: Base directory to save the files.
-#         """
-#         if on_off:
-#             self._raw_data_basedir = base_dir
-#             self._run_no = run_no
-#             # self._raw_file_name = self._raw_file_prefix%(self._run_no, self._raw_no)
-#             self._raw_data_queue = Utils.Queue()
-#             self._rootSaver = Data2ROOT.ROOTSaver(self._raw_data_queue)
-#             self._rootSaver.start()
-            
-
-#             # self._raw_current_size = 0
-#             # self._raw_no = 0
-#         else:
-#             self._raw_data_queue = None
-
-#     def queue_raw_data(self, byte_data):
-#         """
-#         Call from on_daq_data().
-
-#         :type byte_data: bytes
-#         """
-#         if self._raw_data_queue is not None:
-#             try:
-#                 self._raw_data_queue.put(byte_data, False)
-#                 Utils.LOGGER.info("raw data queue %s", str(self._raw_data_queue.qsize()))
-#                 #self._
-#             except Utils.Full as exc:
-#                 Utils.LOGGER.error("Could not queue raw_data %s", str(exc))
-
-#     def _raw_save_worker(self):
-
-#         Utils.LOGGER.debug("Starting raw save worker.")
-
-#         if self._raw_data_queue is not None:
-#             try:
-#                 while self._continue_raw_thread:
-#                     self._raw_current_size = 0
-#                     self._raw_file_name = self._raw_file_prefix % (self._run_no, self._raw_no)
-#                     raw_pathname = os.path.join(self._raw_data_basedir, self._raw_file_name)
-#                     rootfile = ROOT.TFile(raw_pathname+'.root','recreate')
-#                     roottree = ROOT.TTree('channels','channels')
-#                     data = np.array([1])
-#                     roottree.Branch('data', data, 'data/I')
-#                     with open(raw_pathname, "wb") as raw_file:
-#                         Utils.LOGGER.info("Raw data file %s opened.", raw_pathname)
-#                         while self._continue_raw_thread:
-#                             try:
-#                                 raw_data = self._raw_data_queue.get(True, 0.01)
-#                                 for i in range(0,len(raw_data)):                                   
-#                                     data[0] = raw_data[i]
-#                                 roottree.Fill()
-#                                 self._raw_current_size += len(raw_data)
-#                                 del raw_data
-#                                 raw_data = None
-#                                 if self._raw_current_size >= self._raw_file_unit * 1024 * 1024:
-#                                     rootfile.cd()
-#                                     roottree.Write()
-#                                     rootfile.Close()
-#                                     break
-#                             except Utils.Empty:
-#                                 pass
-#                             except Exception as exc:
-#                                 Utils.LOGGER.error("Raw data thread error during dequeue and save: %s", str(exc))
-#                     self._raw_no += 1
-#                 rootfile.cd()
-#                 roottree.Write()
-#                 rootfile.Close()
-#             except Exception as exc:
-#                 Utils.LOGGER.error("Raw data thread error during starting: %s", str(exc))
-
