@@ -64,6 +64,7 @@ class ROOTSaver(threading.Thread):
 
     def run(self):
         self._state = 'running'
+        self.init()
         while self._state == 'running':
             if self._rootfile == None :
                 self.create_rootfile()
