@@ -32,3 +32,5 @@ get  SiTCP register <x>
   1. SiTCP数据的解码和存储为root，需要修改daq/Data2ROOT.py
   2. SiTCP寄存器的控制命令
   3. 编写一个具有线程安全的websocket类，要求socket.send 是多线程安全的。
+
+  test my vscode
