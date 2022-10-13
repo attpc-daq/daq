@@ -225,5 +225,3 @@ class Handler(Handlers.CommandHandler):
             if cmd_list[2] == 'register':
                 await self._read_SiTCP_register(cmd_list[3])
         return True
-
- 
