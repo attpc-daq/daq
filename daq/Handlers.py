@@ -142,7 +142,7 @@ class CommandHandler(TextHandler):
 
         return True
 
-    async def on_cmd_help(self, websocket, _cmd_list):
-        await websocket.send('connection will be closed, byebye')
-        await websocket.close()
-        return False
+    #async def on_cmd_help(self, websocket, _cmd_list):
+    #    await websocket.send('connection will be closed, byebye')
+    #    await websocket.close()
+    #    return False

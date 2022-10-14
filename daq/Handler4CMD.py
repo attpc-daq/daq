@@ -1,4 +1,3 @@
-import threading
 import time
 import asyncio
 import websockets
@@ -10,58 +9,17 @@ from . import Utils
 from . import Handlers
 from . import SiTCPData
 
-class Server(threading.Thread):
-
-    def __init__(self, handler, port, host):
-        super(Server, self).__init__()
-        self._handler = handler
-        self._port = port
-        self._host = host
-        self._state = 'stopped'
-    
-    def state(self):
-        return self._state
-
-    def run(self):
-        try:
-            self._state = 'running'
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            WSServer = websockets.serve(self._handler, self._host, self._port)
-            self._handler.on_server_start(self)
-            asyncio.get_event_loop().run_until_complete(WSServer)
-            asyncio.get_event_loop().run_forever()
-            loop.close()
-            self._state = 'stopped'
-
-        except Exception as e:
-            Utils.LOGGER.error('error in websockets server loop,%s',e)
-
-def startWebSocketServer(host_ip, host_port):
-
-    _handler = Handler()
-    _server = Server(_handler, host_port, host_ip)
-    _server.start()
-
-    try:
-        while _server.state() == 'running':
-            time.sleep(0.1)
-    except KeyboardInterrupt:
-        _handler.on_shutdown(_server)
-
-    _server.join(5)
-
 class Handler(Handlers.CommandHandler):
 
     def __init__(self):
         super(Handler, self).__init__()
 
         self._SiTCP_data_threading = None
-        self._SiTCP_data_address = "localhost"
         self._SiTCP_data_port = 24242
         self._SiTCP_command_sock = None
-        self._SiTCP_command_address = "localhost"
         self._SiTCP_command_port = 9090
+
+        self._SiTCP_address = "localhost"
 
         self._rootfile_events = 100
         self._rootfile_prefix = 'Data'
@@ -92,15 +50,18 @@ class Handler(Handlers.CommandHandler):
                 continue
             if not await self.on_command(websocket, args):
                 return False
+    #____________________________________________________________
+    # _ functions
+    #____________________________________________________________
 
     async def _write_SiTCP_register(self, data):
-        self._connect_SiTCP_command_port()
-        self._SiTCP_command_sock.send(str(data).encode('utf-8'))
+        #self._connect_SiTCP_command_port()
+        #self._SiTCP_command_sock.send(str(data).encode('utf-8'))
         return True
 
     async def _read_SiTCP_register(self, websocket, cmd_list):
-        if self._SiTCP_command_client is None:
-            self.connect_SiTCP_command_port()
+        #if self._SiTCP_command_client is None:
+        #    self.connect_SiTCP_command_port()
         
         return True
 
@@ -118,7 +79,7 @@ class Handler(Handlers.CommandHandler):
             self._SiTCP_command_sock = None
 
     async def _set_SiTCP_adress(self, address):
-        self._SiTCP_command_address = str(address)
+        self._SiTCP_address = str(address)
 
     async def _set_SiTCP_data_port(self, port):
         self._SiTCP_data_port = int(port)
@@ -138,20 +99,52 @@ class Handler(Handlers.CommandHandler):
         #self._root_saver_threading.set_output_directory(dir)
         self._output_directory = str(dir)
 
+    async def _sendMessage2SiTCP(self, client, msg):
+        if client is not None:
+            client.send(str(msg).encode('utf-8'))
+        return
+
     async def _start_root_saver(self):
         self._root_saver_threading = Data2ROOT.ROOTSaver(self.raw_data_queue)
         self._root_saver_threading.set_rootfile_events(self._rootfile_events)
         self._root_saver_threading.set_rootfile_prefix(self._rootfile_prefix)
         self._root_saver_threading.set_output_directory(self._output_directory)
         self._root_saver_threading.start()
-#______________________________________________________________________________
+
+    async def _stop_root_saver(self):
+        self._root_saver_threading.stop()
+        return 
+    async def _start_monitor(self):
+        return
+    async def _stop_monitor(self):
+        return
+    async def _start_daq(self):
+        return
+    async def _stop_daq(self):
+        return
+    #_____________________________________________________
+    # on_cmd_xxx
+    #_____________________________________________________
     async def on_cmd_shutdown(self, websocket, cmd_list):
         await self.on_cmd_close(websocket, cmd_list)
         asyncio.get_event_loop().stop()
 
-    async def on_cmd_run(self, websocket, cmd_list):
+    async def on_cmd_SiTCP(self, websocket, cmd_list):
+        if len(cmd_list) == 1:
+            await websocket.send("no message to send")
+            return False
+
+    async def on_cmd_start(self, websocket, cmd_list):
+        # start 
+        # start rootsaver
+        # start monitor
+        # start daq
 
         if len(cmd_list) == 1:
+            await websocket.send("start what?")
+            return True
+        
+        if cmd_list[1] == 'rootsaver':
             if self._root_saver_threading is None:
                 await self._start_root_saver()
             else:
