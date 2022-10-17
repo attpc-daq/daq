@@ -4,11 +4,13 @@ import time
 from tokenize import Double
 import ROOT
 import numpy as np
+import asyncio
 
 class ROOTSaver(threading.Thread):
-    def __init__(self, queue):
+    def __init__(self, queue, statusHandler):
         super(ROOTSaver, self).__init__()
-
+        self.statusHandler = statusHandler
+    
         self._path = "./output"
         self._prefix = 'Data'
         self._name = None
@@ -65,53 +67,56 @@ class ROOTSaver(threading.Thread):
     def run(self):
         self._state = 'running'
         self.init()
+        asyncio.run(self.statusHandler.updateStatus('root saver','running'))
         while self._state == 'running':
-            if self._rootfile == None :
-                self.create_rootfile()
+            #if self._rootfile == None :
+            #    self.create_rootfile()
             if not self._queue.empty():
                 temp = self._queue.get(True, 0.01)
                 length_byte = len(temp)
                 count = 0
+                time.sleep(1)
                 
-                # find the first header
-                while(count<length_byte):
-                    if(temp[count]==0x5a and (temp[count+1]&0xE0)==0x40):
-                        self._timestamp = (temp[count+4]<<40) + (temp[count+5]<<32) + (temp[count+6]<<24) + (temp[count+7]<<16) + (temp[count+8]<<8) + temp[count+9]
-                        self._event_id  = (temp[count+10]<<24) + (temp[count+11]<<16) + (temp[count+12]<<8) + temp[count+13]
-                        count += 20   
-                        break
-                    else:
-                        count += 1
-                # Decode
-                while(count<length_byte):
-                    if(temp[count]==0x5a):
-                        if((temp[count+1]&0xE0)==0x40):
-                            if(count+13>length_byte):
-                                count += 20
-                            else:
-                                self._timestamp = (temp[count+4]<<40) + (temp[count+5]<<32) + (temp[count+6]<<24) + (temp[count+7]<<16) + (temp[count+8]<<8) + temp[count+9]
-                                self._event_id  = (temp[count+10]<<24) + (temp[count+11]<<16) + (temp[count+12]<<8) + temp[count+13]
-                                count += 20                         
-                        elif((temp[count+1]&0xE0)==0x20):
-                            count += 12                            
-                        elif((temp[count+1]&0xE0)==0x00):
-                            if(count+7+2048>length_byte):
-                                count += 2060
-                            else:
-                                self._FE_ID=temp[count+3]
-                                self._channel_index=temp[count+4]
-                                for i in range(0,1024):
-                                    self._waveform[i] = ((temp[count+6+i*2]<<8) + temp[count+7+i*2])&0b0000111111111111
-                                count += 2060  
-                                self._roottree.Fill()                             
-                        else:
-                            count += 1
-                    else:
-                        count += 1
-                
-                self._memory -= length_byte
-                if self._memory<=0:
-                    self.close_rootfile()
+            #    # find the first header
+            #    while(count<length_byte):
+            #        if(temp[count]==0x5a and (temp[count+1]&0xE0)==0x40):
+            #            self._timestamp = (temp[count+4]<<40) + (temp[count+5]<<32) + (temp[count+6]<<24) + (temp[count+7]<<16) + (temp[count+8]<<8) + temp[count+9]
+            #            self._event_id  = (temp[count+10]<<24) + (temp[count+11]<<16) + (temp[count+12]<<8) + temp[count+13]
+            #            count += 20   
+            #            break
+            #        else:
+            #            count += 1
+            #    # Decode
+            #    while(count<length_byte):
+            #        if(temp[count]==0x5a):
+            #            if((temp[count+1]&0xE0)==0x40):
+            #                if(count+13>length_byte):
+            #                    count += 20
+            #                else:
+            #                    self._timestamp = (temp[count+4]<<40) + (temp[count+5]<<32) + (temp[count+6]<<24) + (temp[count+7]<<16) + (temp[count+8]<<8) + temp[count+9]
+            #                    self._event_id  = (temp[count+10]<<24) + (temp[count+11]<<16) + (temp[count+12]<<8) + temp[count+13]
+            #                    count += 20                         
+            #            elif((temp[count+1]&0xE0)==0x20):
+            #                count += 12                            
+            #            elif((temp[count+1]&0xE0)==0x00):
+            #                if(count+7+2048>length_byte):
+            #                    count += 2060
+            #                else:
+            #                    self._FE_ID=temp[count+3]
+            #                    self._channel_index=temp[count+4]
+            #                    for i in range(0,1024):
+            #                        self._waveform[i] = ((temp[count+6+i*2]<<8) + temp[count+7+i*2])&0b0000111111111111
+            #                    count += 2060  
+            #                    self._roottree.Fill()                             
+            #            else:
+            #                count += 1
+            #        else:
+            #            count += 1
+            #    
+            #    self._memory -= length_byte
+            #    if self._memory<=0:
+            #        self.close_rootfile()
+        asyncio.run(self.statusHandler.updateStatus('root saver','stopped'))
 
     def set_rootfile_events(self, n): #输入量n以Gb为单位
         self._memory = n*1024*1024*1024

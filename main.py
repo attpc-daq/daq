@@ -4,13 +4,16 @@
 import time
 from daq import CMDHandler
 from daq import WSServer
+from daq import StatusHandler
 
 def main():
-    #daq.startWSServer('0.0.0.0',8000)
-    commandHandler=CMDHandler()
+    MonitorHandler = StatusHandler()
+    MonitorServer = WSServer(MonitorHandler,'0.0.0.0',8001)
+    MonitorServer.start()
+
+    commandHandler=CMDHandler(MonitorHandler)
     CMDServer = WSServer(commandHandler,'0.0.0.0',8000)
     CMDServer.start()
-    #WSServer(CMDHandler(),'0.0.0.0',8000).start()
 
     try:
         while CMDServer.state() == 'running':

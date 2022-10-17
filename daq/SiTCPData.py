@@ -3,14 +3,16 @@ import threading
 import select
 import socket
 import traceback
+import asyncio
 
 class TCPClient(threading.Thread):
-    def __init__(self, address, port, queue):
+    def __init__(self, address, port, queue, statusHandler):
         super(TCPClient, self).__init__()
         self._address = address
         self._port = port
         self._raw_data_queue = queue
         self._state = 'stopped'
+        self.statusHandler = statusHandler
 
     def on_data(self, data):
         try:
@@ -31,9 +33,11 @@ class TCPClient(threading.Thread):
             sock.settimeout(2.0)
             try:
                 sock.connect((self._address, self._port))
+                asyncio.run(self.statusHandler.updateStatus('daq thread','running'))
             except (socket.gaierror, socket.timeout, OSError) as exc:
                 Utils.LOGGER.error("Internal Device Connection Error(%s) %s %s ",
                              str(exc), self._address, self._port)
+                asyncio.run(self.statusHandler.updateStatus('daq thread','stopped'))
                 return
             read_list = [sock]
             byte_array = bytearray()
@@ -52,5 +56,6 @@ class TCPClient(threading.Thread):
                     self._state == 'stopped'
                     break
             sock.close()
+            asyncio.run(self.statusHandler.updateStatus('daq thread','stopped'))
         except:
             Utils.LOGGER.error("Error")
