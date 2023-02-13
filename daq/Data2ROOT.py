@@ -1,9 +1,9 @@
 import threading
 import os
 import time
-from tokenize import Double
 import ROOT
 import numpy as np
+import copy
 
 class ROOTSaver(threading.Thread):
     def __init__(self, queue):
@@ -12,16 +12,25 @@ class ROOTSaver(threading.Thread):
         self._path = "./output"
         self._prefix = 'Data'
         self._name = None
-        self._memory = 1*1024*1024*1024 #1Gb
+        self._events = 100
         self._state = 'stopped'
         self._queue = queue
         self._rootfile = None
         self._roottree = None
-        self._FE_ID = 0
-        self._channel_index = 0
-        self._timestamp = 0.
-        self._event_id = 0
-        self._waveform = None
+
+        self._event_id = np.array([-1])
+        self._timestamp = np.array([-1])
+        self._FE_id = np.array([-1])
+        self._channel_index = np.array([-1])
+        self._waveform = np.zeros((1024),dtype=np.float32)
+        self._roottree = ROOT.TTree('RawData','RawData')
+        self._roottree.Branch('event_id',self._event_id, 'event_id/L')
+        self._roottree.Branch('timestamp',self._timestamp, 'timestamp/L')
+        self._roottree.Branch('FE_id',self._FE_id,'FE_id/I')
+        self._roottree.Branch('channel_index',self._channel_index,'channel_index/I')
+        self._roottree.Branch('waveform',self._waveform,'waveform[1024]/F')
+
+        self._package_count = 0
 
     @property
     def state(self):
@@ -35,86 +44,147 @@ class ROOTSaver(threading.Thread):
         t = time.localtime()
         timestr = str(t.tm_year)+"{:02}".format(t.tm_mon)+"{:02}".format(t.tm_mday)+"{:02}".format(t.tm_hour)+"{:02}".format(t.tm_min)+"{:02}".format(t.tm_sec)
         return timestr
-    
-    def init(self):
-        self._FE_ID = 0
-        self._channel_index = 0
-        self._timestamp = 0.
-        self._event_id = 0
 
     def create_rootfile(self):
         if not os.path.exists(self._path):
             os.mkdir(self._path)
         self.update_file_pathname()
         self._rootfile = ROOT.TFile(self._name,'recreate')
-        self._roottree = ROOT.TTree('RawData','RawData')
-        self._roottree.Branch('FE_ID',self._FE_ID, 'FE_ID/I')
-        self._roottree.Branch('channel_index',self._channel_index, 'channel_index/I')
-        self._roottree.Branch('timestamp',self._timestamp, 'timestamp/D')
-        self._roottree.Branch('event_id',self._event_id, 'event_id/I')
-        self._waveform = np.zeros(1024,dtype=int)
-        self._roottree.Branch('waveform',self._waveform, 'waveform[1024]/I')
 
     def close_rootfile(self):
         self._rootfile.cd()
         self._roottree.Write()
         self._rootfile.Close()
         self._rootfile = None
-        self._roottree = None
+        self._roottree.Reset()
+        self._package_count = 0
+        print('root file saved:'+self._name)
 
     def run(self):
         self._state = 'running'
-        self.init()
+        firstPackage = True
+        dataStream = b''
         while self._state == 'running':
             if self._rootfile == None :
                 self.create_rootfile()
-            if not self._queue.empty():
-                temp = self._queue.get(True, 0.01)
-                length_byte = len(temp)
+                f = open(self._name+'.dat', "wb")
+
+            if not self._queue.empty():               
+                package = self._queue.get(True, 0.01)
+                dataStream = b''.join([dataStream,package])
+                f.write(package)
+                self._package_count = self._package_count+1
+            else:
+                time.sleep(0.1)
+
+            if firstPackage is True:
+                length_byte = len(dataStream)
                 count = 0
-                
-                # find the first header
-                while(count<length_byte):
-                    if(temp[count]==0x5a and (temp[count+1]&0xE0)==0x40):
-                        self._timestamp = (temp[count+4]<<40) + (temp[count+5]<<32) + (temp[count+6]<<24) + (temp[count+7]<<16) + (temp[count+8]<<8) + temp[count+9]
-                        self._event_id  = (temp[count+10]<<24) + (temp[count+11]<<16) + (temp[count+12]<<8) + temp[count+13]
-                        count += 20   
+                while count < length_byte:
+                    if(dataStream[count]==0x5a and (dataStream[count+1]&0xE0)==0x40):
+                        self._timestamp[0] = (dataStream[count+4]<<40) + (dataStream[count+5]<<32) + (dataStream[count+6]<<24) + (dataStream[count+7]<<16) + (dataStream[count+8]<<8) + dataStream[count+9] 
+                        self._event_id[0]  = (dataStream[count+10]<<24) + (dataStream[count+11]<<16) + (dataStream[count+12]<<8) + dataStream[count+13]
+                        count += 20
+                        dataStream = dataStream[count:]
+                        firstPackage = False
                         break
                     else:
-                        count += 1
-                # Decode
-                while(count<length_byte):
-                    if(temp[count]==0x5a):
-                        if((temp[count+1]&0xE0)==0x40):
-                            if(count+13>length_byte):
-                                count += 20
-                            else:
-                                self._timestamp = (temp[count+4]<<40) + (temp[count+5]<<32) + (temp[count+6]<<24) + (temp[count+7]<<16) + (temp[count+8]<<8) + temp[count+9]
-                                self._event_id  = (temp[count+10]<<24) + (temp[count+11]<<16) + (temp[count+12]<<8) + temp[count+13]
-                                count += 20                         
-                        elif((temp[count+1]&0xE0)==0x20):
-                            count += 12                            
-                        elif((temp[count+1]&0xE0)==0x00):
-                            if(count+7+2048>length_byte):
-                                count += 2060
-                            else:
-                                self._FE_ID=temp[count+3]
-                                self._channel_index=temp[count+4]
-                                for i in range(0,1024):
-                                    self._waveform[i] = ((temp[count+6+i*2]<<8) + temp[count+7+i*2])&0b0000111111111111
-                                count += 2060  
-                                self._roottree.Fill()                             
-                        else:
-                            count += 1
-                    else:
-                        count += 1
-                
-                self._memory -= length_byte
-                if self._memory<=0:
-                    self.close_rootfile()
+                        count +=1
 
-    def set_rootfile_events(self, n): #输入量n以Gb为单位
-        self._memory = n*1024*1024*1024
+            length_byte = len(dataStream)
+            count = 0
+            while(count+12<length_byte):
+                if(dataStream[count]==0x5a):
+                    if((dataStream[count+1]&0xE0)==0x40):
+                        if(count+13>length_byte):
+                            break
+                            count = count+20
+                        else:
+                            self._timestamp[0] = (dataStream[count+4]<<40) + (dataStream[count+5]<<32) + (dataStream[count+6]<<24) + (dataStream[count+7]<<16) + (dataStream[count+8]<<8) + dataStream[count+9]
+                            self._event_id[0]  = (dataStream[count+10]<<24) + (dataStream[count+11]<<16) + (dataStream[count+12]<<8) + dataStream[count+13]
+                            count = count+20   
+
+                    elif((dataStream[count+1]&0xE0)==0x20):
+                        count = count+12
+
+                    elif((dataStream[count+1]&0xE0)==0x00):
+                        if(count+7+2048>length_byte):
+                            break
+                            count = count+2060
+                        else:
+                            self._FE_id[0] = dataStream[count+3]
+                            self._channel_index[0] = dataStream[count+4]
+                            for i in range(0,1024):
+                                self._waveform[i] = ((dataStream[count+6+i*2]<<8) + dataStream[count+7+i*2])&0b0000111111111111
+                            self._roottree.Fill()
+                            count = count+2060
+                    else:
+                        count = count + 1
+                else:
+                    count = count + 1
+            dataStream = dataStream[count:]
+            if self._package_count >= self._events:
+                self.close_rootfile()
+                f.close()
+                        
+#--------------------------------------------------------------------
+#            if not self._queue.empty():
+#                if self._rootfile == None :
+#                    self.create_rootfile()
+#                    f = open(self._name+'.dat', "wb")
+#                datas = self._queue.get(True, 0.01)
+#                f.write(datas)
+#                self._package_count = self._package_count+1
+#                length_byte = len(datas)
+#                sequence = b''.join([datas])
+#                a=len(sequence)
+#                sequence = b''.join([sequence,datas])
+#                b=len(sequence)
+#                count = 0
+#                while(count<length_byte):
+#                    if(datas[count]==0x5a and (datas[count+1]&0xE0)==0x40):
+#                        self._timestamp[0] = (datas[count+4]<<40) + (datas[count+5]<<32) + (datas[count+6]<<24) + (datas[count+7]<<16) + (datas[count+8]<<8) + datas[count+9] 
+#                        self._event_id[0]  = (datas[count+10]<<24) + (datas[count+11]<<16) + (datas[count+12]<<8) + datas[count+13]
+#                        count += 20
+#                        break
+#                    else:
+#                        count += 1
+#
+#                while(count<length_byte):
+#                    if(datas[count]==0x5a):
+#                        if((datas[count+1]&0xE0)==0x40):
+#                            if(count+13>length_byte):
+#                                count = count+20
+#                            else:
+#                                self._timestamp[0] = (datas[count+4]<<40) + (datas[count+5]<<32) + (datas[count+6]<<24) + (datas[count+7]<<16) + (datas[count+8]<<8) + datas[count+9]
+#                                self._event_id[0]  = (datas[count+10]<<24) + (datas[count+11]<<16) + (datas[count+12]<<8) + datas[count+13]
+#                                count = count+20                         
+#                        elif((datas[count+1]&0xE0)==0x20):
+#                            count = count+12
+#
+#                        elif((datas[count+1]&0xE0)==0x00):
+#                            if(count+7+2048>length_byte):
+#                                count = count+2060
+#                            else:
+#                                self._FE_id[0] = datas[count+3]
+#                                self._channel_index[0] = datas[count+4]
+#                                for i in range(0,1024):
+#                                    self._waveform[i] = ((datas[count+6+i*2]<<8) + datas[count+7+i*2])&0b0000111111111111
+#                                self._roottree.Fill()
+#                                count = count+2060                        
+#                        else:
+#                            count = count+1
+#                    else:
+#                        count = count+1
+#                if self._package_count >= self._events:
+#                    self.close_rootfile()
+#                    f.close()
+#            else:
+#                time.sleep(1)
+
+
+    def set_rootfile_events(self, n):
+        self._events = n
     
     def set_rootfile_prefix(self, prefix):
         self._prefix = prefix

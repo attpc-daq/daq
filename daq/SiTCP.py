@@ -3,10 +3,11 @@ import threading
 import select
 import socket
 import traceback
+import time
 
-class TCPClient(threading.Thread):
+class Client(threading.Thread):
     def __init__(self, address, port, queue):
-        super(TCPClient, self).__init__()
+        super(Client, self).__init__()
         self._address = address
         self._port = port
         self._raw_data_queue = queue
@@ -17,7 +18,6 @@ class TCPClient(threading.Thread):
             self._raw_data_queue.put(data, False)
         except Utils.Full as exc:
             Utils.LOGGER.error("Could not queue raw_data %s", str(exc))
-        print('raw data length',len(data))
         return 
 
     def stop(self):
@@ -31,6 +31,7 @@ class TCPClient(threading.Thread):
             sock.settimeout(2.0)
             try:
                 sock.connect((self._address, self._port))
+
             except (socket.gaierror, socket.timeout, OSError) as exc:
                 Utils.LOGGER.error("Internal Device Connection Error(%s) %s %s ",
                              str(exc), self._address, self._port)

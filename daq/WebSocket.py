@@ -8,7 +8,7 @@ import queue
 from . import Data2ROOT
 from . import Utils
 from . import Handlers
-from . import SiTCPData
+from . import SiTCP
 
 class Server(threading.Thread):
 
@@ -56,16 +56,14 @@ class Handler(Handlers.CommandHandler):
     def __init__(self):
         super(Handler, self).__init__()
 
-        self._SiTCP_data_threading = None
-        self._SiTCP_data_address = "localhost"
-        self._SiTCP_data_port = 24242
-        self._SiTCP_command_sock = None
-        self._SiTCP_command_address = "localhost"
-        self._SiTCP_command_port = 9090
+        self._SiTCP_address="192.168.10.16"
+        self._SiTCP_port=4660
+        self._receiver_threading = None
+        self._SiTCP_sock = None
 
-        self._rootfile_events = 100
+        self._rootfile_events = 1000
         self._rootfile_prefix = 'Data'
-        self._output_directory = './output'
+        self._output_directory = '/storage/ATTPC/output'
 
         self.raw_data_queue = queue.Queue()
         self._root_saver_threading = None
@@ -93,38 +91,11 @@ class Handler(Handlers.CommandHandler):
             if not await self.on_command(websocket, args):
                 return False
 
-    async def _write_SiTCP_register(self, data):
-        self._connect_SiTCP_command_port()
-        self._SiTCP_command_sock.send(str(data).encode('utf-8'))
-        return True
-
-    async def _read_SiTCP_register(self, websocket, cmd_list):
-        if self._SiTCP_command_client is None:
-            self.connect_SiTCP_command_port()
-        
-        return True
-
-    def _connect_SiTCP_command_port(self):
-        if self._SiTCP_command_sock is not None:
-            Utils.LOGGER.info("socket to SiTCP port all ready exist")
-            return
-        # socket.SOCK_STREAM/TCP, socket.SOCK_DGRAM/UDP
-        self._SiTCP_command_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._SiTCP_command_sock.settimeout(2.0)
-        try:
-            self._SiTCP_command_sock.connect((self._SiTCP_command_address, self._SiTCP_command_port))
-        except (socket.gaierror, socket.timeout, OSError) as exc:
-            Utils.LOGGER.error("Can not connect to SiTCP command port")
-            self._SiTCP_command_sock = None
-
     async def _set_SiTCP_adress(self, address):
-        self._SiTCP_command_address = str(address)
+        self._SiTCP_address = str(address)
 
-    async def _set_SiTCP_data_port(self, port):
-        self._SiTCP_data_port = int(port)
-        
-    async def _set_SiTCP_command_port(self, port):
-        self._SiTCP_command_port = int(port)
+    async def _set_SiTCP_port(self, port):
+        self._SiTCP_port = int(port)
 
     async def _set_rootfile_events(self,events):
         #self._root_saver_threading.set_rootfile_events(events)
@@ -144,7 +115,34 @@ class Handler(Handlers.CommandHandler):
         self._root_saver_threading.set_rootfile_prefix(self._rootfile_prefix)
         self._root_saver_threading.set_output_directory(self._output_directory)
         self._root_saver_threading.start()
+    async def stop_SiTCP(self, websocket):
+        await self.on_cmd_send_to_SiTCP(websocket,['send_to_SiTCP', '0410203A4050607083'])
+        await websocket.send("SiTCP stopped")
+    async def clean_SiTCP(self, websocket):
+        await self.on_cmd_send_to_SiTCP(websocket,['send_to_SiTCP', '081020384150607083'])
+        await websocket.send("SiTCP buffer cleaned")
 #______________________________________________________________________________
+    
+    async def on_cmd_send_to_SiTCP(self, websocket, msg_list):
+        if self._receiver_threading is not None:
+            message = "receiver is running, can not send message to SiTCP"
+            await websocket.send(message)
+            return
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(2.0)
+        try:
+            sock.connect((self._SiTCP_address, self._SiTCP_port))
+        except (socket.gaierror, socket.timeout, OSError) as exc:
+            Utils.LOGGER.error("Can not connect to SiTCP port")
+            message = "Can not connect to SiTCP port"
+            await websocket.send(message)
+            return
+        msg = bytes.fromhex(str(msg_list[1]))
+        sock.send(msg)
+        message = str(msg_list[1]) + " done"
+        await websocket.send(message)
+        sock.close()
+
     async def on_cmd_shutdown(self, websocket, cmd_list):
         await self.on_cmd_close(websocket, cmd_list)
         asyncio.get_event_loop().stop()
@@ -158,14 +156,14 @@ class Handler(Handlers.CommandHandler):
                 message = "root saver threading exist"
                 await websocket.send(message)
 
-            if self._SiTCP_data_threading is None:
+            if self._receiver_threading is None:
                 try:
-                    self._SiTCP_data_threading = SiTCPData.TCPClient(self._SiTCP_data_address, self._SiTCP_data_port, self.raw_data_queue)
-                    self._SiTCP_data_threading.start()
+                    self._receiver_threading = SiTCP.Client(self._SiTCP_address, self._SiTCP_port, self.raw_data_queue)
+                    self._receiver_threading.start()
                 except Exception as exc:
                     Utils.LOGGER.error("NG:Could not start daq. %s", exc)
-                    self._SiTCP_data_threading.stop()
-                    self._SiTCP_data_threading = None
+                    self._receiver_threading.stop()
+                    self._receiver_threading = None
             else:
                 message = "NG:Run command status mismatch"
                 await websocket.send(message)
@@ -176,10 +174,10 @@ class Handler(Handlers.CommandHandler):
 
     async def on_cmd_stop(self, websocket, cmd_list):
         if len(cmd_list) == 1:
-            if self._SiTCP_data_threading is not None:
+            if self._receiver_threading is not None:
                 await websocket.send("daq stopped...")
-                self._SiTCP_data_threading.stop()
-                self._SiTCP_data_threading = None
+                self._receiver_threading.stop()
+                self._receiver_threading = None
             else:
                 Utils.LOGGER.error("stop command status mismatch")
             
@@ -193,6 +191,9 @@ class Handler(Handlers.CommandHandler):
         else:
             await websocket.send("NG:Too many arguments")
         await websocket.send("daq stopped")
+        await self.stop_SiTCP(websocket)
+        time.sleep(1)
+        await self.clean_SiTCP(websocket)
         return True
 
     async def on_cmd_set(self, websocket, cmd_list):
@@ -202,14 +203,8 @@ class Handler(Handlers.CommandHandler):
         if cmd_list[1] == 'SiTCP':
             if cmd_list[2] == 'address':
                 await self._set_SiTCP_adress(cmd_list[3])
-            if cmd_list[2] == 'data':
-                if cmd_list[3] == 'port':
-                    await self._set_SiTCP_data_port(cmd_list[4])
-            if cmd_list[2] == 'command':
-                if cmd_list[3] == 'port':
-                    await self._set_SiTCP_command_port(cmd_list[4])
-            if cmd_list[2] == 'register':
-                await self._write_SiTCP_register(cmd_list[3])
+            if cmd_list[2] == 'port':
+                await self._set_SiTCP_port(cmd_list[3])
         if cmd_list[1] == 'rootfile':
             if cmd_list[2] == 'events':
                 await self._set_rootfile_events(cmd_list[3])
@@ -218,10 +213,4 @@ class Handler(Handlers.CommandHandler):
         if cmd_list[1] == 'output':
             if cmd_list[2] == 'directory':
                 await self._set_output_directory(cmd_list[3])
-        return True
-
-    async def on_cmd_get(self, websocket, cmd_list):
-        if cmd_list[1] == 'SiTCP':
-            if cmd_list[2] == 'register':
-                await self._read_SiTCP_register(cmd_list[3])
         return True
