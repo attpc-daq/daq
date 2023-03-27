@@ -207,9 +207,17 @@ class Handler(Handlers.CommandHandler):
             message = "Can not connect to SiTCP port"
             await websocket.send(message)
             return
-        msg = bytes.fromhex(str(msg_list[1]))
-        sock.send(msg)
-        message = str(msg_list[1]) + " done"
+        #read threshold file
+        file_name = str(msg_list[1])
+        with open(file_name, 'r') as f:
+            for line in f:
+                if line[0] == '#':
+                    continue
+                line = line.split()
+                cmd = bytes.fromhex(line[1])
+                sock.send(cmd)
+                time.sleep(0.01)
+        message = "threshold file: "+file_name+" done"
         await websocket.send(message)
         sock.close()
 
