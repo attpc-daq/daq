@@ -14,7 +14,7 @@ def Generate_threshold_file(filename):
     tree = root_file.Get("RawData")
     
     # 获取TTree的entries
-    n_entries = tree.GetEntriesFast()
+    n_entries = tree.GetEntries()
 
     # 获取分支(Branch)
     # event_id_branch = tree.GetBranch("event_id")
@@ -27,15 +27,9 @@ def Generate_threshold_file(filename):
 
     # 读取分支数据
     # 遍历TTree的每个entry
+    # for event in tree:
     for jentry in range(n_entries):
-        # get the next tree in the chain and verify
-        ientry = tree.LoadTree(jentry)
-        if ientry < 0:
-            break
-        # copy next entry into memory and verify
-        nb = tree.GetEntry(jentry)
-        if nb<=0:
-            continue
+        tree.GetEntry(jentry)
         
         # event_id = event_id_branch.GetLeaf("event_id").GetValue()
         # timestamp = timestamp_branch.GetLeaf("timestamp").GetValue()
