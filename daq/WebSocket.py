@@ -4,6 +4,7 @@ import asyncio
 import websockets
 import socket
 import queue
+import math
 
 from . import Data2ROOT
 from . import Utils
@@ -124,6 +125,75 @@ class Handler(Handlers.CommandHandler):
 #______________________________________________________________________________
     
     async def on_cmd_send_to_SiTCP(self, websocket, msg_list):
+        if self._receiver_threading is not None:
+            message = "receiver is running, can not send message to SiTCP"
+            await websocket.send(message)
+            return
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(2.0)
+        try:
+            sock.connect((self._SiTCP_address, self._SiTCP_port))
+        except (socket.gaierror, socket.timeout, OSError) as exc:
+            Utils.LOGGER.error("Can not connect to SiTCP port")
+            message = "Can not connect to SiTCP port"
+            await websocket.send(message)
+            return
+        msg = bytes.fromhex(str(msg_list[1]))
+        sock.send(msg)
+        message = str(msg_list[1]) + " done"
+        await websocket.send(message)
+        sock.close()
+        
+    async def on_cmd_set_threshold_SiTCP(self, websocket, msg_list):
+        #set_threshold_SiTCP FE_ID threshold
+        #FE_ID: 0x00-0x1F (hex,两个数值)
+        #threshold: 0x0000-0x0FFF (hex,四个数值)
+        if self._receiver_threading is not None:
+            message = "receiver is running, can not send message to SiTCP"
+            await websocket.send(message)
+            return
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(2.0)
+        try:
+            sock.connect((self._SiTCP_address, self._SiTCP_port))
+        except (socket.gaierror, socket.timeout, OSError) as exc:
+            Utils.LOGGER.error("Can not connect to SiTCP port")
+            message = "Can not connect to SiTCP port"
+            await websocket.send(message)
+            return
+        if(len(msg_list[1])!=2 or len(msg_list[2])!=4):
+            message = "FE_ID should be 2 hex number and threshold should be 4 hex number"
+            await websocket.send(message)
+            return
+        FE_id = str(msg_list[1])
+        threshold = str(msg_list[2])
+        for i in range(0,64):
+            #address:1806 data:FE_ID
+            cmd = '06102831'+'4'+FE_id[1]+'5'+FE_id[0]+'607083'
+            msg = bytes.fromhex(cmd)
+            sock.send(msg)
+            time.sleep(0.01)
+            #address:1808 data:channel
+            cmd = '08102831'+'4'+str(hex(i%16))[2]+'5'+str(hex(math.floor(i/16)))[2]+'607083'
+            msg = bytes.fromhex(cmd)
+            sock.send(msg)
+            time.sleep(0.01)
+            #address:180A data:threshold
+            cmd = '0A102831'+'4'+threshold[3]+'5'+threshold[2]+'6'+threshold[1]+'7'+threshold[0]+'83'
+            msg = bytes.fromhex(cmd)
+            sock.send(msg)
+            time.sleep(0.01)
+            #address:180C data:0x0001
+            cmd = '0C1028314150607083'
+            msg = bytes.fromhex(cmd)
+            sock.send(msg)
+            time.sleep(0.01)
+        message = "FE_ID: "+FE_id+" threshold: "+threshold+" done"
+        await websocket.send(message)
+        sock.close()
+        
+    async def on_cmd_read_threshold_file_SiTCP(self, websocket, msg_list):
+        #read_threshold_file_SiTCP file_name
         if self._receiver_threading is not None:
             message = "receiver is running, can not send message to SiTCP"
             await websocket.send(message)

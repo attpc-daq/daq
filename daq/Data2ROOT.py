@@ -17,6 +17,10 @@ class ROOTSaver(threading.Thread):
         self._queue = queue
         self._rootfile = None
         self._roottree = None
+        
+        self._clock_init = 0
+        self._clock_final = 0
+        self._file_size = 0
 
         self._event_id = np.array([-1])
         self._timestamp = np.array([-1])
@@ -46,12 +50,17 @@ class ROOTSaver(threading.Thread):
         return timestr
 
     def create_rootfile(self):
+        self._clock_init = time.time()
         if not os.path.exists(self._path):
             os.mkdir(self._path)
         self.update_file_pathname()
         self._rootfile = ROOT.TFile(self._name,'recreate')
 
     def close_rootfile(self):
+        self._clock_final = time.time()
+        delta_t = self._clock_final - self._clock_init
+        #输出文件获取速率
+        print(self._file_size/delta_t/1024+' KB/s')
         self._rootfile.cd()
         self._roottree.Write()
         self._rootfile.Close()
@@ -67,12 +76,12 @@ class ROOTSaver(threading.Thread):
         while self._state == 'running':
             if self._rootfile == None :
                 self.create_rootfile()
-                f = open(self._name+'.dat', "wb")
-
+                # f = open(self._name+'.dat', "wb")
             if not self._queue.empty():               
                 package = self._queue.get(True, 0.01)
+                self._file_size += len(package) #unit:byte 8bit
                 dataStream = b''.join([dataStream,package])
-                f.write(package)
+                # f.write(package)
                 self._package_count = self._package_count+1
             else:
                 time.sleep(0.1)
@@ -125,7 +134,7 @@ class ROOTSaver(threading.Thread):
             dataStream = dataStream[count:]
             if self._package_count >= self._events:
                 self.close_rootfile()
-                f.close()
+                # f.close()
                         
 #--------------------------------------------------------------------
 #            if not self._queue.empty():
