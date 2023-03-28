@@ -51,6 +51,7 @@ class ROOTSaver(threading.Thread):
 
     def create_rootfile(self):
         self._clock_init = time.time()
+        self._file_size = 0
         if not os.path.exists(self._path):
             os.mkdir(self._path)
         self.update_file_pathname()
@@ -59,8 +60,6 @@ class ROOTSaver(threading.Thread):
     def close_rootfile(self):
         self._clock_final = time.time()
         delta_t = self._clock_final - self._clock_init
-        #输出文件获取速率
-        print(self._file_size/delta_t/1024+' KB/s')
         self._rootfile.cd()
         self._roottree.Write()
         self._rootfile.Close()
@@ -68,6 +67,7 @@ class ROOTSaver(threading.Thread):
         self._roottree.Reset()
         self._package_count = 0
         print('root file saved:'+self._name)
+        print('{} KB/s'.format(self._file_size/delta_t/1024))
 
     def run(self):
         self._state = 'running'
