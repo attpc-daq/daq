@@ -2,6 +2,7 @@ import os
 import time
 import ROOT
 import numpy as np
+import sys
 import math
 
 import ROOT
@@ -29,15 +30,15 @@ def Generate_threshold_file(filename):
         waveform = tree.waveform
         
         # 处理读取到的数据
-        if(FE_id == 0):
+        if(event_id == 0):
             continue
-        if(FE_id > 1):
+        if(event_id > 1):
             break
-        if(FE_id == 1):
+        if(event_id == 1):
             waveform_mean = ROOT.TMath.Mean(len(waveform), waveform)
             waveform_rms = ROOT.TMath.RMS(len(waveform), waveform)
             threshold = waveform_mean + 15 * waveform_rms
-            print("waveform_mean = ", waveform_mean, "waveform_rms = ", waveform_rms, "threshold = ", threshold)
+            print("waveform_mean = {:.3f}; waveform_rms = {:.3f}; threshold = {:.3f}".format(waveform_mean,waveform_rms,threshold))
             # 1806 FE ID
             cmd1 = 'send_to_SiTCP '+'06102831'+ '4' + str(hex(int(FE_id)%16))[2] + '5' + str(hex(math.floor(int(FE_id)/16)))[2] + '607083\n'
             fp.write(cmd1)   
@@ -55,3 +56,6 @@ def Generate_threshold_file(filename):
             fp.write(cmd4)
             fp.write('#sleep 100\n') 
     fp.close()
+
+if __name__=='__main__':
+    Generate_threshold_file(sys.argv[1])
