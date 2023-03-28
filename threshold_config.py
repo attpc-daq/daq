@@ -15,29 +15,15 @@ def Generate_threshold_file(filename):
     
     # 获取TTree的entries
     n_entries = tree.GetEntries()
-
-    # 获取分支(Branch)
-    # event_id_branch = tree.GetBranch("event_id")
-    # timestamp_branch = tree.GetBranch("timestamp")
-    # FE_id_branch = tree.GetBranch("FE_id")
-    # channel_index_branch = tree.GetBranch("channel_index")
-    # waveform_branch = tree.GetBranch("waveform")
     
     fp = open("threshold.txt", "w")
 
     # 读取分支数据
     # 遍历TTree的每个entry
-    # for event in tree:
     for jentry in range(n_entries):
         tree.GetEntry(jentry)
-        
-        # event_id = event_id_branch.GetLeaf("event_id").GetValue()
-        # timestamp = timestamp_branch.GetLeaf("timestamp").GetValue()
-        # FE_id = FE_id_branch.GetLeaf("FE_id").GetValue()
-        # channel_index = channel_index_branch.GetLeaf("channel_index").GetValue()
-        # waveform = waveform_branch.GetLeaf("waveform").GetValue()
-        # event_id = tree.event_id
-        # timestamp = tree.timestamp
+        event_id = tree.event_id
+        timestamp = tree.timestamp
         FE_id = tree.FE_id
         channel_index = tree.channel_index
         waveform = tree.waveform
@@ -48,8 +34,6 @@ def Generate_threshold_file(filename):
         if(FE_id > 1):
             break
         if(FE_id == 1):
-            # waveform_mean = np.mean(np.ndarray(1024, dtype=np.float32, buffer=waveform))
-            # waveform_rms  = np.std(np.ndarray(1024, dtype=np.float32, buffer=waveform))
             waveform_mean = ROOT.TMath.Mean(len(waveform), waveform)
             waveform_rms = ROOT.TMath.RMS(len(waveform), waveform)
             threshold = waveform_mean + 15 * waveform_rms
