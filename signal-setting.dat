@@ -1,0 +1,54 @@
+send_to_SiTCP 0A1020384150607083
+#sleep 1000
+send_to_SiTCP 0610203A4150607083
+#sleep 1000
+send_to_SiTCP 041020314150607083
+#sleep 1000
+send_to_SiTCP 001020304150607083
+#sleep 1000
+send_to_SiTCP 041020384150607083
+#sleep 1000
+
+#压缩阈值
+set_threshold_SiTCP 00 0258
+#sleep 10000
+set_threshold_SiTCP 01 0258
+#sleep 10000
+set_threshold_SiTCP 02 0258
+#sleep 10000
+set_threshold_SiTCP 03 0258
+#sleep 10000
+set_threshold_SiTCP 04 0258
+#sleep 10000
+set_threshold_SiTCP 05 0258
+#sleep 10000
+set_threshold_SiTCP 06 0258
+#sleep 10000
+set_threshold_SiTCP 07 0258
+#sleep 10000
+
+#read_threshold_file_SiTCP /storage/ATTPC/daq/threshold.txt
+##sleep 30000
+
+#触发斜率
+send_to_SiTCP 001128314350607083
+#sleep 1000
+#符合通道数
+send_to_SiTCP 021028314150607083
+#sleep 1000
+
+send_to_SiTCP 001028314150607083
+#sleep 1000
+send_to_SiTCP 081020384150607083
+#sleep 1000
+send_to_SiTCP 021020394F5F6F7F83
+#sleep 1000
+send_to_SiTCP 0410203A4150607083
+#sleep 1000
+
+#set rootfile events 1000
+##sleep 1000
+#set output directory /storage/ATTPC/output/
+##sleep 1000
+run
+#send_to_SiTCP 0410203A4050607083
