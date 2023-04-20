@@ -1,56 +1,87 @@
+#浏览器注册
 register 
 
+#初始化log文件，参数1:路径，参数2:文件名前缀
+setlog output log
+
+#输入log内容，参数任意，多条log输入可以";"间隔
+log  this is a test run
+
+#浏览器端延迟，单位ms
 #sleep 1000
+
+#初始化sitcp读取程序
 initsitcp
 
+#连接电子学
 connect2device
 
+#初始化raw data处理程序
 initrawdataprocessor
 
+#初始化参数产生程序
 initparametergenerator
+
 #sleep 1000
+
+#运行sitcp读取
 startsitcp
+
 #sleep 1000
 startrawdataprocessor
+
 #sleep 1000
 startparametergenerator
-#sleep 1000
+
+#等待参数文件产生完成
+#浏览器端暂停，
 #pause
 
+#关闭sitcp读取程序
 stopsitcp
-
 #sleep 1000
 
+#关闭raw data 处理程序
 stoprawdataprocessor
 
 #sleep 1000
-
+#关闭parameter处理程序
 stopparametergenerator
 
 #pause
 
+
 initsitcp
 #sleep 1000
+
 connect2device
 #sleep 1000
+
 initrawdataprocessor
 #sleep 1000
 
+#初始化raw event 处理程序
 initraweventprocessor
 #sleep 1000
+
+#初始化QA程序
 initeventqa
 #sleep 1000
-startsitcp
 
+startsitcp
 #sleep 1000
+
 startrawdataprocessor
 #sleep 1000
+
 startraweventprocessor
 #sleep 1000
+
 starteventqa
 #sleep 1000
-#setupthreshold
 
+#设置电子学阈值
+#setupthreshold
 
 #pause
 
@@ -59,4 +90,5 @@ stoprawdataprocessor
 stopraweventprocessor
 stopeventqa
 
+#关闭后台服务程序
 shutdown
