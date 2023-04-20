@@ -1,0 +1,4 @@
+[ libPacketDecoder.so ]
+# List of selected classes
+class PacketDecoder
+header PacketDecoder.h

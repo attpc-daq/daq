@@ -1,0 +1,4 @@
+[ libRawDataProcessor.so ]
+# List of selected classes
+class RawDataProcessor
+header RawDataProcessor.h

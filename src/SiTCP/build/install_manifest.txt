@@ -1,0 +1,4 @@
+/usr/local/lib/libSiTCP.so
+/usr/local/include/SiTCP.h
+/usr/local/lib/libSiTCP.rootmap
+/usr/local/lib/libSiTCP_rdict.pcm

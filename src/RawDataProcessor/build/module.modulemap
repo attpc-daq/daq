@@ -1,0 +1,7 @@
+module "RawDataProcessor" {
+  requires cplusplus
+  module "RawDataProcessor.h" { header "RawDataProcessor.h" export * }
+  link "libRawDataProcessor.so"
+  export *
+}
+

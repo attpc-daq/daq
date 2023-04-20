@@ -1,0 +1,4 @@
+/usr/local/lib/libPacketDecoder.so
+/usr/local/include/PacketDecoder.h
+/usr/local/lib/libPacketDecoder.rootmap
+/usr/local/lib/libPacketDecoder_rdict.pcm

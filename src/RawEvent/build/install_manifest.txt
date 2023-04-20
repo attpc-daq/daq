@@ -1,0 +1,5 @@
+/usr/local/lib/libRawEvent.so
+/usr/local/include/Channel.h
+/usr/local/include/RawEvent.h
+/usr/local/lib/libRawEvent.rootmap
+/usr/local/lib/libRawEvent_rdict.pcm

@@ -1,0 +1,4 @@
+[ libTMessageBuffer.so ]
+# List of selected classes
+class TMessageBuffer
+header TMessageBuffer.h

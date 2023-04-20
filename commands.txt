@@ -1,0 +1,62 @@
+register 
+
+#sleep 1000
+initsitcp
+
+connect2device
+
+initrawdataprocessor
+
+initparametergenerator
+#sleep 1000
+startsitcp
+#sleep 1000
+startrawdataprocessor
+#sleep 1000
+startparametergenerator
+#sleep 1000
+#pause
+
+stopsitcp
+
+#sleep 1000
+
+stoprawdataprocessor
+
+#sleep 1000
+
+stopparametergenerator
+
+#pause
+
+initsitcp
+#sleep 1000
+connect2device
+#sleep 1000
+initrawdataprocessor
+#sleep 1000
+
+initraweventprocessor
+#sleep 1000
+initeventqa
+#sleep 1000
+startsitcp
+
+#sleep 1000
+startrawdataprocessor
+#sleep 1000
+startraweventprocessor
+#sleep 1000
+starteventqa
+#sleep 1000
+#setupthreshold
+
+
+#pause
+
+stopsitcp
+stoprawdataprocessor
+stopraweventprocessor
+stopeventqa
+
+shutdown

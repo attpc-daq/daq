@@ -1,0 +1,7 @@
+module "TMessageBuffer" {
+  requires cplusplus
+  module "TMessageBuffer.h" { header "TMessageBuffer.h" export * }
+  link "libTMessageBuffer.so"
+  export *
+}
+

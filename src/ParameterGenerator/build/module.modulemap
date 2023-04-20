@@ -1,0 +1,7 @@
+module "ParameterGenerator" {
+  requires cplusplus
+  module "ParameterGenerator.h" { header "ParameterGenerator.h" export * }
+  link "libParameterGenerator.so"
+  export *
+}
+

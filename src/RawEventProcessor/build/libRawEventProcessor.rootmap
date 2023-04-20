@@ -1,0 +1,4 @@
+[ libRawEventProcessor.so ]
+# List of selected classes
+class RawEventProcessor
+header RawEventProcessor.h

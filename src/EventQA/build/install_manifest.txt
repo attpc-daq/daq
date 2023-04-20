@@ -1,0 +1,4 @@
+/usr/local/lib/libEventQA.so
+/usr/local/include/EventQA.h
+/usr/local/lib/libEventQA.rootmap
+/usr/local/lib/libEventQA_rdict.pcm

@@ -1,0 +1,7 @@
+module "RawEventProcessor" {
+  requires cplusplus
+  module "RawEventProcessor.h" { header "RawEventProcessor.h" export * }
+  link "libRawEventProcessor.so"
+  export *
+}
+

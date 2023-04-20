@@ -1,0 +1,8 @@
+/storage/ATTPC/daq-dev-/src/PacketDecoder/build/CMakeFiles/PacketDecoder.dir
+/storage/ATTPC/daq-dev-/src/PacketDecoder/build/CMakeFiles/PacketDecoder_dict.dir
+/storage/ATTPC/daq-dev-/src/PacketDecoder/build/CMakeFiles/edit_cache.dir
+/storage/ATTPC/daq-dev-/src/PacketDecoder/build/CMakeFiles/rebuild_cache.dir
+/storage/ATTPC/daq-dev-/src/PacketDecoder/build/CMakeFiles/list_install_components.dir
+/storage/ATTPC/daq-dev-/src/PacketDecoder/build/CMakeFiles/install.dir
+/storage/ATTPC/daq-dev-/src/PacketDecoder/build/CMakeFiles/install/local.dir
+/storage/ATTPC/daq-dev-/src/PacketDecoder/build/CMakeFiles/install/strip.dir

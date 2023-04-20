@@ -1,0 +1,8 @@
+/storage/ATTPC/daq-dev-/src/SiTCP/build/CMakeFiles/SiTCP.dir
+/storage/ATTPC/daq-dev-/src/SiTCP/build/CMakeFiles/SiTCP_dict.dir
+/storage/ATTPC/daq-dev-/src/SiTCP/build/CMakeFiles/edit_cache.dir
+/storage/ATTPC/daq-dev-/src/SiTCP/build/CMakeFiles/rebuild_cache.dir
+/storage/ATTPC/daq-dev-/src/SiTCP/build/CMakeFiles/list_install_components.dir
+/storage/ATTPC/daq-dev-/src/SiTCP/build/CMakeFiles/install.dir
+/storage/ATTPC/daq-dev-/src/SiTCP/build/CMakeFiles/install/local.dir
+/storage/ATTPC/daq-dev-/src/SiTCP/build/CMakeFiles/install/strip.dir

@@ -1,0 +1,7 @@
+module "EventQA" {
+  requires cplusplus
+  module "EventQA.h" { header "EventQA.h" export * }
+  link "libEventQA.so"
+  export *
+}
+
