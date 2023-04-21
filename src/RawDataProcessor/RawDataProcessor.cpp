@@ -55,6 +55,7 @@ bool RawDataProcessor::openRawDataFile(){
 }
 void RawDataProcessor::closeRawDataFile(){
     rawDataFile.close();
+    remove((rawDataDir+readingTempFileName).c_str());
 }
 void RawDataProcessor::updateOutputFileID(){
     outputFileID = -1;
@@ -135,6 +136,7 @@ void RawDataProcessor::setSocketPort(int port){
 }
 
 void RawDataProcessor::mLoop(bool broadcast){
+    cout<<"raw data processor loop start, broadcast 0 for no, 1 for yes. "<< broadcast <<endl;
     status = status_running;
     char byte;
     int eventCount = 0;
@@ -146,7 +148,7 @@ void RawDataProcessor::mLoop(bool broadcast){
             sleep(1);
             continue;
         }
-        while (rawDataFile.read(&byte, 1)) {
+        while (rawDataFile.read(&byte, 1) && (status == status_running)) {
             if(decoder.Fill(&byte)){
                 rawEvent = decoder.rawEvent;
                 rawTree->Fill();

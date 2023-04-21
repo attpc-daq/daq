@@ -39,6 +39,7 @@ void ParameterGenerator::setOutputFileName(const char* thrName, const char* evtP
 void ParameterGenerator::setReadingTempFileName(const char* name){
     readingTempFileName = name;
 }
+int ParameterGenerator::state(){ return status; }
 bool ParameterGenerator::isFinish(){
     if(status == status_stopped){
         return true;
@@ -98,6 +99,7 @@ void ParameterGenerator::run(int nEvent){
 }
 
 void ParameterGenerator::mLoop(int nEvent){
+    cout<<"parameter generation loop start"<<endl;
     status = status_running;
     char byte;
     int eventCount = 0;
@@ -110,6 +112,7 @@ void ParameterGenerator::mLoop(int nEvent){
             if(decoder.Fill(&byte)){
                 rawEvent = decoder.rawEvent;
                 eventCount++;
+                cout<<"events for parameter generation "<<eventCount<<" / "<<nEvent<<endl;
                 fill(&rawEvent);
                 if(eventCount>nEvent){
                     status = status_stopping;
@@ -129,7 +132,7 @@ void ParameterGenerator::fill(RawEvent* revt){
         int len = sizeof(revt->channels[i].waveform)/sizeof(UInt_t);
         int waveform_mean = TMath::Mean(len, revt->channels[i].waveform);
         int waveform_rms = TMath::RMS(len, revt->channels[i].waveform);
-        int threshold = waveform_mean+ 10* waveform_rms;
+        int threshold = waveform_mean+ 15* waveform_rms;
         if(revt->channels[i].FEE_id > 31) continue;
         if(revt->channels[i].channel_id>63)continue;
         sum_threshold[revt->channels[i].FEE_id][revt->channels[i].channel_id]+=threshold;

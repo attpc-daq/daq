@@ -34,6 +34,7 @@ public:
   string getEventFileList(int n = -1);
   void stop();
   void run();
+  int state(){return status;}
   void setRawTreeName(const char* name);
   void setRawBranchName(const char* name);
   void setEventTreeName(const char* name);

@@ -14,7 +14,6 @@ PacketDecoder::PacketDecoder(){
 PacketDecoder::~PacketDecoder(){}
 
 bool PacketDecoder::Fill(const char* dataByte){
-
     switch(fillStatusCode){
       case 0://find event head
         if(*dataByte == 0x5a ) fillStatusCode = 1;
@@ -227,6 +226,9 @@ bool PacketDecoder::Fill(const char* dataByte){
         break;
       case 44: 
         fillStatusCode = 0;//CRC-32[7-0]
+        break;
+      
+      default:
         break;
     }
   return false;

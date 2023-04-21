@@ -6,7 +6,7 @@ ClassImp(TMessageBuffer);
 TMessageBuffer::TMessageBuffer(int size){
     buffer = new TMessage*[size];
     for(int i = 0; i < size; i++){
-        buffer[i] = new TMessage();
+        buffer[i] = new TMessage(kMESS_ANY,1024*1024*20);
     }
     bufferLength = size;
     dataLength = 0;

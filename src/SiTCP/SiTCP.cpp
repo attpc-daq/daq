@@ -1,4 +1,6 @@
 #include "SiTCP.h"
+#include <sys/select.h>
+#include <netinet/in.h>
 
 ClassImp(SiTCP);
 
@@ -40,10 +42,10 @@ void SiTCP::updateFileID(){
 }
 void SiTCP::createSocket(){
     sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock == -1) {
-        std::cerr << "Failed to create socket" << std::endl;
-        return;
-    }
+    struct timeval tv;
+    tv.tv_sec = 2;
+    tv.tv_usec = 0;
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
 }
 void SiTCP::connectToDevice(const char* ip, int port){
     createSocket();
@@ -53,6 +55,7 @@ void SiTCP::connectToDevice(const char* ip, int port){
     if (connect(sock, (struct sockaddr *)&server_address, sizeof(server_address)) == -1) {
         std::cerr << "Failed to connect to server" << std::endl;
     }
+
 }
 void SiTCP::stop(){
     status = status_stopping;
@@ -62,9 +65,9 @@ void SiTCP::run(){
     DAQThread = new thread(&SiTCP::DAQLoop, this);
 }
 void SiTCP::sendToDevice(const char* msg){
-    lock.lock();
-    send(sock, msg, 8, 0);
-    lock.unlock();
+    // lock.lock();
+    send(sock, msg, 9, 0);
+    // lock.unlock();
 }
 void SiTCP::setSocketBufferSize(int n){
     socketBufferSize = n;
@@ -74,15 +77,21 @@ void SiTCP::setFileMaxSize(int n){
     fileMaxSize = n;
 }
 void SiTCP::DAQLoop(){
+    cout<<"data acquisition loop start"<<endl;
     connectionStatus = disconnected;
     status = status_running;
     int fileSize = 0;
     createFile();
     while(status == status_running){
-        lock.lock();
+        // lock.lock();
         int length = recv(sock, socketBuffer, socketBufferSize, 0);
-        lock.unlock();
-        if(length <=0 )continue;
+        // lock.unlock();
+        //cout<<"sitcp get data "<<length<<endl;
+        if(length <=0 ){
+            sleep(0.1);
+            cout<<"sitcp get data "<<length<<endl;
+            continue;
+        }
         file.write(socketBuffer, length);
         fileSize += length;
         if(fileSize > fileMaxSize){

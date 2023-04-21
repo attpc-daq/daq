@@ -126,6 +126,7 @@ void RawEventProcessor::run(){
 //     socketPort = port;
 // }
 void RawEventProcessor::mLoop(){
+    cout<<"raw event convertion to event loop start"<<endl;
     status = status_running;
     // TMessageSocket* socket = new TMessageSocket(socketPort);
     while(status == status_running){

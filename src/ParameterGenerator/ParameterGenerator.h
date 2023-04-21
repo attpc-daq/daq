@@ -36,6 +36,7 @@ public:
     void setRawDataFilePrefix(const char* prefix);
     void setReadingTempFileName(const char* name);
     bool isFinish();
+    int state();
 
 private:
     string generate_settings(int WValue, int Vdrift);

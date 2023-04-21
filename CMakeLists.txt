@@ -2,8 +2,10 @@ cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
 project (event VERSION 1.0.0)
 
 set(GUISocketDir src/GUISocket)
+set(PySiTCPDir src/PySiTCP)
 
 install(DIRECTORY ${GUISocketDir} DESTINATION "/usr/local/lib/python3.10/dist-packages/")
+install(DIRECTORY ${PySiTCPDir} DESTINATION "/usr/local/lib/python3.10/dist-packages/")
 
 #set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")   # 设置可执行文件的输出目录
 

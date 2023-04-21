@@ -1,41 +1,55 @@
-#浏览器注册
+#————————————————————————————————————————浏览器注册
 register 
 
+#————————————————————————————————————————log 文件
 #初始化log文件，参数1:路径，参数2:文件名前缀
 setlog output log
 
 #输入log内容，参数任意，多条log输入可以";"间隔
 log  this is a test run
 
+
 #浏览器端延迟，单位ms
 #sleep 1000
 
+#usecppsitcp
+usepysitcp
+
+#————————————————————————————————————————参数数据产生
 #初始化sitcp读取程序
 initsitcp
 
-#连接电子学
+#连接电子学 可选参数1:IP，参数2port
 connect2device
+#sleep 1000
+
+selftrigger
+#sleep 1000
 
 #初始化raw data处理程序
-initrawdataprocessor
+initrawdataprocessor  5
 
 #初始化参数产生程序
 initparametergenerator
 
 #sleep 1000
 
-#运行sitcp读取
+#运行sitcp读取，仅当使用cpp sitcp时有效
 startsitcp
 
 #sleep 1000
-startrawdataprocessor
+startrawdataprocessor false
 
 #sleep 1000
-startparametergenerator
+startparametergenerator 
+
 
 #等待参数文件产生完成
 #浏览器端暂停，
 #pause
+#————————————————————————————————————————关闭和清理文件
+#停止产生数据
+stopdata
 
 #关闭sitcp读取程序
 stopsitcp
@@ -45,11 +59,12 @@ stopsitcp
 stoprawdataprocessor
 
 #sleep 1000
-#关闭parameter处理程序
-stopparametergenerator
+
+cleardir ./output
 
 #pause
 
+#————————————————————————————————————————设置threshold
 
 initsitcp
 #sleep 1000
@@ -57,11 +72,32 @@ initsitcp
 connect2device
 #sleep 1000
 
-initrawdataprocessor
+initrawdataprocessor 1000
 #sleep 1000
 
 #初始化raw event 处理程序
-initraweventprocessor
+initraweventprocessor 
+#sleep 1000
+
+setupthreshold
+
+#pause
+
+
+#————————————————————————————————————————数据采集
+#触发斜率
+send2device 001128314350607083
+#sleep 1000
+#符合通道数
+send2device 021028314150607083
+#sleep 1000
+send2device 001028314150607083
+#sleep 1000
+send2device 081020384150607083
+#sleep 1000
+send2device 021020394F5F6F7F83
+#sleep 1000
+send2device 0410203A4150607083
 #sleep 1000
 
 #初始化QA程序
@@ -71,24 +107,23 @@ initeventqa
 startsitcp
 #sleep 1000
 
-startrawdataprocessor
+startrawdataprocessor true
 #sleep 1000
 
 startraweventprocessor
 #sleep 1000
 
 starteventqa
-#sleep 1000
-
-#设置电子学阈值
-#setupthreshold
 
 #pause
-
+#————————————————————————————————————————停止
+stopdata
 stopsitcp
 stoprawdataprocessor
 stopraweventprocessor
 stopeventqa
 
+#pause
+#————————————————————————————————————————关机
 #关闭后台服务程序
 shutdown

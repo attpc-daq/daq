@@ -91,6 +91,7 @@ void EventQA::run(){
 }
 
 void EventQA::mLoop(){
+    cout<<"Event QA loop start"<<endl;
     status = status_running;
     TMessageSocket *socket = new TMessageSocket(socketPort, socketHost.c_str());
     while(status == status_running){

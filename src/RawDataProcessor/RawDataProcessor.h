@@ -28,6 +28,7 @@ public:
     virtual ~RawDataProcessor();
     void run(bool broadcast= true);
     void stop();
+    int state(){return status;}
 
     void setOutputFileEvents(int n);
     void setOutputDir(const char* dir);

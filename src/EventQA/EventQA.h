@@ -28,6 +28,8 @@ public:
 
   void setpad_numQA(long num);//num: 0~2047 num=row*64+column
   void setpad_numQA(long row, long column);//row: 0~31 column: 0~63
+
+  int state(){return status;}
  
 private:
   void fill(const RawEvent &revt, const Event &evt);

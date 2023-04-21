@@ -30,6 +30,7 @@ public:
     void setSocketBufferSize(int n=1024*1024);
     void setFileMaxSize(int n=1024*1024*1024);
     void setFilePrefix(const char* prefix);
+    int state(){return status;}
 
 private:
     string prefix;
