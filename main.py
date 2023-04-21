@@ -7,7 +7,8 @@ import time
 import asyncio
 import os
 import json
-from src.PySiTCP.SiTCP import Process as SiTCP
+#from src.PySiTCP.SiTCP import Process as SiTCP
+from PySiTCP.SiTCP import Process as SiTCP
 
 sys.path.append('/usr/local/lib')
 ROOT.gInterpreter.Declare('#include "SiTCP.h"')
