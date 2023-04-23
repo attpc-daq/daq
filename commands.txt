@@ -1,13 +1,14 @@
 #————————————————————————————————————————浏览器注册
 register 
+#————————————————————————————————————————设置输出文件目录
+setdir  test
+setrawdatafilesize  1000000
 
 #————————————————————————————————————————log 文件
-#初始化log文件，参数1:路径，参数2:文件名前缀
-setlog output log
+newlog
 
 #输入log内容，参数任意，多条log输入可以";"间隔
 log  this is a test run
-
 
 #浏览器端延迟，单位ms
 #sleep 1000
@@ -20,12 +21,12 @@ usepysitcp
 initsitcp
 
 #连接电子学 可选参数1:IP，参数2port
-connect2device
+connect2device 0.0.0.0 8001
 #sleep 1000
 
 selftrigger
 #sleep 1000
-
+#pause
 #初始化raw data处理程序
 initrawdataprocessor  5
 
@@ -60,7 +61,7 @@ stoprawdataprocessor
 
 #sleep 1000
 
-cleardir ./output
+cleardir
 
 #pause
 
@@ -69,10 +70,10 @@ cleardir ./output
 initsitcp
 #sleep 1000
 
-connect2device
+connect2device  0.0.0.0 8001 
 #sleep 1000
 
-initrawdataprocessor 1000
+initrawdataprocessor 10
 #sleep 1000
 
 #初始化raw event 处理程序

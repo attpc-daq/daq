@@ -5,7 +5,9 @@
 
 ClassImp(EventQA);
 
-EventQA::EventQA(){
+EventQA::EventQA(int port){
+    TServ = new THttpServer(Form("http:%d",port));
+    TServ->SetReadOnly(kFALSE);
     Pad_ADC = new TH1D("Pad_ADC","Pad_ADC",4096,0,4095);//ADC码值
     Mesh_Energy_Spectrum = new TH1D("Mesh_Energy_Spectrum","Mesh_Energy_Spectrum",1000,0,10);//unit: MeV
     Mesh_ADC_Spectrum = new TH1D("Mesh_ADC_Spectrum","Mesh_ADC_Spectrum",4096,0,4095);
@@ -37,9 +39,13 @@ EventQA::EventQA(){
     setpad_numQA(16,32);
 }
 EventQA::~EventQA(){
-
+    delete TServ;
 }
-
+void EventQA::setDir(const char* _dir){
+    dir = _dir;
+    if(dir[dir.length()-1]!='/')dir.append("/");
+    std::filesystem::create_directory(dir.c_str());
+}
 string EventQA::get(const char* name){
     if (strcasecmp(name, "track_2D") == 0){
         lock.lock();
@@ -74,23 +80,45 @@ string EventQA::get(const char* name){
 
     return string("");
 }
-
+string EventQA::getList(){
+    string list = "";
+    list += "track_2D";
+    list += "/n";
+    list += "track_3D";
+    list += "/n";
+    list += "Pad_ADC";
+    list += "/n";
+    list += "mesh_energy";
+    list += "/n";
+    list += "mesh_adc";
+    list += "/n";
+    return list;
+}
 void EventQA::setMessageHost(int port, const char* host){
     socketPort = port;
     socketHost = host;
 }
 void EventQA::stop(){
     status = status_stopping;
-    mThread->join();
+    mQAThread->join();
+    mTServThread->join();
     status = status_stopped;
 }
 void EventQA::run(){
     status = status_starting;
-    mThread = new thread(&EventQA::mLoop, this);
+    mQAThread = new thread(&EventQA::mQALoop, this);
+    mTServThread = new thread(&EventQA::mTServLoop, this);
     status = status_running;
 }
-
-void EventQA::mLoop(){
+void EventQA::mTServLoop(){
+    cout<<"THttp Server start"<<endl;
+     while(status == status_running){
+        TServ->ProcessRequests();
+        usleep(100000);
+    }
+    cout<<"THttp Server stop"<<endl;
+}
+void EventQA::mQALoop(){
     cout<<"Event QA loop start"<<endl;
     status = status_running;
     TMessageSocket *socket = new TMessageSocket(socketPort, socketHost.c_str());

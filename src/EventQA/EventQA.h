@@ -14,11 +14,14 @@
 #include "TMessageSocket.h"
 #include "EventMaker.h"
 #include <mutex>
+#include <THttpServer.h>
+#include <filesystem>
+#include <TFileCollection.h>
 
 using namespace std;
 class EventQA :public TObject{
 public:
-  EventQA();
+  EventQA(int port=8008);
   virtual ~EventQA();
   void setMessageHost(int port, const char* host="localhost");
   string get(const char* name);
@@ -30,8 +33,13 @@ public:
   void setpad_numQA(long row, long column);//row: 0~31 column: 0~63
 
   int state(){return status;}
- 
+  string getList();
+
+  void setDir(const char* dir);
+
 private:
+  string dir;
+  THttpServer * TServ;
   void fill(const RawEvent &revt, const Event &evt);
   TH2D* track_2D = NULL;
   TH3D* track_3D = NULL;
@@ -45,7 +53,8 @@ private:
 
   int socketPort;
   string socketHost;
-  void mLoop();
+  void mQALoop();
+  void mTServLoop();
 
   int status_not_started = 0;
   int status_starting = 1;
@@ -53,7 +62,8 @@ private:
   int status_stopping = 3;
   int status_stopped = 4;
   atomic_int status;
-  thread * mThread;
+  thread * mQAThread;
+  thread * mTServThread;
 
   mutex lock;
   ClassDef(EventQA,1)

@@ -48,6 +48,9 @@ private:
     struct sockaddr_in server_address;
     
     int sock;
+    int max_fd;
+    int activity;
+    fd_set sockReadSet,sockWriteSet;
 
     int status_not_started = 0;
     int status_starting = 1;

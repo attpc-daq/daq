@@ -132,7 +132,7 @@ void ParameterGenerator::fill(RawEvent* revt){
         int len = sizeof(revt->channels[i].waveform)/sizeof(UInt_t);
         int waveform_mean = TMath::Mean(len, revt->channels[i].waveform);
         int waveform_rms = TMath::RMS(len, revt->channels[i].waveform);
-        int threshold = waveform_mean+ 15* waveform_rms;
+        int threshold = waveform_mean+ 20* waveform_rms;
         if(revt->channels[i].FEE_id > 31) continue;
         if(revt->channels[i].channel_id>63)continue;
         sum_threshold[revt->channels[i].FEE_id][revt->channels[i].channel_id]+=threshold;
@@ -141,7 +141,7 @@ void ParameterGenerator::fill(RawEvent* revt){
 }
 void ParameterGenerator::make_threshold(){
     json js={};
-    int threshold[32][64];
+    uint threshold[32][64];
     for(int i = 0;i<32;i++){
         for(int j = 0; j<64;j++){
 
@@ -165,7 +165,7 @@ void ParameterGenerator::make_threshold(){
 
             msg.push_back({{"FE_id",cmd2.str()}});
 
-            int threshold_value = threshold[i][j];
+            uint threshold_value = threshold[i][j];
             stringstream cmd3;
             cmd3  << "0A102831" << "4"
                         << std::hex << threshold_value % 16 << "5"

@@ -22,7 +22,7 @@ bool PacketDecoder::Fill(const char* dataByte){
       case 1:
         if((*dataByte&0b01100000) == 0b01000000 ){
           fillStatusCode = 2;//event head found
-          packetSize = int((*dataByte&0b00011111)<<8);
+          packetSize = uint((*dataByte&0b00011111)<<8);
           rawEvent.reset();
         }else{
           fillStatusCode = 0;//event head not found
@@ -31,72 +31,75 @@ bool PacketDecoder::Fill(const char* dataByte){
 
       case 2:
         fillStatusCode = 3;//packet size 0-7 bits
-        packetSize += int(*dataByte);
+        packetSize += uint(*dataByte);
         if(packetSize != 20)fillStatusCode = 0;
         break;
 
       case 3:
         fillStatusCode = 4;//FEE ID
-        FEE_ID = int(*dataByte&0b00111111);
+        FEE_ID = uint(*dataByte&0b00111111);
         break;
 
       case 4:
         fillStatusCode = 5;//timestamp 47-40 bits
-        //TODO: check if the timestamp is correct
-        rawEvent.timestamp = static_cast<Long64_t>(*dataByte) << 40;
+        //update: by whk
+        rawEvent.timestamp = 0;
+        rawEvent.timestamp = (rawEvent.timestamp<<8) | ((static_cast<Long64_t>(*dataByte)) & 0xff);
         break;
 
       case 5:
         fillStatusCode = 6;//timestamp 39-32 bits
-        //TODO: check if the timestamp is correct
-        rawEvent.timestamp |= static_cast<Long64_t>(*dataByte) << 32;
+        //update: by whk
+        rawEvent.timestamp = (rawEvent.timestamp<<8) | ((static_cast<Long64_t>(*dataByte)) & 0xff);
         break;
 
       case 6:
         fillStatusCode = 7;//timestamp 31-24 bits
-        rawEvent.timestamp |= static_cast<Long64_t>(*dataByte) << 24;
+        rawEvent.timestamp = (rawEvent.timestamp<<8) | ((static_cast<Long64_t>(*dataByte)) & 0xff);
         break;
 
       case 7:
         fillStatusCode = 8;//timestamp 23-16 bits
-        rawEvent.timestamp |= static_cast<Long64_t>(*dataByte) << 16;
+        rawEvent.timestamp = (rawEvent.timestamp<<8) | ((static_cast<Long64_t>(*dataByte)) & 0xff);
         break;
 
       case 8:
         fillStatusCode = 9;//timestamp 15-8 bits
-        rawEvent.timestamp |= static_cast<Long64_t>(*dataByte) << 8;
+        rawEvent.timestamp = (rawEvent.timestamp<<8) | ((static_cast<Long64_t>(*dataByte)) & 0xff);
         break;
 
       case 9:
         fillStatusCode = 10;//timestamp 7-0 bits
-        rawEvent.timestamp |= static_cast<Long64_t>(*dataByte);
+        rawEvent.timestamp = (rawEvent.timestamp<<8) | ((static_cast<Long64_t>(*dataByte)) & 0xff);
         break;
 
       case 10:
         fillStatusCode = 11;//event id 31-24 bits
-        //TODO: check if the event id is correct
-        rawEvent.event_id = static_cast<Long64_t>(*dataByte) << 24;
+        //update: by whk
+        rawEvent.event_id = 0;
+        rawEvent.event_id = (rawEvent.event_id<<8) | ((static_cast<Long64_t>(*dataByte)) & 0xff);
         break;
 
       case 11:
         fillStatusCode = 12;//event id 23-16 bits
-        rawEvent.event_id |= static_cast<Long64_t>(*dataByte) << 16;
+        rawEvent.event_id = (rawEvent.event_id<<8) | ((static_cast<Long64_t>(*dataByte)) & 0xff);
         break;
 
       case 12:
         fillStatusCode = 13;//event id 15-8 bits
-        rawEvent.event_id |= static_cast<Long64_t>(*dataByte) << 8;
+        rawEvent.event_id = (rawEvent.event_id<<8) | ((static_cast<Long64_t>(*dataByte)) & 0xff);
         break;
 
       case 13:
         fillStatusCode = 14;//event id 7-0 bits
-        rawEvent.event_id |= static_cast<Long64_t>(*dataByte);
+        rawEvent.event_id = (rawEvent.event_id<<8) | ((static_cast<Long64_t>(*dataByte)) & 0xff);
         break;
 
       case 14:
         fillStatusCode = 15;// hit count
-        rawEvent.hit_count = int(*dataByte&0b00111111);
-        if(rawEvent.hit_count != 0)fillStatusCode = 0;
+        rawEvent.hit_count = uint(*dataByte&0b00111111);
+        //update: by whk
+        // if(rawEvent.hit_count != 0)fillStatusCode = 0;
         break;
       //-----
       case 15:
@@ -113,6 +116,8 @@ bool PacketDecoder::Fill(const char* dataByte){
         break;
       case 19:
         fillStatusCode = 20;//CRC-32[7-0]
+        //update: by whk
+        if(rawEvent.hit_count != 0)fillStatusCode = 0;
         break;
 
 
@@ -123,10 +128,11 @@ bool PacketDecoder::Fill(const char* dataByte){
       case 21:
         if((*dataByte&0b01100000) == 0b00000000 ){
           fillStatusCode = 22;//channel head found
-          packetSize = int((*dataByte&0b00011111)<<8);
+          packetSize = uint((*dataByte&0b00011111)<<8);
         }else if((*dataByte&0b01100000) == 0b00100000 ){
           fillStatusCode = 34;//event tail found
-          return true;
+          //update: by whk
+          // return true;
         }else{
           fillStatusCode = 20;//channel head not found
         }
@@ -134,18 +140,18 @@ bool PacketDecoder::Fill(const char* dataByte){
 
       case 22:
         fillStatusCode = 23;//packet size 0-7 bits
-        packetSize += int(*dataByte);
+        packetSize += uint(*dataByte);
         break;
 
       case 23:
         //TODO:这里识别有错误会产生过大的值，会导致基于FEE-id的计算出错
         fillStatusCode = 24;//FEE ID
-        channel.FEE_id = int(*dataByte&0b00111111);
+        channel.FEE_id = uint(*dataByte&0b00111111);
         break;
 
       case 24:
         fillStatusCode = 25;//channel id
-        channel.channel_id = int(*dataByte&0b00111111);
+        channel.channel_id = uint(*dataByte&0b00111111);
         break;
 
       case 25:
@@ -226,6 +232,8 @@ bool PacketDecoder::Fill(const char* dataByte){
         break;
       case 44: 
         fillStatusCode = 0;//CRC-32[7-0]
+        //update: by whk
+        return true;
         break;
       
       default:

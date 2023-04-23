@@ -7,7 +7,7 @@ ClassImp(SiTCP);
 SiTCP::SiTCP(){
     fileMaxSize = 1024*1024*1024;
     setSocketBufferSize(1024*1024);
-    dir = "./output";
+    dir = "./output/";
     prefix = "packet";
 }
 SiTCP::~SiTCP(){
@@ -55,7 +55,11 @@ void SiTCP::connectToDevice(const char* ip, int port){
     if (connect(sock, (struct sockaddr *)&server_address, sizeof(server_address)) == -1) {
         std::cerr << "Failed to connect to server" << std::endl;
     }
-
+    FD_ZERO(&sockReadSet);
+    FD_ZERO(&sockWriteSet);
+    FD_SET(sock,&sockReadSet);
+    FD_SET(sock,&sockWriteSet);
+    max_fd = sock;
 }
 void SiTCP::stop(){
     status = status_stopping;
@@ -65,9 +69,16 @@ void SiTCP::run(){
     DAQThread = new thread(&SiTCP::DAQLoop, this);
 }
 void SiTCP::sendToDevice(const char* msg){
-    // lock.lock();
-    send(sock, msg, 9, 0);
-    // lock.unlock();
+    int length;
+    activity = select(max_fd+1, NULL, &sockWriteSet, NULL,NULL);
+    if((activity<0) &&(errno != EINTR)){
+            cout<<"SiTCP socket select error"<<endl;
+    }
+    if(FD_ISSET(sock,&sockWriteSet)){
+        // lock.lock();
+        send(sock, msg, 9, 0);
+        // lock.unlock();
+    }
 }
 void SiTCP::setSocketBufferSize(int n){
     socketBufferSize = n;
@@ -82,11 +93,19 @@ void SiTCP::DAQLoop(){
     status = status_running;
     int fileSize = 0;
     createFile();
+    int length;
     while(status == status_running){
-        // lock.lock();
-        int length = recv(sock, socketBuffer, socketBufferSize, 0);
-        // lock.unlock();
-        //cout<<"sitcp get data "<<length<<endl;
+        
+        activity = select(max_fd+1, &sockReadSet, NULL,NULL,NULL);
+        if((activity<0) &&(errno != EINTR)){
+            cout<<"SiTCP socket select error"<<endl;
+        }
+        if(FD_ISSET(sock,&sockReadSet)){
+            // lock.lock();
+            length = recv(sock, socketBuffer, socketBufferSize, 0);
+            // lock.unlock();
+            //cout<<"sitcp get data "<<length<<endl;
+        }
         if(length <=0 ){
             sleep(0.1);
             cout<<"sitcp get data "<<length<<endl;

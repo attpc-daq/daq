@@ -6,7 +6,7 @@ import time
 import os
 
 class Process(multiprocessing.Process):
-    def __init__(self):
+    def __init__(self, outputDir, fileMaxSize = 1024*1024):
         super(Process, self).__init__()
 
         self._state = Utils.State()
@@ -14,15 +14,17 @@ class Process(multiprocessing.Process):
 
         self.pipe_parent, self.pipe_child = multiprocessing.Pipe()
 
-        self.dir = "./output/"
+        self.dir = outputDir
+        if not self.dir.endswith("/"):
+            self.dir = self.dir + "/"
         self.socketBufferSize = 1024*1024
-        self.fileMaxSize = 100*1024*1024
+        self.fileMaxSize = fileMaxSize
         self.filePrefix = "packet"
         self.ip = None
         self.port = 4660
         self.file = None
         self.fileID = -1
-        self.read_list = []
+        self._sock_list = []
 
     # @property
     def state(self):
@@ -42,7 +44,6 @@ class Process(multiprocessing.Process):
 
         if not os.path.exists(self.dir):
             os.mkdir(self.dir)
-        
         self.pipe_child.send("done")
 
     def updateFileID(self):
@@ -114,10 +115,12 @@ class Process(multiprocessing.Process):
             for msg in msglist:
                 try:
                     time.sleep(0.01)
-                    self._sock.send(msg)
-                    count += 1
-                    if count%100 == 0:
-                        self.pipe_child.send(str(int(count*100/l))+"%")
+                    _,writeable,_ = select.select([],self._sock_list,[], 0.01)
+                    if self._sock in writeable:
+                        self._sock.send(msg)
+                        count += 1
+                        if count%100 == 0:
+                            self.pipe_child.send(str(int(count*100/l))+"%")
                 except:
                     raise Exception('SiTCP send failed')         
         
@@ -163,8 +166,9 @@ class Process(multiprocessing.Process):
         if self.ip == None:
             return False
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.read_list = [self._sock]
+        self._sock_list = [self._sock]
         self._sock.settimeout(2)
+        self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
         self._connectionState = True
         try:
             self._sock.connect((self.ip, self.port))
@@ -172,6 +176,7 @@ class Process(multiprocessing.Process):
             return True
         except (socket.gaierror, socket.timeout, OSError) as exc:
             self._connectionState = False
+            print('can not connect to device')
             return False
             # raise Exception('SiTCP connection error')
 
@@ -191,7 +196,7 @@ class Process(multiprocessing.Process):
                     if not self.connect2SiTCP():
                         continue;
                     try:
-                        readable, _, _ = select.select(self.read_list, [], [], 0.01)
+                        readable, _, _ = select.select(self._sock_list, [], [], 0.01)
                         if self._sock in readable:
                             byte_array = self._sock.recv(self.socketBufferSize)
 
@@ -214,6 +219,7 @@ class Process(multiprocessing.Process):
             self._state.transit(Utils.PROCESS_STOPPING)
             self._sock.close()
             self._connectionState = False
+            print('data acquisition loop stop')
 
 
         finally:

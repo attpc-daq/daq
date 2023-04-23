@@ -53,7 +53,8 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
     def __init__(self):
         super(DAQHandler, self).__init__()
         self.usepysitcp = True
-
+        self.outputDir = './output/'
+        self.sitcpBufferFileSize = 1024*1024
     #—————————————————————————————————————————————————————————————
     #自定义函数应为协程函数，前缀为'on_cmd_'，参数列表不可变更
     #—————————————————————————————————————————————————————————————
@@ -63,9 +64,7 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
         self.usepysitcp = False
 
     async def on_cmd_setrawdatafilesize(self, websocket, cmd_list, client_key):
-        self.sitcp.setFileMaxSize(int(cmd_list[1]))
-        if self.usepysitcp is True:
-            self.sitcp.wait()
+        self.sitcpBufferFileSize = int(cmd_list[1])
 
     async def on_cmd_initsitcp(self, websocket, cmd_list, client_key):
         '''
@@ -74,20 +73,20 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
         if self.usepysitcp is False:
             self.sitcp = ROOT.SiTCP()
             # self.sitcp.connectToDevice("0.0.0.0",8002)
-            self.sitcp.setDir("./output")
+            self.sitcp.setDir(self.outputDir)
             self.sitcp.setSocketBufferSize(1024*1024)
-            self.sitcp.setFileMaxSize(10*1024*1024)
+            self.sitcp.setFileMaxSize(self.sitcpBufferFileSize)
             self.sitcp.setFilePrefix("packet")
         else:
-            self.sitcp = SiTCP()
+            self.sitcp = SiTCP(self.outputDir,self.sitcpBufferFileSize)
             self.sitcp.start()
             # self.sitcp.connectToDevice("0.0.0.0",8002)
-            self.sitcp.setDir("./output")
-            self.sitcp.wait()
+            # self.sitcp.setDir(self.outputDir)
+            # self.sitcp.wait()
             self.sitcp.setSocketBufferSize(1024*1024)
             self.sitcp.wait()
-            self.sitcp.setFileMaxSize(10*1024*1024)
-            self.sitcp.wait()
+            # self.sitcp.setFileMaxSize(10*1024*1024)
+            # self.sitcp.wait()
             self.sitcp.setFilePrefix("packet")
             self.sitcp.wait()
 
@@ -126,11 +125,11 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
         初始化RawDataProcessor
         '''
         self.rawDataProcessor = ROOT.RawDataProcessor()
-        self.rawDataProcessor.setRawDataDir("./output")
+        self.rawDataProcessor.setRawDataDir(self.outputDir)
         self.rawDataProcessor.setRawDataFilePrefix("packet")
         self.rawDataProcessor.setReadingTempFileName("reading.dat")
         self.rawDataProcessor.setOutputFileEvents(int(cmd_list[1]))
-        self.rawDataProcessor.setOutputDir("./output")
+        self.rawDataProcessor.setOutputDir(self.outputDir)
         self.rawDataProcessor.setOutputFilePrefix("RawEvent")
         self.rawDataProcessor.setWritingTempFileName("writing.root")
         self.rawDataProcessor.setRawEventTreeName("raw_event_tree")
@@ -155,10 +154,10 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
 
     async def on_cmd_initparametergenerator(self, websocket, cmd_list, client_key):
         self.parameterGenerator = ROOT.ParameterGenerator()
-        self.parameterGenerator.setRawDataDir("./output")
+        self.parameterGenerator.setRawDataDir(self.outputDir)
         self.parameterGenerator.setRawDataFilePrefix("packet")
         self.parameterGenerator.setReadingTempFileName("reading.dat")
-        self.parameterGenerator.setOutputDir("./")
+        self.parameterGenerator.setOutputDir(self.outputDir)
         self.parameterGenerator.setOutputFileName("thresholdes.json","eventParameters.json")
 
     async def on_cmd_selftrigger(self, websocket, cmd_list, client_key):
@@ -213,14 +212,15 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
             await self.notifymonitor("starting parametergeneration...")
             self.parameterGenerator.run(3)
             while self.parameterGenerator.isFinish() is False:
-                time.sleep(1)
+                await self.notifymonitor("parameter generation running")
+                time.sleep(3)
             await self.notifymonitor("parameter generation finish")
         else:
             await self.notifymonitor("starting parametergeneration...")
             self.parameterGenerator.run(3)
             while self.parameterGenerator.isFinish() is False:
                 await self.notifymonitor("parameter generation running")
-                time.sleep(1)
+                time.sleep(3)
             await self.notifymonitor("parameter generation finish")
 
     async def on_cmd_stopparametergenerator(self, websocket, cmd_list, client_key):
@@ -245,11 +245,11 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
 
     async def on_cmd_initraweventprocessor(self, websocket, cmd_list, client_key):
         self.rawEventProcessor = ROOT.RawEventProcessor()
-        file = open('./eventParameters.json', 'r')
+        file = open(os.path.join(self.outputDir,'./eventParameters.json'), 'r')
         settingJson = file.read()
         self.rawEventProcessor.updateSettings(settingJson)
         self.rawEventProcessor.setOutputFilePrefix("Event")
-        self.rawEventProcessor.setDir("output")
+        self.rawEventProcessor.setDir(self.outputDir)
         self.rawEventProcessor.setRawEventFilePrefix("RawEvent")
         self.rawEventProcessor.setRawTreeName("raw_event_tree")
         self.rawEventProcessor.setRawBranchName("raw_event")
@@ -264,9 +264,9 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
     
     async def on_cmd_initeventqa(self, websocket, cmd_list, client_key):
 
-        self.eventQA = ROOT.EventQA()
+        self.eventQA = ROOT.EventQA(8008)
         self.eventQA.setMessageHost(8020,"0.0.0.0")
-        file = open('./eventParameters.json', 'r')
+        file = open(os.path.join(self.outputDir,'./eventParameters.json'), 'r')
         settingJson = file.read()
         self.eventQA.updateSettings(settingJson)
         
@@ -286,7 +286,11 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
         '''
         设置文件保存路径
         '''
-        # self.sitcp.setDir("./output")
+        self.outputDir = cmd_list[1]
+        if not self.outputDir.endswith("/"):
+            self.outputDir = self.outputDir + "/"
+        if not os.path.exists(self.outputDir):
+            os.mkdir(self.outputDir)
         pass
 
     async def on_cmd_generateparameter(self, websocket, cmd_list, client_key):
@@ -328,12 +332,13 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
     async def on_cmd_shutdown(self, websocket, cmd_list, client_key):
         asyncio.get_event_loop().stop()
 
-    async def on_cmd_setlog(self, websocket, cmd_list, client_key):
-        if not os.path.exists(cmd_list[1]):
-            os.mkdir(cmd_list[1])
-        GUISocket.Utils.LOGGER.setPath(cmd_list[1])
-        GUISocket.Utils.LOGGER.setPrefix(cmd_list[2])
+    async def on_cmd_newlog(self, websocket, cmd_list, client_key):
+        if not os.path.exists(self.outputDir):
+            os.mkdir(self.outputDir)
+        GUISocket.Utils.LOGGER.setPath(self.outputDir)
+        GUISocket.Utils.LOGGER.setPrefix('log')
         GUISocket.Utils.LOGGER.new()
+
     async def on_cmd_log(self, websocket, cmd_list, client_key):
         GUISocket.Utils.LOGGER.info(" ".join(cmd_list))
 
@@ -351,9 +356,13 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
                     break
 
     async def on_cmd_cleardir(self, websocket, cmd_list, client_key):
-        for filename in os.listdir(cmd_list[1]):
+        for filename in os.listdir(self.outputDir):
             if filename.endswith(".dat") or filename.endswith(".root"):
-                 os.remove(os.path.join(cmd_list[1], filename))
+                 os.remove(os.path.join(self.outputDir, filename))
+
+    async def on_cmd_getqalist(self, websocket, cmd_list, client_key):
+
+        await websocket.send(self.eventQA.getList())
 
     async def on_cmd_setupthreshold(self, websocket, cmd_list, client_key):
         if self.usepysitcp is False:
@@ -369,7 +378,7 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
             time.sleep(0.01)
 
             #with open(cmd_list[1],'r') as file:
-            with open("thresholdes.json",'r') as file:
+            with open(os.path.join(self.outputDir,"thresholdes.json"),'r') as file:
                 content = file.read()
                 msgJson = json.loads(content)
 
@@ -396,7 +405,7 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
             bytes_array.append(bytes.fromhex('001020304150607083'))
             bytes_array.append(bytes.fromhex('041020384150607083'))
 
-            with open("thresholdes.json",'r') as file:
+            with open(os.path.join(self.outputDir,"thresholdes.json"),'r') as file:
                 content = file.read()
                 msgJson = json.loads(content)
 

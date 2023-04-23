@@ -40,8 +40,8 @@ public:
 
 private:
     string generate_settings(int WValue, int Vdrift);
-    int sum_threshold[32][64];
-    int count[32][64];
+    uint sum_threshold[32][64];
+    uint count[32][64];
 
     void fill(RawEvent* revt);
     void make_threshold();

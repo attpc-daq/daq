@@ -22,8 +22,8 @@ public:
   RawEvent rawEvent;
 
 private:
-  int packetSize;
-  int FEE_ID;
+  uint packetSize;
+  uint FEE_ID;
   int fillStatusCode;
   int waveformFillStatusCode;
   Channel channel;
