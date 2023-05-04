@@ -6,7 +6,7 @@ find_package(ROOT REQUIRED COMPONENTS RIO Net)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_library(TMessageSocket SHARED TMessageSocket.cpp)
-target_link_libraries(TMessageSocket PUBLIC ROOT::RIO ROOT::Net TMessageBuffer RawEvent FullEvent)
+target_link_libraries(TMessageSocket PUBLIC ROOT::RIO ROOT::Net TMessageBuffer RawEvent)
 
 ROOT_GENERATE_DICTIONARY(TMessageSocket_dict TMessageSocket.h LINKDEF Linkdef.h MODULE TMessageSocket)
 

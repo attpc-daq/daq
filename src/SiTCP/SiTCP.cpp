@@ -9,6 +9,7 @@ SiTCP::SiTCP(){
     setSocketBufferSize(1024*1024);
     dir = "./output/";
     prefix = "packet";
+    fileID = 0;
 }
 SiTCP::~SiTCP(){
 }
@@ -25,8 +26,9 @@ void SiTCP::createFile(){
 }
 void SiTCP::closeFile(){
     file.close();
-    updateFileID();
+    //updateFileID();
     rename ( (dir+"writing.dat").c_str(), ( dir+prefix+to_string(fileID)+".dat").c_str() );
+    fileID++;
 }
 void SiTCP::updateFileID(){
     fileID = -1;
@@ -39,6 +41,16 @@ void SiTCP::updateFileID(){
         if(id>fileID)fileID = id;
     }
     fileID++;
+}
+void SiTCP::clearDir(){
+    for (const auto & file : std::filesystem::directory_iterator(dir)){
+        string name = file.path().filename().string();
+        string suffix = ".dat";
+        if(name.substr(0, prefix.size()) != prefix)continue;
+        if(name.substr(name.size() - suffix.size()) != suffix)continue;
+        std::filesystem::remove(file.path());
+    }
+    fileID = 0;
 }
 void SiTCP::createSocket(){
     sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -70,6 +82,7 @@ void SiTCP::run(){
 }
 void SiTCP::sendToDevice(const char* msg){
     int length;
+    lock.lock();
     activity = select(max_fd+1, NULL, &sockWriteSet, NULL,NULL);
     if((activity<0) &&(errno != EINTR)){
             cout<<"SiTCP socket select error"<<endl;
@@ -77,8 +90,14 @@ void SiTCP::sendToDevice(const char* msg){
     if(FD_ISSET(sock,&sockWriteSet)){
         // lock.lock();
         send(sock, msg, 9, 0);
+        std::cout << "send to device: 0x";
+        for (int i = 0; i < 9; i++) {
+            std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<uint>(msg[i]&0b0000000011111111);
+        }
+        std::cout<<std::dec << std::endl;
         // lock.unlock();
     }
+    lock.unlock();
 }
 void SiTCP::setSocketBufferSize(int n){
     socketBufferSize = n;
@@ -93,22 +112,23 @@ void SiTCP::DAQLoop(){
     status = status_running;
     int fileSize = 0;
     createFile();
-    int length;
+    int length=0;
     while(status == status_running){
-        
+        lock.lock();
         activity = select(max_fd+1, &sockReadSet, NULL,NULL,NULL);
         if((activity<0) &&(errno != EINTR)){
             cout<<"SiTCP socket select error"<<endl;
         }
         if(FD_ISSET(sock,&sockReadSet)){
-            // lock.lock();
+            // 
             length = recv(sock, socketBuffer, socketBufferSize, 0);
             // lock.unlock();
             //cout<<"sitcp get data "<<length<<endl;
         }
+        lock.unlock();
         if(length <=0 ){
             sleep(0.1);
-            cout<<"sitcp get data "<<length<<endl;
+            cout<<"sitcp get data length "<<length<<endl;
             continue;
         }
         file.write(socketBuffer, length);

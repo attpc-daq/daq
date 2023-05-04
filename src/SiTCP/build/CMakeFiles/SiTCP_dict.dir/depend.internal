@@ -46,5 +46,5 @@ SiTCP_dict.cxx
  /opt/root/include/snprintf.h
  /opt/root/include/strlcpy.h
  /opt/root/include/strtok.h
- /storage/ATTPC/daq-dev-/src/SiTCP/Linkdef.h
- /storage/ATTPC/daq-dev-/src/SiTCP/SiTCP.h
+ /storage/ATTPC/DAQ/src/SiTCP/Linkdef.h
+ /storage/ATTPC/DAQ/src/SiTCP/SiTCP.h

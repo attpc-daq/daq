@@ -1,7 +1,7 @@
 CMakeFiles/EventMaker.dir/EventMaker.o: \
- /storage/ATTPC/daq-dev-/src/EventMaker/EventMaker.cpp \
+ /storage/ATTPC/DAQ/src/EventMaker/EventMaker.cpp \
  /usr/include/stdc-predef.h \
- /storage/ATTPC/daq-dev-/src/EventMaker/EventMaker.h \
+ /storage/ATTPC/DAQ/src/EventMaker/EventMaker.h \
  /opt/root/include/TGClient.h /opt/root/include/TObject.h \
  /opt/root/include/Rtypes.h /opt/root/include/RtypesCore.h \
  /opt/root/include/ROOT/RConfig.hxx /opt/root/include/RVersion.h \

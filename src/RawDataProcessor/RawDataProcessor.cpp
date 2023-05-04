@@ -6,6 +6,8 @@ RawDataProcessor::RawDataProcessor(){
     nEvents = 100;
     writingTempFileName = "writing";
     readingTempFileName = "reading";
+    rawDataFileID = 0;
+    outputFileID = 0;
 }
 RawDataProcessor::~RawDataProcessor(){
 }
@@ -43,9 +45,10 @@ void RawDataProcessor::setWritingTempFileName(const char* name){
     writingTempFileName = name;
 }
 bool RawDataProcessor::openRawDataFile(){
-    updateRawDataFileID();
-    if(rawDataFileID<0)return false;
+    //updateRawDataFileID();
+    // if(rawDataFileID<0)return false;
     int check = rename (( rawDataDir+rawDataFilePrefix+to_string(rawDataFileID)+".dat").c_str(), (rawDataDir+readingTempFileName).c_str() );
+    // cout<<"RawDataFile:"<<( rawDataDir+rawDataFilePrefix+to_string(rawDataFileID)+".dat")<<endl;
     if(check == -1) return false;
     rawDataFile.open((rawDataDir+readingTempFileName).c_str(), std::ios::binary);
     if (!rawDataFile.is_open()) {
@@ -56,6 +59,7 @@ bool RawDataProcessor::openRawDataFile(){
 void RawDataProcessor::closeRawDataFile(){
     rawDataFile.close();
     remove((rawDataDir+readingTempFileName).c_str());
+    rawDataFileID++;
 }
 void RawDataProcessor::updateOutputFileID(){
     outputFileID = -1;
@@ -69,6 +73,16 @@ void RawDataProcessor::updateOutputFileID(){
     }
     outputFileID++;
 }
+void RawDataProcessor::clearDir(){
+    for (const auto & file : std::filesystem::directory_iterator(outputDir)){
+        string name = file.path().filename().string();
+        string suffix = ".root";
+        if(name.substr(0, rawEventFilePrefix.size()) != rawEventFilePrefix)continue;
+        if(name.substr(name.size() - suffix.size()) != suffix)continue;
+        std::filesystem::remove(file.path());
+    }
+    outputFileID = 0;
+}
 void RawDataProcessor::updateRawDataFileID(){
     rawDataFileID = -1;
     for (const auto & file : std::filesystem::directory_iterator(rawDataDir)){
@@ -81,7 +95,7 @@ void RawDataProcessor::updateRawDataFileID(){
     }
 }
 void RawDataProcessor::createOutputFile(){
-    updateOutputFileID();
+    // updateOutputFileID();
     rawEventFile = new TFile((outputDir+writingTempFileName).c_str(), "RECREATE");
     rawEventFile->cd();
     rawTree = new TTree(rawEventTreeName.c_str(), rawEventTreeName.c_str());
@@ -91,9 +105,10 @@ void RawDataProcessor::closeOutputFile(){
     rawEventFile->cd();
     rawEventFile->Write();
     rawEventFile->Close();
-    delete rawEventFile;
-    updateOutputFileID();
+    // delete rawEventFile;
+    // updateOutputFileID();
     rename ( (outputDir+writingTempFileName).c_str(), ( outputDir+rawEventFilePrefix+to_string(outputFileID)+".root").c_str() );
+    outputFileID++;
 }
 
 string RawDataProcessor::getRawEventFileList(int n){
@@ -149,7 +164,9 @@ void RawDataProcessor::mLoop(bool broadcast){
             continue;
         }
         while (rawDataFile.read(&byte, 1) && (status == status_running)) {
+            //UPDATE: by whk
             if(decoder.Fill(&byte)){
+                // sleep(1);
                 rawEvent = decoder.rawEvent;
                 rawTree->Fill();
                 if(broadcast) socket->put(&rawEvent);
@@ -159,6 +176,7 @@ void RawDataProcessor::mLoop(bool broadcast){
                     eventCount = 0;
                     createOutputFile();
                 }
+                decoder.rawEvent.reset();
             }
         }
         closeRawDataFile();

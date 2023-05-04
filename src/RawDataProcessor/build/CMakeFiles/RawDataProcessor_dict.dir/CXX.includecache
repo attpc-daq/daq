@@ -416,13 +416,13 @@ ROOT/RConfig.hxx
 cstring
 -
 
-/storage/ATTPC/daq-dev-/src/RawDataProcessor/Linkdef.h
+/storage/ATTPC/DAQ/src/RawDataProcessor/Linkdef.h
 
-/storage/ATTPC/daq-dev-/src/RawDataProcessor/RawDataProcessor.h
+/storage/ATTPC/DAQ/src/RawDataProcessor/RawDataProcessor.h
 TGClient.h
-/storage/ATTPC/daq-dev-/src/RawDataProcessor/TGClient.h
+/storage/ATTPC/DAQ/src/RawDataProcessor/TGClient.h
 TObject.h
-/storage/ATTPC/daq-dev-/src/RawDataProcessor/TObject.h
+/storage/ATTPC/DAQ/src/RawDataProcessor/TObject.h
 iostream
 -
 fstream
@@ -434,9 +434,9 @@ thread
 atomic
 -
 PacketDecoder.h
-/storage/ATTPC/daq-dev-/src/RawDataProcessor/PacketDecoder.h
+/storage/ATTPC/DAQ/src/RawDataProcessor/PacketDecoder.h
 RawEvent.h
-/storage/ATTPC/daq-dev-/src/RawDataProcessor/RawEvent.h
+/storage/ATTPC/DAQ/src/RawDataProcessor/RawEvent.h
 mutex
 -
 fstream
@@ -450,5 +450,5 @@ sstream
 string
 -
 TMessageSocket.h
-/storage/ATTPC/daq-dev-/src/RawDataProcessor/TMessageSocket.h
+/storage/ATTPC/DAQ/src/RawDataProcessor/TMessageSocket.h
 

@@ -149,11 +149,11 @@ namespace {
 nullptr
     };
     static const char* includePaths[] = {
-"/storage/ATTPC/daq-dev-/src/EventMaker",
-"/storage/ATTPC/daq-dev-/src/EventMaker",
+"/storage/ATTPC/DAQ/src/EventMaker",
+"/storage/ATTPC/DAQ/src/EventMaker",
 "/opt/root/include",
 "/opt/root/include/",
-"/storage/ATTPC/daq-dev-/src/EventMaker/build/",
+"/storage/ATTPC/DAQ/src/EventMaker/build/",
 nullptr
     };
     static const char* fwdDeclCode = R"DICTFWDDCLS(

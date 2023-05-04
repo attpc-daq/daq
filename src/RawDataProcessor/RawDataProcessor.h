@@ -46,6 +46,7 @@ public:
     string getRawEventFileList(int n = -1);
     
     void setSocketPort(int port);
+    void clearDir();
 
 private:
     int socketPort;
@@ -66,8 +67,8 @@ private:
     string rawDataFilePrefix;
     string rawEventFilePrefix;
     int nEvents;
-    int rawDataFileID; 
-    int outputFileID;
+    uint64_t rawDataFileID; 
+    uint64_t outputFileID;
     ifstream rawDataFile;
     string rawDataDir;
     string outputDir;

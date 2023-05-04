@@ -46,6 +46,7 @@ private:
   TH1D* Mesh_Energy_Spectrum = NULL;
   TH1D* Mesh_ADC_Spectrum = NULL;
   TH1D* Pad_ADC = NULL;
+  TMultiGraph* mg = NULL;
 
   int pad_numQA = 0;
 

@@ -11,11 +11,14 @@ def main():
     sitcp = ROOT.SiTCP()
     sitcp.connectToDevice("0.0.0.0",8002)
     sitcp.setDir("./output_test1")
-    # sitcp.sendToDevice('0xFFFFFFFF');
+    # sitcp.sendToDevice('0xFFFFFFFF')
     sitcp.setSocketBufferSize(1024*1024)
     sitcp.setFileMaxSize(1024*1024*1024)
     sitcp.run()
-    # sitcp.sendToDevice('0xFFFFFFFF');
+    # sitcp.sendToDevice('0xFFFFFFFF')
+    sitcp.setFilePrefix('packet')
+    sitcp.state()
+    sitcp.connnectionState()
 
     pass
     sitcp.stop()

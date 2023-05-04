@@ -71,5 +71,5 @@ EventMaker_dict.cxx
  /opt/root/include/snprintf.h
  /opt/root/include/strlcpy.h
  /opt/root/include/strtok.h
- /storage/ATTPC/daq-dev-/src/EventMaker/EventMaker.h
- /storage/ATTPC/daq-dev-/src/EventMaker/Linkdef.h
+ /storage/ATTPC/DAQ/src/EventMaker/EventMaker.h
+ /storage/ATTPC/DAQ/src/EventMaker/Linkdef.h

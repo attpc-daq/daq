@@ -78,17 +78,6 @@ void ParameterGenerator::updateRawDataFileID(){
         if((id<rawDataFileID)||(rawDataFileID == -1))rawDataFileID = id;
     }
 }
-// void ParameterGenerator::createOutputFile(){
-//     // thresholdFileID = open((outputDir+thresholdFileName).c_str(), O_WRONLY);
-//     eventParameterFileID = open((outputDir+eventParameterFileName).c_str(), O_WRONLY);
-//     cout<<"parameter created "<<(outputDir+thresholdFileName)<<endl;
-//     cout<<"parameter created "<<(outputDir+eventParameterFileName)<<endl;
-// }
-// void ParameterGenerator::closeOutputFile(){
-//     cout<<"closing file"<<endl;
-//     // close(thresholdFileID);
-//     close(eventParameterFileID);
-// }
 
 void ParameterGenerator::stop(){
     status = status_stopping;
@@ -109,6 +98,7 @@ void ParameterGenerator::mLoop(int nEvent){
             continue;
         }
         while (rawDataFile.read(&byte, 1)) {
+            //UPDATE: by whk
             if(decoder.Fill(&byte)){
                 rawEvent = decoder.rawEvent;
                 eventCount++;
@@ -118,6 +108,8 @@ void ParameterGenerator::mLoop(int nEvent){
                     status = status_stopping;
                     break;
                 }
+                //UPDATE: by whk
+                decoder.rawEvent.reset();
             }
         }
         closeRawDataFile();
@@ -163,7 +155,7 @@ void ParameterGenerator::make_threshold(){
                     << std::hex << j % 16 << "5"
                     << std::hex << std::floor(j / 16) << "607083";
 
-            msg.push_back({{"FE_id",cmd2.str()}});
+            msg.push_back({{"channel_id",cmd2.str()}});
 
             uint threshold_value = threshold[i][j];
             stringstream cmd3;

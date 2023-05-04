@@ -19,6 +19,7 @@ RawEventProcessor::RawEventProcessor(){
         }
     }
    rawEvent = new RawEvent();
+   outputFileID = 0;
 }
 
 RawEventProcessor::~RawEventProcessor(){
@@ -39,7 +40,6 @@ void RawEventProcessor::setDir(const char* _dir){
   dir = _dir;
   if(dir[dir.length()-1]!='/')dir.append("/");
   std::filesystem::create_directory(dir.c_str());
-
 }
 void RawEventProcessor::setRawEventFilePrefix(const char* prefix){
   rawEventFilePrefix = prefix;
@@ -67,6 +67,16 @@ void RawEventProcessor::updateOutputFileID(){
     }
 
 }
+void RawEventProcessor::clearDir(){
+    for (const auto & file : std::filesystem::directory_iterator(dir)){
+        string name = file.path().filename().string();
+        string suffix = ".root";
+        if(name.substr(0, outputFilePrefix.size()) != outputFilePrefix)continue;
+        if(name.substr(name.size() - suffix.size()) != suffix)continue;
+        std::filesystem::remove(file.path());
+    }
+    outputFileID = 0;
+}
 
 string RawEventProcessor::getEventFileList(int n){
     string list;
@@ -81,38 +91,35 @@ string RawEventProcessor::getEventFileList(int n){
     return list;
 }
 
-void RawEventProcessor::openRawEventFile(){
+bool RawEventProcessor::openRawEventFile(){
     string filename = dir+rawEventFilePrefix+to_string(outputFileID)+".root";
     rawEventFile = new TFile(filename.c_str(), "READ"); 
+    if (rawEventFile == nullptr) return false;
     rawTree = (TTree*) rawEventFile->Get(rawTreeName);
     rawTree->SetBranchAddress(rawBranchName,&rawEvent);
+    createEventFile();
+    return true;
 }
 
 void RawEventProcessor::createEventFile(){
-    sem_wait(SEMFileID);
-    updateOutputFileID();
-    if(outputFileID>=0){
-        openRawEventFile();
-      string filename = dir+outputFilePrefix+to_string(outputFileID)+".root";
-      eventFile = new TFile(filename.c_str(), "RECREATE");
-      eventFile->cd();
-      eventTree = new TTree(eventTreeName, eventTreeName);
-      eventTree->Branch(eventBranchName, &event);
-      
-    }
-    sem_post(SEMFileID);
+    string filename = dir+outputFilePrefix+to_string(outputFileID)+".root";
+    eventFile = new TFile(filename.c_str(), "RECREATE");
+    eventFile->cd();
+    eventTree = new TTree(eventTreeName, eventTreeName);
+    eventTree->Branch(eventBranchName, &event);
 }
 
 void RawEventProcessor::closeRawEventFile(){
     rawEventFile->Close();
-    delete rawEventFile;
+    closeEventFile();
+    //delete rawEventFile;
 }
 
 void RawEventProcessor::closeEventFile(){
     eventFile->cd();
     eventFile->Write();
     eventFile->Close();
-    delete eventFile;
+    //delete eventFile;
 }
 
 void RawEventProcessor::stop(){
@@ -122,30 +129,21 @@ void RawEventProcessor::stop(){
 void RawEventProcessor::run(){
     mThread = new thread(&RawEventProcessor::mLoop, this);
 }
-// void RawEventProcessor::setSocketPort(int port){
-//     socketPort = port;
-// }
 void RawEventProcessor::mLoop(){
     cout<<"raw event convertion to event loop start"<<endl;
     status = status_running;
-    // TMessageSocket* socket = new TMessageSocket(socketPort);
     while(status == status_running){
-        createEventFile();
-        if(outputFileID<0){
-          sleep(1);
-          continue;
+        if(openRawEventFile()==false){
+            sleep(1);
+            continue;
         }
         int n = rawTree->GetEntries();
         for( int i = 0; i<n;i++){
           rawTree->GetEntry(i);
           event = *maker.convert(*rawEvent);
           eventTree->Fill();
-        //   socket->put(rawEvent);
-        //   socket->put(&event);
         }
         closeRawEventFile();
-        closeEventFile();
     }
-    // delete socket;
     cout<<"raw event convertion to event loop stop"<<endl;
 }

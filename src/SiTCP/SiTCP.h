@@ -31,6 +31,9 @@ public:
     void setFileMaxSize(int n=1024*1024*1024);
     void setFilePrefix(const char* prefix);
     int state(){return status;}
+    int connectionState(){return connectionStatus;}
+    void clearDir();
+    void updateFileID();
 
 private:
     string prefix;
@@ -40,11 +43,10 @@ private:
     void closeFile();
     ofstream file;
     string dir;
-    int fileID;
+    uint64_t fileID;
     int socketBufferSize;
     void createSocket();
-    void updateFileID();
-
+    
     struct sockaddr_in server_address;
     
     int sock;

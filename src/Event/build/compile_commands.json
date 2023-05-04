@@ -1,0 +1,17 @@
+[
+{
+  "directory": "/storage/ATTPC/DAQ/src/Event/build",
+  "command": "/usr/bin/g++  -I/storage/ATTPC/DAQ/src/Event -I/opt/root/include -g -fPIC -o CMakeFiles/Event_dict.dir/Event_dict.o -c /storage/ATTPC/DAQ/src/Event/build/Event_dict.cxx",
+  "file": "/storage/ATTPC/DAQ/src/Event/build/Event_dict.cxx"
+},
+{
+  "directory": "/storage/ATTPC/DAQ/src/Event/build",
+  "command": "/usr/bin/g++ -DEvent_EXPORTS -I/storage/ATTPC/DAQ/src/Event -isystem /opt/root/include -g -fPIC -o CMakeFiles/Event.dir/Event.o -c /storage/ATTPC/DAQ/src/Event/Event.cpp",
+  "file": "/storage/ATTPC/DAQ/src/Event/Event.cpp"
+},
+{
+  "directory": "/storage/ATTPC/DAQ/src/Event/build",
+  "command": "/usr/bin/g++ -DEvent_EXPORTS -I/storage/ATTPC/DAQ/src/Event -isystem /opt/root/include -g -fPIC -o CMakeFiles/Event.dir/Pad.o -c /storage/ATTPC/DAQ/src/Event/Pad.cpp",
+  "file": "/storage/ATTPC/DAQ/src/Event/Pad.cpp"
+}
+]

@@ -1,0 +1,66 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-.-Debug-0d565bcd23df00a6eed4.json",
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "Event",
+					"targetIndexes" : 
+					[
+						0,
+						1
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "Event::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-Event-Debug-a30b70d25d9759a89f18.json",
+					"name" : "Event",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "Event_dict::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-Event_dict-Debug-ec180dabb367ce6d9b36.json",
+					"name" : "Event_dict",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/storage/ATTPC/DAQ/src/Event/build",
+		"source" : "/storage/ATTPC/DAQ/src/Event"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 3
+	}
+}

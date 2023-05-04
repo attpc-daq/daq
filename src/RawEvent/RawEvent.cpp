@@ -48,4 +48,5 @@ void RawEvent::reset(){
     timestamp = 0;
     hit_count = 0;
 }
+
 RawEvent::~RawEvent(){}

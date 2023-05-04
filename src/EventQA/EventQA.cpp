@@ -8,6 +8,7 @@ ClassImp(EventQA);
 EventQA::EventQA(int port){
     TServ = new THttpServer(Form("http:%d",port));
     TServ->SetReadOnly(kFALSE);
+
     Pad_ADC = new TH1D("Pad_ADC","Pad_ADC",4096,0,4095);//ADC码值
     Mesh_Energy_Spectrum = new TH1D("Mesh_Energy_Spectrum","Mesh_Energy_Spectrum",1000,0,10);//unit: MeV
     Mesh_ADC_Spectrum = new TH1D("Mesh_ADC_Spectrum","Mesh_ADC_Spectrum",4096,0,4095);
@@ -34,8 +35,8 @@ EventQA::EventQA(int port){
     for(int i=0;i<=YNbins;i++){YEdge[i]=i*4.5;}
 
     track_2D = new TH2D("track_2D","track_2D",ZNbins,ZEdge,XNbins,XEdge);
-    track_3D = new TH3D("track_3D","track_3D",ZNbins,ZEdge,YNbins,YEdge,XNbins,XEdge);
-    
+    track_3D = new TH3D("track_3D","track_3D",ZNbins,ZEdge,XNbins,XEdge,YNbins,YEdge);
+    mg = new TMultiGraph();
     setpad_numQA(16,32);
 }
 EventQA::~EventQA(){
@@ -77,6 +78,12 @@ string EventQA::get(const char* name){
         lock.unlock();
         return str;
     }   
+    if (strcasecmp(name, "waveform") == 0){
+        lock.lock();
+        string str =  TBufferJSON::ToJSON(mg).Data();
+        lock.unlock();
+        return str;
+    }
 
     return string("");
 }
@@ -91,6 +98,8 @@ string EventQA::getList(){
     list += "mesh_energy";
     list += "/n";
     list += "mesh_adc";
+    list += "/n";
+    list += "waveform";
     list += "/n";
     return list;
 }
@@ -141,12 +150,14 @@ void EventQA::updateSettings(const char* msg){
 }
 
 void EventQA::fill(const RawEvent &revt, const Event &evt){
-    // resetwaveform();
+    delete mg;
+    mg = NULL;
+    mg = new TMultiGraph();
     float mesh_energy = 0;
     float mesh_charge = 0;
     track_2D->Reset();
     track_3D->Reset();
-    // int i=0;
+    int i=0;
     for(auto iter : evt.pads){
         int padrow = iter.padRow;
         int padcol = iter.padColumn;
@@ -163,17 +174,18 @@ void EventQA::fill(const RawEvent &revt, const Event &evt){
         // track_2D->SetBinContent(padcol+1,padrow+1,adc);
         // track_3D->SetBinContent(padcol+1,padrow+1,180-height,adc);
         track_2D->SetBinContent(padcol+1,padrow+1,charge);
-        track_3D->SetBinContent(padcol+1,padrow+1,180-height,charge);
+        //track_3D->SetBinContent(padcol+1,padrow+1,180-height,charge); 
+        track_3D->SetBinContent(padcol+1,padrow+1,90,charge); 
         
-        // gr[i] = new TGraph();
-        // gr[i]->SetName(Form( "event-%i: raw-%i col-%i",evt.event.event_id,padrow,padcol));
-        // gr[i]->SetTitle(Form("event-%i: raw-%i col-%i",evt.event.event_id,padrow,padcol));
-        // for(int j=0;j<1024;j++){
-        //     int waveform = evt.raw_event.channels[i].waveform[j];
-        //     gr[i]->SetPoint(j,j,waveform);
-        // }
-        // mg->Add(gr[i]);
-        // i++;
+        TGraph* gr = new TGraph();
+        gr->SetName(Form( "event-%lli: raw-%i col-%i",evt.event_id,padrow,padcol));
+        gr->SetTitle(Form("event-%lli: raw-%i col-%i",evt.event_id,padrow,padcol));
+        for(int j=0;j<1024;j++){
+            unsigned int waveform = revt.channels[i].waveform[j];
+            gr->SetPoint(j,j,waveform);
+        }
+        mg->Add(gr);
+        i++;
     }
     // cout<<"=================>>>mesh_energy: "<<mesh_energy<<endl;
     Mesh_ADC_Spectrum->Fill(mesh_charge*1E+15/6.24150975E+18*0.75/10*4096/4000);//mesh_charge*1E+15/6.24150975E+18 unit:fc  假设ADC量程为4V=4000mV，精度为12bit  主放增益为10，前放增益为0.75mv/fc

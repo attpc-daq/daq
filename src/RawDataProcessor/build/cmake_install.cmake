@@ -1,4 +1,4 @@
-# Install script for directory: /storage/ATTPC/daq-dev-/src/RawDataProcessor
+# Install script for directory: /storage/ATTPC/DAQ/src/RawDataProcessor
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -49,7 +49,7 @@ if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_
          FILE "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/libRawDataProcessor.so"
          RPATH "")
   endif()
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE SHARED_LIBRARY FILES "/storage/ATTPC/daq-dev-/src/RawDataProcessor/build/libRawDataProcessor.so")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE SHARED_LIBRARY FILES "/storage/ATTPC/DAQ/src/RawDataProcessor/build/libRawDataProcessor.so")
   if(EXISTS "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/libRawDataProcessor.so" AND
      NOT IS_SYMLINK "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/libRawDataProcessor.so")
     file(RPATH_CHANGE
@@ -66,13 +66,13 @@ if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_
 endif()
 
 if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_COMPONENT)
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/include" TYPE FILE FILES "/storage/ATTPC/daq-dev-/src/RawDataProcessor/RawDataProcessor.h")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/include" TYPE FILE FILES "/storage/ATTPC/DAQ/src/RawDataProcessor/RawDataProcessor.h")
 endif()
 
 if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_COMPONENT)
   file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE FILE FILES
-    "/storage/ATTPC/daq-dev-/src/RawDataProcessor/build/libRawDataProcessor.rootmap"
-    "/storage/ATTPC/daq-dev-/src/RawDataProcessor/build/libRawDataProcessor_rdict.pcm"
+    "/storage/ATTPC/DAQ/src/RawDataProcessor/build/libRawDataProcessor.rootmap"
+    "/storage/ATTPC/DAQ/src/RawDataProcessor/build/libRawDataProcessor_rdict.pcm"
     )
 endif()
 
@@ -84,5 +84,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/storage/ATTPC/daq-dev-/src/RawDataProcessor/build/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/storage/ATTPC/DAQ/src/RawDataProcessor/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

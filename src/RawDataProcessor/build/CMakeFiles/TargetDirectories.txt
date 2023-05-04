@@ -1,8 +1,8 @@
-/storage/ATTPC/daq-dev-/src/RawDataProcessor/build/CMakeFiles/RawDataProcessor.dir
-/storage/ATTPC/daq-dev-/src/RawDataProcessor/build/CMakeFiles/RawDataProcessor_dict.dir
-/storage/ATTPC/daq-dev-/src/RawDataProcessor/build/CMakeFiles/edit_cache.dir
-/storage/ATTPC/daq-dev-/src/RawDataProcessor/build/CMakeFiles/rebuild_cache.dir
-/storage/ATTPC/daq-dev-/src/RawDataProcessor/build/CMakeFiles/list_install_components.dir
-/storage/ATTPC/daq-dev-/src/RawDataProcessor/build/CMakeFiles/install.dir
-/storage/ATTPC/daq-dev-/src/RawDataProcessor/build/CMakeFiles/install/local.dir
-/storage/ATTPC/daq-dev-/src/RawDataProcessor/build/CMakeFiles/install/strip.dir
+/storage/ATTPC/DAQ/src/RawDataProcessor/build/CMakeFiles/RawDataProcessor.dir
+/storage/ATTPC/DAQ/src/RawDataProcessor/build/CMakeFiles/RawDataProcessor_dict.dir
+/storage/ATTPC/DAQ/src/RawDataProcessor/build/CMakeFiles/edit_cache.dir
+/storage/ATTPC/DAQ/src/RawDataProcessor/build/CMakeFiles/rebuild_cache.dir
+/storage/ATTPC/DAQ/src/RawDataProcessor/build/CMakeFiles/list_install_components.dir
+/storage/ATTPC/DAQ/src/RawDataProcessor/build/CMakeFiles/install.dir
+/storage/ATTPC/DAQ/src/RawDataProcessor/build/CMakeFiles/install/local.dir
+/storage/ATTPC/DAQ/src/RawDataProcessor/build/CMakeFiles/install/strip.dir

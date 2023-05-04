@@ -6,7 +6,7 @@ find_package(ROOT REQUIRED COMPONENTS RIO Net)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_library(RawEventProcessor SHARED RawEventProcessor.cpp)
-target_link_libraries(RawEventProcessor PUBLIC ROOT::RIO ROOT::Net Event RawEvent TMessageSocket FullEvent)
+target_link_libraries(RawEventProcessor PUBLIC ROOT::RIO ROOT::Net Event RawEvent TMessageSocket)
 
 ROOT_GENERATE_DICTIONARY(RawEventProcessor_dict  RawEventProcessor.h LINKDEF Linkdef.h MODULE RawEventProcessor)
 

@@ -23,12 +23,13 @@ class Process(multiprocessing.Process):
         self.ip = None
         self.port = 4660
         self.file = None
-        self.fileID = -1
+        self.fileID = 0
         self._sock_list = []
 
     # @property
     def state(self):
         self.pipe_parent.send("state")
+        return self.wait()
 
     def rsp_state(self):
         self.pipe_child.send(self._state.state)
@@ -36,6 +37,7 @@ class Process(multiprocessing.Process):
     def setDir(self,dir):
         self.pipe_parent.send("setDir")
         self.pipe_parent.send(dir)
+        return self.wait()
 
     def rsp_setDir(self):
         self.dir = self.pipe_child.recv()
@@ -56,18 +58,27 @@ class Process(multiprocessing.Process):
         
         self.fileID += 1
 
+    def clearDir(self):
+        for filename in os.listdir(self.dir):
+            if filename.startswith(self.filePrefix) and filename.endswith(".dat"):
+                os.remove(self.dir+filename)
+
+        self.fileID = 0
+
     def createFile(self):
         self.file = open(self.dir+"writing.dat","wb")
     
     def closeFile(self):
         self.file.close()
-        self.updateFileID()
+        # self.updateFileID()
         os.rename(self.dir+"writing.dat", self.dir+self.filePrefix+str(self.fileID)+".dat")
+        self.fileID += 1
 
     def connectToDevice(self, ip, port):
         self.pipe_parent.send("connectToDevice")
         self.pipe_parent.send(ip)
         self.pipe_parent.send(port)
+        return self.wait()
 
     def rsp_connectToDevice(self):
         self.ip = self.pipe_child.recv()
@@ -80,6 +91,7 @@ class Process(multiprocessing.Process):
     def setSocketBufferSize(self, size):
         self.pipe_parent.send("setSocketBufferSize")
         self.pipe_parent.send(size)
+        return self.wait()
 
     def rsp_setSocketBufferSize(self):
         self.socketBufferSize = int(self.pipe_child.recv())
@@ -88,6 +100,7 @@ class Process(multiprocessing.Process):
     def setFileMaxSize(self, size):
         self.pipe_parent.send("setFileMaxSize")
         self.pipe_parent.send(size)
+        return self.wait()
     
     def rsp_setFileMaxSize(self):
         self.fileMaxSize = int(self.pipe_child.recv())
@@ -96,6 +109,7 @@ class Process(multiprocessing.Process):
     def setFilePrefix(self, prefix):
         self.pipe_parent.send("setFilePrefix")
         self.pipe_parent.send(prefix)
+        return self.wait()
 
     def rsp_setFilePrefix(self):
         msg = self.pipe_child.recv()
@@ -103,10 +117,25 @@ class Process(multiprocessing.Process):
         self.pipe_child.send("done")
 
     def sendToDevice(self,msg):
-        self.pipe_parent.send("sendToDevice")
-        self.pipe_parent.send(msg)
+        if isinstance(msg,bytes):
+            self.pipe_parent.send("sendToDeviceBytes")
+            self.pipe_parent.send(msg)
+            return self.wait()
+        else:
+            self.pipe_parent.send("sendToDeviceArray")
+            self.pipe_parent.send(msg)
 
-    def rsp_sendToDevice(self):
+    def rsp_sendToDeviceBytes(self):
+        msg = self.pipe_child.recv()
+        self.connect2SiTCP()
+        _,writeable,_ = select.select([],self._sock_list,[], 0.01)
+        if self._sock in writeable:
+            self._sock.send(msg)
+            self.pipe_child.send("done")
+        else:
+            self.pipe_child.send("fail")
+
+    def rsp_sendToDeviceArray(self):
         while self.pipe_child.poll():
             msglist = self.pipe_child.recv()
             self.connect2SiTCP()
@@ -129,8 +158,10 @@ class Process(multiprocessing.Process):
     def response(self):
         while self.pipe_child.poll():
             msg = self.pipe_child.recv()
-            if msg == "sendToDevice":
-                self.rsp_sendToDevice()
+            if msg == "sendToDeviceBytes":
+                self.rsp_sendToDeviceBytes()
+            elif msg == "sendToDeviceArray":
+                self.rsp_sendToDeviceArray()
             elif msg == "setFilePrefix":
                 self.rsp_setFilePrefix()
             elif msg == "setFileMaxSize":
@@ -167,8 +198,8 @@ class Process(multiprocessing.Process):
             return False
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._sock_list = [self._sock]
-        self._sock.settimeout(2)
-        self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+        self._sock.settimeout(3)
+        # self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
         self._connectionState = True
         try:
             self._sock.connect((self.ip, self.port))
@@ -199,7 +230,6 @@ class Process(multiprocessing.Process):
                         readable, _, _ = select.select(self._sock_list, [], [], 0.01)
                         if self._sock in readable:
                             byte_array = self._sock.recv(self.socketBufferSize)
-
                             if len(byte_array) <= 0 :
                                 print("get bytes ",len(byte_array))
                                 continue

@@ -54,10 +54,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /storage/ATTPC/daq-dev-/src/SiTCP
+CMAKE_SOURCE_DIR = /storage/ATTPC/DAQ/src/SiTCP
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /storage/ATTPC/daq-dev-/src/SiTCP/build
+CMAKE_BINARY_DIR = /storage/ATTPC/DAQ/src/SiTCP/build
 
 #=============================================================================
 # Directory level rules for the build root directory
@@ -83,14 +83,14 @@ clean: CMakeFiles/SiTCP_dict.dir/clean
 CMakeFiles/SiTCP.dir/all: CMakeFiles/SiTCP_dict.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/SiTCP.dir/build.make CMakeFiles/SiTCP.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/SiTCP.dir/build.make CMakeFiles/SiTCP.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/storage/ATTPC/daq-dev-/src/SiTCP/build/CMakeFiles --progress-num=1,2 "Built target SiTCP"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/storage/ATTPC/DAQ/src/SiTCP/build/CMakeFiles --progress-num=1,2 "Built target SiTCP"
 .PHONY : CMakeFiles/SiTCP.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/SiTCP.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /storage/ATTPC/daq-dev-/src/SiTCP/build/CMakeFiles 4
+	$(CMAKE_COMMAND) -E cmake_progress_start /storage/ATTPC/DAQ/src/SiTCP/build/CMakeFiles 4
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/SiTCP.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /storage/ATTPC/daq-dev-/src/SiTCP/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /storage/ATTPC/DAQ/src/SiTCP/build/CMakeFiles 0
 .PHONY : CMakeFiles/SiTCP.dir/rule
 
 # Convenience name for target.
@@ -109,14 +109,14 @@ CMakeFiles/SiTCP.dir/clean:
 CMakeFiles/SiTCP_dict.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/SiTCP_dict.dir/build.make CMakeFiles/SiTCP_dict.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/SiTCP_dict.dir/build.make CMakeFiles/SiTCP_dict.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/storage/ATTPC/daq-dev-/src/SiTCP/build/CMakeFiles --progress-num=3,4 "Built target SiTCP_dict"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/storage/ATTPC/DAQ/src/SiTCP/build/CMakeFiles --progress-num=3,4 "Built target SiTCP_dict"
 .PHONY : CMakeFiles/SiTCP_dict.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/SiTCP_dict.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /storage/ATTPC/daq-dev-/src/SiTCP/build/CMakeFiles 2
+	$(CMAKE_COMMAND) -E cmake_progress_start /storage/ATTPC/DAQ/src/SiTCP/build/CMakeFiles 2
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/SiTCP_dict.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /storage/ATTPC/daq-dev-/src/SiTCP/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /storage/ATTPC/DAQ/src/SiTCP/build/CMakeFiles 0
 .PHONY : CMakeFiles/SiTCP_dict.dir/rule
 
 # Convenience name for target.

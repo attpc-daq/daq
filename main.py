@@ -7,8 +7,9 @@ import time
 import asyncio
 import os
 import json
-#from src.PySiTCP.SiTCP import Process as SiTCP
-from PySiTCP.SiTCP import Process as SiTCP
+from src.PySiTCP.SiTCP import Process as SiTCP
+#from PySiTCP.SiTCP import Process as SiTCP
+import numpy as np
 
 sys.path.append('/usr/local/lib')
 ROOT.gInterpreter.Declare('#include "SiTCP.h"')
@@ -35,8 +36,6 @@ ROOT.gSystem.Load("libRawEventProcessor.so")
 ROOT.gSystem.Load("libTMessageBuffer.so")
 ROOT.gSystem.Load("libTMessageSocket.so")
 ROOT.gSystem.Load("libHist.so")
-
-
 
 # import websockets
 # import os
@@ -71,24 +70,16 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
         初始化SiTCP
         '''
         if self.usepysitcp is False:
-            self.sitcp = ROOT.SiTCP()
-            # self.sitcp.connectToDevice("0.0.0.0",8002)
-            self.sitcp.setDir(self.outputDir)
-            self.sitcp.setSocketBufferSize(1024*1024)
-            self.sitcp.setFileMaxSize(self.sitcpBufferFileSize)
-            self.sitcp.setFilePrefix("packet")
+            self.sitcp = ROOT.SiTCP()       
         else:
             self.sitcp = SiTCP(self.outputDir,self.sitcpBufferFileSize)
             self.sitcp.start()
-            # self.sitcp.connectToDevice("0.0.0.0",8002)
-            # self.sitcp.setDir(self.outputDir)
-            # self.sitcp.wait()
-            self.sitcp.setSocketBufferSize(1024*1024)
-            self.sitcp.wait()
-            # self.sitcp.setFileMaxSize(10*1024*1024)
-            # self.sitcp.wait()
-            self.sitcp.setFilePrefix("packet")
-            self.sitcp.wait()
+
+        # self.sitcp.connectToDevice("0.0.0.0",8002)
+        self.sitcp.setDir(self.outputDir)
+        self.sitcp.setSocketBufferSize(1024*1024)
+        self.sitcp.setFileMaxSize(self.sitcpBufferFileSize)
+        self.sitcp.setFilePrefix("packet")
 
     async def on_cmd_startsitcp(self, websocket, cmd_list, client_key):
         '''
@@ -107,18 +98,10 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
         '''
         连接设备
         '''
-        if self.usepysitcp is False:
-            if len(cmd_list) == 1:
-                self.sitcp.connectToDevice("192.168.10.16",4660)
-            else:
-                self.sitcp.connectToDevice(cmd_list[1],int(cmd_list[2]))
+        if len(cmd_list) == 1:
+            self.sitcp.connectToDevice("192.168.10.16",4660)
         else:
-            if len(cmd_list) == 1:
-                self.sitcp.connectToDevice("192.168.10.16",4660)
-                print(self.sitcp.wait())
-            else:
-                self.sitcp.connectToDevice(cmd_list[1],int(cmd_list[2]))
-                print(self.sitcp.wait())
+            self.sitcp.connectToDevice(cmd_list[1],int(cmd_list[2]))
 
     async def on_cmd_initrawdataprocessor(self, websocket, cmd_list, client_key):
         '''
@@ -161,87 +144,39 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
         self.parameterGenerator.setOutputFileName("thresholdes.json","eventParameters.json")
 
     async def on_cmd_selftrigger(self, websocket, cmd_list, client_key):
-        if self.usepysitcp is False:
-            self.sitcp.sendToDevice(bytes.fromhex('0A1020384150607083'))
-            time.sleep(0.01)
-            self.sitcp.sendToDevice(bytes.fromhex('0610203A4150607083'))
-            time.sleep(0.01)
-            self.sitcp.sendToDevice(bytes.fromhex('041020314150607083'))
-            time.sleep(0.01)
-            self.sitcp.sendToDevice(bytes.fromhex('001020304150607083'))
-            time.sleep(0.01)
-            self.sitcp.sendToDevice(bytes.fromhex('041020384150607083'))
-            time.sleep(0.01)
-            self.sitcp.sendToDevice(bytes.fromhex('001028314050607083'))
-            time.sleep(0.01)
-            self.sitcp.sendToDevice(bytes.fromhex('081020384150607083'))
-            time.sleep(0.01)
-            self.sitcp.sendToDevice(bytes.fromhex('021020394F5F6F7F83'))
-            time.sleep(0.01)
-            self.sitcp.sendToDevice(bytes.fromhex('0410203A4150607083'))
-            time.sleep(0.01)
-
-        else:
-            bytes_array =[]
-            bytes_array.append(bytes.fromhex('0A1020384150607083'))
-            
-            bytes_array.append(bytes.fromhex('0610203A4150607083'))
-
-            bytes_array.append(bytes.fromhex('041020314150607083'))
-
-            bytes_array.append(bytes.fromhex('001020304150607083'))
-
-            bytes_array.append(bytes.fromhex('041020384150607083'))
-
-            bytes_array.append(bytes.fromhex('001028314050607083'))
-
-            bytes_array.append(bytes.fromhex('081020384150607083'))
-
-            bytes_array.append(bytes.fromhex('021020394F5F6F7F83'))
-
-            bytes_array.append(bytes.fromhex('0410203A4150607083'))
-            self.sitcp.sendToDevice(bytes_array)
-            while True:
-                rsp = self.sitcp.wait()
-                await self.notifymonitor(rsp)
-                if rsp == "done":
-                    break
+        self.sitcp.sendToDevice(bytes.fromhex('0A1020384150607083'))
+        time.sleep(1)
+        self.sitcp.sendToDevice(bytes.fromhex('0610203A4150607083'))
+        time.sleep(1)
+        self.sitcp.sendToDevice(bytes.fromhex('041020314150607083'))
+        time.sleep(1)
+        self.sitcp.sendToDevice(bytes.fromhex('001020304150607083'))
+        time.sleep(1)
+        self.sitcp.sendToDevice(bytes.fromhex('041020384150607083'))
+        time.sleep(1)
+        self.sitcp.sendToDevice(bytes.fromhex('001028314050607083'))
+        time.sleep(1)
+        self.sitcp.sendToDevice(bytes.fromhex('081020384150607083'))
+        time.sleep(1)
+        self.sitcp.sendToDevice(bytes.fromhex('021020394F5F6F7F83'))
+        time.sleep(1)
+        self.sitcp.sendToDevice(bytes.fromhex('0410203A4150607083'))
+        time.sleep(1)
 
     async def on_cmd_startparametergenerator(self, websocket, cmd_list, client_key):
-        if self.usepysitcp is False:
-            await self.notifymonitor("starting parametergeneration...")
-            self.parameterGenerator.run(3)
-            while self.parameterGenerator.isFinish() is False:
-                await self.notifymonitor("parameter generation running")
-                time.sleep(3)
-            await self.notifymonitor("parameter generation finish")
-        else:
-            await self.notifymonitor("starting parametergeneration...")
-            self.parameterGenerator.run(3)
-            while self.parameterGenerator.isFinish() is False:
-                await self.notifymonitor("parameter generation running")
-                time.sleep(3)
-            await self.notifymonitor("parameter generation finish")
+        await self.notifymonitor("starting parametergeneration...")
+        self.parameterGenerator.run(100)
+        while self.parameterGenerator.isFinish() is False:
+            await self.notifymonitor("parameter generation running")
+            time.sleep(3)
+        await self.notifymonitor("parameter generation finish")
 
     async def on_cmd_stopparametergenerator(self, websocket, cmd_list, client_key):
-        if self.usepysitcp is False:
-            self.sitcp.sendToDevice(bytes.fromhex('0410203A4050607083'))
-            time.sleep(0.01)
-            self.sitcp.sendToDevice(bytes.fromhex('081020384150607083'))
-            time.sleep(0.01)
-            self.parameterGenerator.stop()
-        else:
-            bytes_array =[]
-            bytes_array.append(bytes.fromhex('0410203A4050607083'))
-            bytes_array.append(bytes.fromhex('081020384150607083'))
-            self.sitcp.sendToDevice(bytes_array)
-            while True:
-                rsp = self.sitcp.wait()
-                await self.notifymonitor(rsp)
-                if rsp == "done":
-                    break
-
-            self.parameterGenerator.stop()
+        self.sitcp.sendToDevice(bytes.fromhex('0410203A4050607083'))
+        time.sleep(1)
+        self.sitcp.sendToDevice(bytes.fromhex('081020384150607083'))
+        time.sleep(1)
+        self.parameterGenerator.stop()
 
     async def on_cmd_initraweventprocessor(self, websocket, cmd_list, client_key):
         self.rawEventProcessor = ROOT.RawEventProcessor()
@@ -293,41 +228,15 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
             os.mkdir(self.outputDir)
         pass
 
-    async def on_cmd_generateparameter(self, websocket, cmd_list, client_key):
-
-        pass
-
     async def on_cmd_stopdata(self, websocket, cmd_list, client_key):
-        if self.usepysitcp is False:
-            self.sitcp.sendToDevice(bytes.fromhex('0410203A4050607083'))
-            time.sleep(0.01)
-            self.sitcp.sendToDevice(bytes.fromhex('081020384150607083'))
-            time.sleep(0.01)
-        else:
-            bytes_array =[]
-            bytes_array.append(bytes.fromhex('0410203A4050607083'))
-            bytes_array.append(bytes.fromhex('081020384150607083'))
-            self.sitcp.sendToDevice(bytes_array)
-            while True:
-                rsp = self.sitcp.wait()
-                await self.notifymonitor(rsp)
-                if rsp == "done":
-                    break
-
+        self.sitcp.sendToDevice(bytes.fromhex('0410203A4050607083'))
+        time.sleep(1)
+        self.sitcp.sendToDevice(bytes.fromhex('081020384150607083'))
+        time.sleep(1)
 
     async def on_cmd_startdata(self, websocket, cmd_list, client_key):
-        if self.usepysitcp is False:
-            self.sitcp.sendToDevice(bytes.fromhex('0410203A4150607083'))
-            time.sleep(0.01)
-        else:
-            bytes_array =[]
-            bytes_array.append(bytes.fromhex('0410203A4150607083'))
-            self.sitcp.sendToDevice(bytes_array)
-            while True:
-                rsp = self.sitcp.wait()
-                await self.notifymonitor(rsp)
-                if rsp == "done":
-                    break
+        self.sitcp.sendToDevice(bytes.fromhex('0410203A4150607083'))
+        time.sleep(1)
 
     async def on_cmd_shutdown(self, websocket, cmd_list, client_key):
         asyncio.get_event_loop().stop()
@@ -343,46 +252,38 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
         GUISocket.Utils.LOGGER.info(" ".join(cmd_list))
 
     async def on_cmd_send2device(self, websocket, cmd_list, client_key):
-        if self.usepysitcp is False:
-            self.sitcp.sendToDevice(bytes.fromhex(str(cmd_list[1])))
-        else:
-            bytes_array =[]
-            bytes_array.append(bytes.fromhex(str(cmd_list[1])))
-            self.sitcp.sendToDevice(bytes_array)
-            while True:
-                rsp = self.sitcp.wait()
-                await self.notifymonitor(rsp)
-                if rsp == "done":
-                    break
+        self.sitcp.sendToDevice(bytes.fromhex(str(cmd_list[1])))
 
     async def on_cmd_cleardir(self, websocket, cmd_list, client_key):
         for filename in os.listdir(self.outputDir):
             if filename.endswith(".dat") or filename.endswith(".root"):
                  os.remove(os.path.join(self.outputDir, filename))
 
-    async def on_cmd_getqalist(self, websocket, cmd_list, client_key):
+        if os.path.exists("/dev/shm/sem.REP"):
+            os.remove("/dev/shm/sem.REP")
 
+    async def on_cmd_getqalist(self, websocket, cmd_list, client_key):
         await websocket.send(self.eventQA.getList())
 
-    async def on_cmd_setupthreshold(self, websocket, cmd_list, client_key):
+    async def on_cmd_setupthreshold(self, websocket, cmd_list, client_key): 
+        self.sitcp.sendToDevice(bytes.fromhex('0A1020384150607083'))
+        time.sleep(1)
+        self.sitcp.sendToDevice(bytes.fromhex('0610203A4150607083'))
+        time.sleep(1)
+        self.sitcp.sendToDevice(bytes.fromhex('041020314150607083'))
+        time.sleep(1)
+        self.sitcp.sendToDevice(bytes.fromhex('001020304150607083'))
+        time.sleep(1)
+        self.sitcp.sendToDevice(bytes.fromhex('041020384150607083'))
+        time.sleep(1)
+
+        with open(os.path.join(self.outputDir,"thresholdes.json"),'r') as file:
+            content = file.read()
+            msgJson = json.loads(content)
+
+        GUISocket.Utils.LOGGER.info("SiTCP threshold setting:")
+        
         if self.usepysitcp is False:
-            self.sitcp.sendToDevice(bytes.fromhex('0A1020384150607083'))
-            time.sleep(0.01)
-            self.sitcp.sendToDevice(bytes.fromhex('0610203A4150607083'))
-            time.sleep(0.01)
-            self.sitcp.sendToDevice(bytes.fromhex('041020314150607083'))
-            time.sleep(0.01)
-            self.sitcp.sendToDevice(bytes.fromhex('001020304150607083'))
-            time.sleep(0.01)
-            self.sitcp.sendToDevice(bytes.fromhex('041020384150607083'))
-            time.sleep(0.01)
-
-            #with open(cmd_list[1],'r') as file:
-            with open(os.path.join(self.outputDir,"thresholdes.json"),'r') as file:
-                content = file.read()
-                msgJson = json.loads(content)
-
-            GUISocket.Utils.LOGGER.info("SiTCP threshold setting:")
             for i in range(msgJson['count']):
                 for key in msgJson[str(i)]:
                     for k, v in key.items():
@@ -399,17 +300,6 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
         
         else:
             bytes_array =[]
-            bytes_array.append(bytes.fromhex('0A1020384150607083'))
-            bytes_array.append(bytes.fromhex('0610203A4150607083'))
-            bytes_array.append(bytes.fromhex('041020314150607083'))
-            bytes_array.append(bytes.fromhex('001020304150607083'))
-            bytes_array.append(bytes.fromhex('041020384150607083'))
-
-            with open(os.path.join(self.outputDir,"thresholdes.json"),'r') as file:
-                content = file.read()
-                msgJson = json.loads(content)
-
-            GUISocket.Utils.LOGGER.info("SiTCP threshold setting:")
             for i in range(msgJson['count']):
                 for key in msgJson[str(i)]:
                     for k, v in key.items():

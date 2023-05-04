@@ -416,13 +416,13 @@ ROOT/RConfig.hxx
 cstring
 -
 
-/storage/ATTPC/daq-dev-/src/SiTCP/Linkdef.h
+/storage/ATTPC/DAQ/src/SiTCP/Linkdef.h
 
-/storage/ATTPC/daq-dev-/src/SiTCP/SiTCP.h
+/storage/ATTPC/DAQ/src/SiTCP/SiTCP.h
 TGClient.h
-/storage/ATTPC/daq-dev-/src/SiTCP/TGClient.h
+/storage/ATTPC/DAQ/src/SiTCP/TGClient.h
 TObject.h
-/storage/ATTPC/daq-dev-/src/SiTCP/TObject.h
+/storage/ATTPC/DAQ/src/SiTCP/TObject.h
 iostream
 -
 sys/socket.h

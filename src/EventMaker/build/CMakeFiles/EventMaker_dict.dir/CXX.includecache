@@ -628,25 +628,25 @@ ROOT/RConfig.hxx
 cstring
 -
 
-/storage/ATTPC/daq-dev-/src/EventMaker/EventMaker.h
+/storage/ATTPC/DAQ/src/EventMaker/EventMaker.h
 TGClient.h
-/storage/ATTPC/daq-dev-/src/EventMaker/TGClient.h
+/storage/ATTPC/DAQ/src/EventMaker/TGClient.h
 TObject.h
-/storage/ATTPC/daq-dev-/src/EventMaker/TObject.h
+/storage/ATTPC/DAQ/src/EventMaker/TObject.h
 RawEvent.h
-/storage/ATTPC/daq-dev-/src/EventMaker/RawEvent.h
+/storage/ATTPC/DAQ/src/EventMaker/RawEvent.h
 Event.h
-/storage/ATTPC/daq-dev-/src/EventMaker/Event.h
+/storage/ATTPC/DAQ/src/EventMaker/Event.h
 TTree.h
-/storage/ATTPC/daq-dev-/src/EventMaker/TTree.h
+/storage/ATTPC/DAQ/src/EventMaker/TTree.h
 TFile.h
-/storage/ATTPC/daq-dev-/src/EventMaker/TFile.h
+/storage/ATTPC/DAQ/src/EventMaker/TFile.h
 TString.h
-/storage/ATTPC/daq-dev-/src/EventMaker/TString.h
+/storage/ATTPC/DAQ/src/EventMaker/TString.h
 Pad.h
-/storage/ATTPC/daq-dev-/src/EventMaker/Pad.h
+/storage/ATTPC/DAQ/src/EventMaker/Pad.h
 FullEvent.h
-/storage/ATTPC/daq-dev-/src/EventMaker/FullEvent.h
+/storage/ATTPC/DAQ/src/EventMaker/FullEvent.h
 
-/storage/ATTPC/daq-dev-/src/EventMaker/Linkdef.h
+/storage/ATTPC/DAQ/src/EventMaker/Linkdef.h
 

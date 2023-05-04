@@ -4,7 +4,7 @@
 # compile CXX with /usr/bin/c++
 CXX_DEFINES = -DEventMaker_EXPORTS
 
-CXX_INCLUDES = -I/storage/ATTPC/daq-dev-/src/EventMaker -isystem /opt/root/include
+CXX_INCLUDES = -I/storage/ATTPC/DAQ/src/EventMaker -isystem /opt/root/include
 
 CXX_FLAGS = -fPIC
 

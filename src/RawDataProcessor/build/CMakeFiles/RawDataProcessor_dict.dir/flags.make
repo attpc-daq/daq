@@ -4,7 +4,7 @@
 # compile CXX with /usr/bin/c++
 CXX_DEFINES = 
 
-CXX_INCLUDES = -I/storage/ATTPC/daq-dev-/src/RawDataProcessor -I/opt/root/include
+CXX_INCLUDES = -I/storage/ATTPC/DAQ/src/RawDataProcessor -I/opt/root/include
 
 CXX_FLAGS = -fPIC
 

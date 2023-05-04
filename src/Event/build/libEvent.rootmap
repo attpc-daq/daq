@@ -1,0 +1,6 @@
+[ libEvent.so ]
+# List of selected classes
+class Event
+class Pad
+header Event.h
+header Pad.h

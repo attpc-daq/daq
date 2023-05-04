@@ -10,7 +10,7 @@ EventMaker::EventMaker(){
     Vdrift = 1.0; //unit: mm/ns  电子漂移速度
     PadMap(XPos,ZPos);
     event = new Event();
- }
+}
 
 EventMaker::~EventMaker(){
     delete event;
@@ -118,7 +118,7 @@ Event* EventMaker::convert(const RawEvent &REvt){
     event->Vdrift = Vdrift;
     for (auto iter : REvt.channels)
     {   
-        if(iter.FEE_id>=32)continue;
+        if(iter.FEE_id>=32 || iter.channel_id>64)continue;
         Pad pad;
         if(iter.FEE_id%2==0){}
         else iter.channel_id += 64;

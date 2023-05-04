@@ -1,5 +1,5 @@
 CMakeFiles/RawDataProcessor_dict.dir/RawDataProcessor_dict.o: \
- /storage/ATTPC/daq-dev-/src/RawDataProcessor/build/RawDataProcessor_dict.cxx \
+ /storage/ATTPC/DAQ/src/RawDataProcessor/build/RawDataProcessor_dict.cxx \
  /usr/include/stdc-predef.h \
  /usr/lib/gcc/x86_64-linux-gnu/11/include/stddef.h /usr/include/stdio.h \
  /usr/include/x86_64-linux-gnu/bits/libc-header-start.h \
@@ -245,7 +245,7 @@ CMakeFiles/RawDataProcessor_dict.dir/RawDataProcessor_dict.o: \
  /usr/include/c++/11/forward_list /usr/include/c++/11/bits/forward_list.h \
  /usr/include/c++/11/bits/forward_list.tcc \
  /opt/root/include/TDataMember.h \
- /storage/ATTPC/daq-dev-/src/RawDataProcessor/RawDataProcessor.h \
+ /storage/ATTPC/DAQ/src/RawDataProcessor/RawDataProcessor.h \
  /opt/root/include/TGClient.h /opt/root/include/GuiTypes.h \
  /usr/include/c++/11/climits \
  /usr/lib/gcc/x86_64-linux-gnu/11/include/limits.h \

@@ -39,7 +39,7 @@ public:
   void setRawBranchName(const char* name);
   void setEventTreeName(const char* name);
   void setEventBranchName(const char* name);
-  // void setSocketPort(int port);
+  void clearDir();
 
 private:
   // int socketPort;
@@ -52,11 +52,11 @@ private:
   void closeRawEventFile();
 
   void createEventFile();
-  void openRawEventFile();
+  bool openRawEventFile();
   TFile *eventFile;
   TFile *rawEventFile;
 
-  int outputFileID;
+  uint64_t outputFileID;
 
   EventMaker maker;
 

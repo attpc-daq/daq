@@ -1,5 +1,5 @@
 CMakeFiles/EventMaker_dict.dir/EventMaker_dict.o: \
- /storage/ATTPC/daq-dev-/src/EventMaker/build/EventMaker_dict.cxx \
+ /storage/ATTPC/DAQ/src/EventMaker/build/EventMaker_dict.cxx \
  /usr/include/stdc-predef.h \
  /usr/lib/gcc/x86_64-linux-gnu/11/include/stddef.h /usr/include/stdio.h \
  /usr/include/x86_64-linux-gnu/bits/libc-header-start.h \
@@ -245,7 +245,7 @@ CMakeFiles/EventMaker_dict.dir/EventMaker_dict.o: \
  /usr/include/c++/11/forward_list /usr/include/c++/11/bits/forward_list.h \
  /usr/include/c++/11/bits/forward_list.tcc \
  /opt/root/include/TDataMember.h \
- /storage/ATTPC/daq-dev-/src/EventMaker/EventMaker.h \
+ /storage/ATTPC/DAQ/src/EventMaker/EventMaker.h \
  /opt/root/include/TGClient.h /opt/root/include/GuiTypes.h \
  /usr/include/c++/11/climits \
  /usr/lib/gcc/x86_64-linux-gnu/11/include/limits.h \

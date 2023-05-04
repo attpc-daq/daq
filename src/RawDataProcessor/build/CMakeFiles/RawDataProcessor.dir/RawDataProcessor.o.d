@@ -1,7 +1,7 @@
 CMakeFiles/RawDataProcessor.dir/RawDataProcessor.o: \
- /storage/ATTPC/daq-dev-/src/RawDataProcessor/RawDataProcessor.cpp \
+ /storage/ATTPC/DAQ/src/RawDataProcessor/RawDataProcessor.cpp \
  /usr/include/stdc-predef.h \
- /storage/ATTPC/daq-dev-/src/RawDataProcessor/RawDataProcessor.h \
+ /storage/ATTPC/DAQ/src/RawDataProcessor/RawDataProcessor.h \
  /opt/root/include/TGClient.h /opt/root/include/TObject.h \
  /opt/root/include/Rtypes.h /opt/root/include/RtypesCore.h \
  /opt/root/include/ROOT/RConfig.hxx /opt/root/include/RVersion.h \

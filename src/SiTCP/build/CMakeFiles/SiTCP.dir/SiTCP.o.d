@@ -1,5 +1,5 @@
-CMakeFiles/SiTCP.dir/SiTCP.o: /storage/ATTPC/daq-dev-/src/SiTCP/SiTCP.cpp \
- /usr/include/stdc-predef.h /storage/ATTPC/daq-dev-/src/SiTCP/SiTCP.h \
+CMakeFiles/SiTCP.dir/SiTCP.o: /storage/ATTPC/DAQ/src/SiTCP/SiTCP.cpp \
+ /usr/include/stdc-predef.h /storage/ATTPC/DAQ/src/SiTCP/SiTCP.h \
  /opt/root/include/TGClient.h /opt/root/include/TObject.h \
  /opt/root/include/Rtypes.h /opt/root/include/RtypesCore.h \
  /opt/root/include/ROOT/RConfig.hxx /opt/root/include/RVersion.h \
