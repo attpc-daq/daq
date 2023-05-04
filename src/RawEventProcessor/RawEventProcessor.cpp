@@ -93,8 +93,8 @@ string RawEventProcessor::getEventFileList(int n){
 
 bool RawEventProcessor::openRawEventFile(){
     string filename = dir+rawEventFilePrefix+to_string(outputFileID)+".root";
+    if (!std::filesystem::exists(filename))return false;
     rawEventFile = new TFile(filename.c_str(), "READ"); 
-    if (rawEventFile == nullptr) return false;
     rawTree = (TTree*) rawEventFile->Get(rawTreeName);
     rawTree->SetBranchAddress(rawBranchName,&rawEvent);
     createEventFile();
@@ -112,6 +112,7 @@ void RawEventProcessor::createEventFile(){
 void RawEventProcessor::closeRawEventFile(){
     rawEventFile->Close();
     closeEventFile();
+    outputFileID++;
     //delete rawEventFile;
 }
 
