@@ -52,9 +52,9 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
         初始化SiTCP
         '''
         self.sitcp = ROOT.SiTCP()       
-        # self.sitcp.connectDevice("0.0.0.0",8002)
+        # self.sitcp.connectDevice("0.0.0.0",8001)
         self.sitcp.setDir(self.outputDir)
-        self.sitcp.setDataProcessHost(8802)
+        self.sitcp.setDataProcessHost(8002)
         self.sitcp.setFileMaxSize(16*1024*1024)
     
     async def on_cmd_initdataprocessor(self, websocket, cmd_list, client_key):
@@ -63,8 +63,8 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
         '''
         self.dataProcessor = ROOT.DataProcessor()
         self.dataProcessor.setDir(self.outputDir)
-        self.dataProcessor.setDataPort(8802)
-        self.dataProcessor.setQAPort(8803)
+        self.dataProcessor.setDataPort(8002)
+        self.dataProcessor.setQAPort(8003)
         self.dataProcessor.setEventSave(False)
         self.dataProcessor.setRawEventSave(True)
         self.dataProcessor.setQA(True)
@@ -125,8 +125,8 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
 
     async def on_cmd_initeventqa(self, websocket, cmd_list, client_key):
 
-        self.eventQA = ROOT.EventQA(8808)
-        self.eventQA.setMessageHost(8803,"0.0.0.0")
+        self.eventQA = ROOT.EventQA(8008)
+        self.eventQA.setMessageHost(8003,"0.0.0.0")
         file = open(os.path.join(self.outputDir,'./eventParameters.json'), 'r')
         settingJson = file.read()
         self.eventQA.updateSettings(settingJson)
@@ -231,7 +231,7 @@ def main():
     '''
     handler = DAQHandler()
     parser = argparse.ArgumentParser()
-    parser.add_argument('--gui_port', default=8809, help='The socket port from GUI connect to DAQ server')
+    parser.add_argument('--gui_port', default=8000, help='The socket port from GUI connect to DAQ server')
     args = parser.parse_args()
     GUISocket.start(handler,args.gui_port)
 
