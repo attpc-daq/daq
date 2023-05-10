@@ -1,23 +1,22 @@
 #ifndef __RawEvent_h__
 #define __RawEvent_h__
-#include "TGClient.h"
-#include "TObject.h"
+#include <TGClient.h>
+#include <TObject.h>
 #include "Channel.h"
-#include <vector>
-
+#include <TList.h>
 using namespace std;
 class RawEvent :public TObject{
 public:
   RawEvent();
+  RawEvent& operator=(const RawEvent& other);
   virtual ~RawEvent();
-  //UPDATE： timestamp[47-0 bit] 需要用无整形uint64_t表示
   uint64_t event_id;
   uint64_t timestamp;
-  int hit_count;
-  bool Fill(const Channel& ch);
-  bool fill(long event_id, long timestamp, long FEE_id, long channel_id, float* waveform);
+  uint hit_count;
+  void AddChannel(Channel* ch);
+  void AddChannel(const Channel& ch);
   void reset();
-  vector<Channel> channels;
+  TList * channels;
 private:
   ClassDef(RawEvent,1)
 };

@@ -342,7 +342,8 @@ CMakeFiles/RawEvent_dict.dir/RawEvent_dict.o: RawEvent_dict.cxx \
   /opt/root/include/TQClass.h \
   /opt/root/include/TObject.h \
   ../RawEvent.h \
-  ../Channel.h
+  ../Channel.h \
+  /opt/root/include/TList.h
 
 
 ../RawEvent.h:

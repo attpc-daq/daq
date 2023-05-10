@@ -6,7 +6,7 @@ find_package(ROOT REQUIRED COMPONENTS RIO Net)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_library(SiTCP SHARED SiTCP.cpp)
-target_link_libraries(SiTCP PUBLIC ROOT::RIO ROOT::Net)
+target_link_libraries(SiTCP PUBLIC ROOT::RIO ROOT::Net RawEvent PacketDecoder)
 
 ROOT_GENERATE_DICTIONARY(SiTCP_dict SiTCP.h LINKDEF Linkdef.h MODULE SiTCP)
 

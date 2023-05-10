@@ -1,0 +1,4 @@
+/usr/local/lib/libDataProcessor.so
+/usr/local/include/DataProcessor.h
+/usr/local/lib/libDataProcessor.rootmap
+/usr/local/lib/libDataProcessor_rdict.pcm

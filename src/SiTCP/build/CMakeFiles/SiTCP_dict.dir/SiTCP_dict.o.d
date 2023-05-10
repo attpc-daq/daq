@@ -1,5 +1,5 @@
 CMakeFiles/SiTCP_dict.dir/SiTCP_dict.o: \
- /storage/ATTPC/DAQ/src/SiTCP/build/SiTCP_dict.cxx \
+ /storage/ATTPC/DAQ_dev/src/SiTCP/build/SiTCP_dict.cxx \
  /usr/include/stdc-predef.h \
  /usr/lib/gcc/x86_64-linux-gnu/11/include/stddef.h /usr/include/stdio.h \
  /usr/include/x86_64-linux-gnu/bits/libc-header-start.h \
@@ -244,7 +244,7 @@ CMakeFiles/SiTCP_dict.dir/SiTCP_dict.o: \
  /opt/root/include/TCollectionProxyInfo.h \
  /usr/include/c++/11/forward_list /usr/include/c++/11/bits/forward_list.h \
  /usr/include/c++/11/bits/forward_list.tcc \
- /opt/root/include/TDataMember.h /storage/ATTPC/DAQ/src/SiTCP/SiTCP.h \
+ /opt/root/include/TDataMember.h /storage/ATTPC/DAQ_dev/src/SiTCP/SiTCP.h \
  /opt/root/include/TGClient.h /opt/root/include/GuiTypes.h \
  /usr/include/c++/11/climits \
  /usr/lib/gcc/x86_64-linux-gnu/11/include/limits.h \

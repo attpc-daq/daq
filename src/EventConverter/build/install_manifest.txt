@@ -1,0 +1,4 @@
+/usr/local/lib/libEventConverter.so
+/usr/local/include/EventConverter.h
+/usr/local/lib/libEventConverter.rootmap
+/usr/local/lib/libEventConverter_rdict.pcm

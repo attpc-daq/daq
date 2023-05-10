@@ -416,13 +416,13 @@ ROOT/RConfig.hxx
 cstring
 -
 
-/storage/ATTPC/daq-dev-/src/ParameterGenerator/Linkdef.h
+/storage/ATTPC/DAQ_dev/src/ParameterGenerator/Linkdef.h
 
-/storage/ATTPC/daq-dev-/src/ParameterGenerator/ParameterGenerator.h
+/storage/ATTPC/DAQ_dev/src/ParameterGenerator/ParameterGenerator.h
 TGClient.h
-/storage/ATTPC/daq-dev-/src/ParameterGenerator/TGClient.h
+/storage/ATTPC/DAQ_dev/src/ParameterGenerator/TGClient.h
 TObject.h
-/storage/ATTPC/daq-dev-/src/ParameterGenerator/TObject.h
+/storage/ATTPC/DAQ_dev/src/ParameterGenerator/TObject.h
 iostream
 -
 fstream
@@ -434,9 +434,9 @@ thread
 atomic
 -
 PacketDecoder.h
-/storage/ATTPC/daq-dev-/src/ParameterGenerator/PacketDecoder.h
+/storage/ATTPC/DAQ_dev/src/ParameterGenerator/PacketDecoder.h
 RawEvent.h
-/storage/ATTPC/daq-dev-/src/ParameterGenerator/RawEvent.h
+/storage/ATTPC/DAQ_dev/src/ParameterGenerator/RawEvent.h
 mutex
 -
 fstream

@@ -1,0 +1,12 @@
+register 
+setdir  test
+
+initeventqa
+
+starteventqa
+
+#pause
+
+stopeventqa
+#pause
+shutdown

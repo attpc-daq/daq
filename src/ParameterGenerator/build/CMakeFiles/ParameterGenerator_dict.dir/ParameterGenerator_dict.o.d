@@ -1,5 +1,5 @@
 CMakeFiles/ParameterGenerator_dict.dir/ParameterGenerator_dict.o: \
- /storage/ATTPC/daq-dev-/src/ParameterGenerator/build/ParameterGenerator_dict.cxx \
+ /storage/ATTPC/DAQ_dev/src/ParameterGenerator/build/ParameterGenerator_dict.cxx \
  /usr/include/stdc-predef.h \
  /usr/lib/gcc/x86_64-linux-gnu/11/include/stddef.h /usr/include/stdio.h \
  /usr/include/x86_64-linux-gnu/bits/libc-header-start.h \
@@ -245,7 +245,7 @@ CMakeFiles/ParameterGenerator_dict.dir/ParameterGenerator_dict.o: \
  /usr/include/c++/11/forward_list /usr/include/c++/11/bits/forward_list.h \
  /usr/include/c++/11/bits/forward_list.tcc \
  /opt/root/include/TDataMember.h \
- /storage/ATTPC/daq-dev-/src/ParameterGenerator/ParameterGenerator.h \
+ /storage/ATTPC/DAQ_dev/src/ParameterGenerator/ParameterGenerator.h \
  /opt/root/include/TGClient.h /opt/root/include/GuiTypes.h \
  /usr/include/c++/11/climits \
  /usr/lib/gcc/x86_64-linux-gnu/11/include/limits.h \

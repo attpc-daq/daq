@@ -1,4 +1,0 @@
-/usr/local/lib/libEventMaker.so
-/usr/local/include/EventMaker.h
-/usr/local/lib/libEventMaker.rootmap
-/usr/local/lib/libEventMaker_rdict.pcm

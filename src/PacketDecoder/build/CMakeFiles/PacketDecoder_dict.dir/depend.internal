@@ -71,5 +71,5 @@ PacketDecoder_dict.cxx
  /opt/root/include/snprintf.h
  /opt/root/include/strlcpy.h
  /opt/root/include/strtok.h
- /storage/ATTPC/DAQ/src/PacketDecoder/Linkdef.h
- /storage/ATTPC/DAQ/src/PacketDecoder/PacketDecoder.h
+ /storage/ATTPC/DAQ_dev/src/PacketDecoder/Linkdef.h
+ /storage/ATTPC/DAQ_dev/src/PacketDecoder/PacketDecoder.h

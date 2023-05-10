@@ -1,4 +1,0 @@
-/usr/local/lib/libRawEventProcessor.so
-/usr/local/include/RawEventProcessor.h
-/usr/local/lib/libRawEventProcessor.rootmap
-/usr/local/lib/libRawEventProcessor_rdict.pcm

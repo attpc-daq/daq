@@ -243,71 +243,6 @@ namespace ROOT {
    }
 } // end of namespace ROOT for class ::RawEvent
 
-namespace ROOT {
-   static TClass *vectorlEChannelgR_Dictionary();
-   static void vectorlEChannelgR_TClassManip(TClass*);
-   static void *new_vectorlEChannelgR(void *p = nullptr);
-   static void *newArray_vectorlEChannelgR(Long_t size, void *p);
-   static void delete_vectorlEChannelgR(void *p);
-   static void deleteArray_vectorlEChannelgR(void *p);
-   static void destruct_vectorlEChannelgR(void *p);
-
-   // Function generating the singleton type initializer
-   static TGenericClassInfo *GenerateInitInstanceLocal(const vector<Channel>*)
-   {
-      vector<Channel> *ptr = nullptr;
-      static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(vector<Channel>));
-      static ::ROOT::TGenericClassInfo 
-         instance("vector<Channel>", -2, "vector", 389,
-                  typeid(vector<Channel>), ::ROOT::Internal::DefineBehavior(ptr, ptr),
-                  &vectorlEChannelgR_Dictionary, isa_proxy, 0,
-                  sizeof(vector<Channel>) );
-      instance.SetNew(&new_vectorlEChannelgR);
-      instance.SetNewArray(&newArray_vectorlEChannelgR);
-      instance.SetDelete(&delete_vectorlEChannelgR);
-      instance.SetDeleteArray(&deleteArray_vectorlEChannelgR);
-      instance.SetDestructor(&destruct_vectorlEChannelgR);
-      instance.AdoptCollectionProxyInfo(TCollectionProxyInfo::Generate(TCollectionProxyInfo::Pushback< vector<Channel> >()));
-
-      ::ROOT::AddClassAlternate("vector<Channel>","std::vector<Channel, std::allocator<Channel> >");
-      return &instance;
-   }
-   // Static variable to force the class initialization
-   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal((const vector<Channel>*)nullptr); R__UseDummy(_R__UNIQUE_DICT_(Init));
-
-   // Dictionary for non-ClassDef classes
-   static TClass *vectorlEChannelgR_Dictionary() {
-      TClass* theClass =::ROOT::GenerateInitInstanceLocal((const vector<Channel>*)nullptr)->GetClass();
-      vectorlEChannelgR_TClassManip(theClass);
-   return theClass;
-   }
-
-   static void vectorlEChannelgR_TClassManip(TClass* ){
-   }
-
-} // end of namespace ROOT
-
-namespace ROOT {
-   // Wrappers around operator new
-   static void *new_vectorlEChannelgR(void *p) {
-      return  p ? ::new((::ROOT::Internal::TOperatorNewHelper*)p) vector<Channel> : new vector<Channel>;
-   }
-   static void *newArray_vectorlEChannelgR(Long_t nElements, void *p) {
-      return p ? ::new((::ROOT::Internal::TOperatorNewHelper*)p) vector<Channel>[nElements] : new vector<Channel>[nElements];
-   }
-   // Wrapper around operator delete
-   static void delete_vectorlEChannelgR(void *p) {
-      delete ((vector<Channel>*)p);
-   }
-   static void deleteArray_vectorlEChannelgR(void *p) {
-      delete [] ((vector<Channel>*)p);
-   }
-   static void destruct_vectorlEChannelgR(void *p) {
-      typedef vector<Channel> current_t;
-      ((current_t*)p)->~current_t();
-   }
-} // end of namespace ROOT for class vector<Channel>
-
 namespace {
   void TriggerDictionaryInitialization_libRawEvent_Impl() {
     static const char* headers[] = {
@@ -316,11 +251,11 @@ namespace {
 nullptr
     };
     static const char* includePaths[] = {
-"/storage/ATTPC/daq-dev-fastQueue/src/RawEvent",
-"/storage/ATTPC/daq-dev-fastQueue/src/RawEvent",
+"/storage/ATTPC/DAQ_dev/src/RawEvent",
+"/storage/ATTPC/DAQ_dev/src/RawEvent",
 "/opt/root/include",
 "/opt/root/include/",
-"/storage/ATTPC/daq-dev-fastQueue/src/RawEvent/build/",
+"/storage/ATTPC/DAQ_dev/src/RawEvent/build/",
 nullptr
     };
     static const char* fwdDeclCode = R"DICTFWDDCLS(

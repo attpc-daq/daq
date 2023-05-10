@@ -14,20 +14,20 @@
 #include "TServerSocket.h"
 #include "TMonitor.h"
 
-
 using namespace std;
 
 class TMessageSocket:public TObject {
 public:
-    TMessageSocket(int port, int bufferSize = 10);
-    TMessageSocket(int port, const char* host, int bufferSize = 10);
+    TMessageSocket(int port, int bufferSize = 100);
+    TMessageSocket(int port, const char* host, int bufferSize = 100);
     virtual ~TMessageSocket();
     bool put(TObject* obj);
     TObject* get(TClass* cl);
    
 private:
+    int port;
+    string host;
 
-    
     TSocket *receiver=NULL;
 
     TMessageBuffer *buffer=NULL;
@@ -37,11 +37,6 @@ private:
     void asSender(int port);
     thread *mSocketThreadSender=NULL;
     void senderLoop(int port);
-
-
-    void asReceiver(int port, const char* host);
-    thread *mSocketThreadReceiver=NULL;
-    void receiverLoop(int port, const char* host);
 
     int status_not_started = 0;
     int status_starting = 1;

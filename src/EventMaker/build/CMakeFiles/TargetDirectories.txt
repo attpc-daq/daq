@@ -1,8 +1,0 @@
-/storage/ATTPC/DAQ/src/EventMaker/build/CMakeFiles/EventMaker.dir
-/storage/ATTPC/DAQ/src/EventMaker/build/CMakeFiles/EventMaker_dict.dir
-/storage/ATTPC/DAQ/src/EventMaker/build/CMakeFiles/edit_cache.dir
-/storage/ATTPC/DAQ/src/EventMaker/build/CMakeFiles/rebuild_cache.dir
-/storage/ATTPC/DAQ/src/EventMaker/build/CMakeFiles/list_install_components.dir
-/storage/ATTPC/DAQ/src/EventMaker/build/CMakeFiles/install.dir
-/storage/ATTPC/DAQ/src/EventMaker/build/CMakeFiles/install/local.dir
-/storage/ATTPC/DAQ/src/EventMaker/build/CMakeFiles/install/strip.dir

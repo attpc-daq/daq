@@ -1,0 +1,8 @@
+/storage/ATTPC/DAQ_dev/src/DataProcessor/build/CMakeFiles/DataProcessor.dir
+/storage/ATTPC/DAQ_dev/src/DataProcessor/build/CMakeFiles/DataProcessor_dict.dir
+/storage/ATTPC/DAQ_dev/src/DataProcessor/build/CMakeFiles/edit_cache.dir
+/storage/ATTPC/DAQ_dev/src/DataProcessor/build/CMakeFiles/rebuild_cache.dir
+/storage/ATTPC/DAQ_dev/src/DataProcessor/build/CMakeFiles/list_install_components.dir
+/storage/ATTPC/DAQ_dev/src/DataProcessor/build/CMakeFiles/install.dir
+/storage/ATTPC/DAQ_dev/src/DataProcessor/build/CMakeFiles/install/local.dir
+/storage/ATTPC/DAQ_dev/src/DataProcessor/build/CMakeFiles/install/strip.dir

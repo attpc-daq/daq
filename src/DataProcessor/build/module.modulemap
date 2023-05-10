@@ -1,0 +1,7 @@
+module "DataProcessor" {
+  requires cplusplus
+  module "DataProcessor.h" { header "DataProcessor.h" export * }
+  link "libDataProcessor.so"
+  export *
+}
+

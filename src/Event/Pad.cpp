@@ -10,3 +10,10 @@ Pad::Pad(){
     DriftTime = 0;
 }
 Pad::~Pad(){}
+
+Pad::Pad(const Pad& pad){
+    *this = pad;
+}
+Pad::Pad(Pad* pad){
+    *this = *pad;
+}

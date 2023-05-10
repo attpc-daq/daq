@@ -6,7 +6,7 @@ ClassImp(TMessageBuffer);
 TMessageBuffer::TMessageBuffer(int size){
     buffer = new TMessage*[size];
     for(int i = 0; i < size; i++){
-        buffer[i] = new TMessage(kMESS_ANY,1024*1024*20);
+        buffer[i] = new TMessage(kMESS_ANY);
     }
     bufferLength = size;
     dataLength = 0;
@@ -18,19 +18,20 @@ TMessageBuffer::~TMessageBuffer(){
     for(int i = 0; i < bufferLength; i++){
         delete buffer[i];
     }
+    delete buffer;
 }
 bool TMessageBuffer::put(TObject* obj){
     if(dataLength>=bufferLength){
         return false;
     }
-    dataLengthLock.lock();
-    tailLock.lock();
+    // dataLengthLock.lock();
+    // tailLock.lock();
     buffer[tail]->WriteObject(obj);
     buffer[tail]->SetWhat(kMESS_OBJECT);
     tail = (tail + 1) % bufferLength;
     dataLength++;
-    dataLengthLock.unlock();
-    tailLock.unlock();
+    // dataLengthLock.unlock();
+    // tailLock.unlock();
     return true;
 }
 int TMessageBuffer::size(){
@@ -44,12 +45,12 @@ TMessage* TMessageBuffer::get(){
     return buffer[head];
 }
 void TMessageBuffer::getDone(){
-    dataLengthLock.lock();
-    headLock.lock();
+    // dataLengthLock.lock();
+    // headLock.lock();
     buffer[head]->Reset();
     buffer[head]->SetWhat(kMESS_ANY);
     head = (head + 1) % bufferLength;
     dataLength--;
-    dataLengthLock.unlock();
-    headLock.unlock();
+    // dataLengthLock.unlock();
+    // headLock.unlock();
 }

@@ -6,9 +6,7 @@
 ClassImp(EventQA);
 
 EventQA::EventQA(int port){
-    TServ = new THttpServer(Form("http:%d",port));
-    TServ->SetReadOnly(kFALSE);
-
+    THttpServerPort = port;
     Pad_ADC = new TH1D("Pad_ADC","Pad_ADC",4096,0,4095);//ADC码值
     Mesh_Energy_Spectrum = new TH1D("Mesh_Energy_Spectrum","Mesh_Energy_Spectrum",1000,0,10);//unit: MeV
     Mesh_ADC_Spectrum = new TH1D("Mesh_ADC_Spectrum","Mesh_ADC_Spectrum",4096,0,4095);
@@ -40,7 +38,7 @@ EventQA::EventQA(int port){
     setpad_numQA(16,32);
 }
 EventQA::~EventQA(){
-    delete TServ;
+    
 }
 void EventQA::setDir(const char* _dir){
     dir = _dir;
@@ -114,27 +112,31 @@ void EventQA::stop(){
     status = status_stopped;
 }
 void EventQA::run(){
-    status = status_starting;
+    status = status_running;
     mQAThread = new thread(&EventQA::mQALoop, this);
     mTServThread = new thread(&EventQA::mTServLoop, this);
-    status = status_running;
 }
 void EventQA::mTServLoop(){
     cout<<"THttp Server start"<<endl;
+    TServ = new THttpServer(Form("http:%d",THttpServerPort));
+    TServ->SetReadOnly(kFALSE);
      while(status == status_running){
         TServ->ProcessRequests();
         usleep(100000);
     }
+    delete TServ;
     cout<<"THttp Server stop"<<endl;
 }
 void EventQA::mQALoop(){
     cout<<"Event QA loop start"<<endl;
-    status = status_running;
     TMessageSocket *socket = new TMessageSocket(socketPort, socketHost.c_str());
     while(status == status_running){
         RawEvent* revt =(RawEvent*) socket->get(RawEvent::Class());
-        if(revt == NULL)continue;
-        Event *evt = maker.convert(*revt);
+        if(revt == NULL){
+            sleep(0.1);
+            continue;
+        }
+        Event *evt = converter.convert(*revt);
         //---------------------------------
         // Do QA with the event here
         //---------------------------------
@@ -146,7 +148,7 @@ void EventQA::mQALoop(){
     cout<<"Event QA Loop stop"<<endl;
 }
 void EventQA::updateSettings(const char* msg){
-  maker.updateSettings(msg);
+  converter.updateSettings(msg);
 }
 
 void EventQA::fill(const RawEvent &revt, const Event &evt){
@@ -157,35 +159,37 @@ void EventQA::fill(const RawEvent &revt, const Event &evt){
     float mesh_charge = 0;
     track_2D->Reset();
     track_3D->Reset();
-    int i=0;
-    for(auto iter : evt.pads){
-        int padrow = iter.padRow;
-        int padcol = iter.padColumn;
-        int adc = iter.adc;
-        int height =int(iter.DriftTime*(evt.Vdrift));
-        // cout<<iter.DriftTime<<"  "<<evt.event.Vdrift<<endl;
-        int charge = iter.ChargeDeposited;
-        mesh_energy += iter.Energy;
-        mesh_charge += charge;
-        // cout<<"iter.Energy: "<<iter.Energy<<endl;
+    for(auto channelIter: *(revt.channels)){
+        Channel* ch = (Channel*)channelIter;
+        for(auto padIter : *(evt.pads)){
+            Pad* pad = (Pad*)padIter;
+            int padrow = pad->padRow;
+            int padcol = pad->padColumn;
+            int adc = pad->adc;
+            int height =int(pad->DriftTime*(evt.Vdrift));
+            // cout<<pad->DriftTime<<"  "<<evt.event.Vdrift<<endl;
+            int charge = pad->ChargeDeposited;
+            mesh_energy += pad->Energy;
+            mesh_charge += charge;
+            // cout<<"pad->Energy: "<<pad->Energy<<endl;
 
-        if(iter.padNumber==pad_numQA)
-            Pad_ADC->Fill(adc);
-        // track_2D->SetBinContent(padcol+1,padrow+1,adc);
-        // track_3D->SetBinContent(padcol+1,padrow+1,180-height,adc);
-        track_2D->SetBinContent(padcol+1,padrow+1,charge);
-        //track_3D->SetBinContent(padcol+1,padrow+1,180-height,charge); 
-        track_3D->SetBinContent(padcol+1,padrow+1,90,charge); 
-        
-        TGraph* gr = new TGraph();
-        gr->SetName(Form( "event-%lli: raw-%i col-%i",evt.event_id,padrow,padcol));
-        gr->SetTitle(Form("event-%lli: raw-%i col-%i",evt.event_id,padrow,padcol));
-        for(int j=0;j<1024;j++){
-            unsigned int waveform = revt.channels[i].waveform[j];
-            gr->SetPoint(j,j,waveform);
+            if(pad->padNumber==pad_numQA)
+                Pad_ADC->Fill(adc);
+            // track_2D->SetBinContent(padcol+1,padrow+1,adc);
+            // track_3D->SetBinContent(padcol+1,padrow+1,180-height,adc);
+            track_2D->SetBinContent(padcol+1,padrow+1,charge);
+            //track_3D->SetBinContent(padcol+1,padrow+1,180-height,charge); 
+            track_3D->SetBinContent(padcol+1,padrow+1,90,charge); 
+            
+            TGraph* gr = new TGraph();
+            gr->SetName(Form( "event-%lli: raw-%i col-%i",evt.event_id,padrow,padcol));
+            gr->SetTitle(Form("event-%lli: raw-%i col-%i",evt.event_id,padrow,padcol));
+            for(int j=0;j<1024;j++){
+                unsigned int waveform = ch->waveform[j];
+                gr->SetPoint(j,j,waveform);
+            }
+            mg->Add(gr);
         }
-        mg->Add(gr);
-        i++;
     }
     // cout<<"=================>>>mesh_energy: "<<mesh_energy<<endl;
     Mesh_ADC_Spectrum->Fill(mesh_charge*1E+15/6.24150975E+18*0.75/10*4096/4000);//mesh_charge*1E+15/6.24150975E+18 unit:fc  假设ADC量程为4V=4000mV，精度为12bit  主放增益为10，前放增益为0.75mv/fc

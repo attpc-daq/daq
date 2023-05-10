@@ -55,7 +55,7 @@ namespace ROOT {
       ::EventQA *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::EventQA >(nullptr);
       static ::ROOT::TGenericClassInfo 
-         instance("EventQA", ::EventQA::Class_Version(), "EventQA.h", 19,
+         instance("EventQA", ::EventQA::Class_Version(), "EventQA.h", 22,
                   typeid(::EventQA), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &::EventQA::Dictionary, isa_proxy, 4,
                   sizeof(::EventQA) );
@@ -149,11 +149,11 @@ namespace {
 nullptr
     };
     static const char* includePaths[] = {
-"/storage/ATTPC/DAQ/src/EventQA",
-"/storage/ATTPC/DAQ/src/EventQA",
+"/storage/ATTPC/DAQ_dev/src/EventQA",
+"/storage/ATTPC/DAQ_dev/src/EventQA",
 "/opt/root/include",
 "/opt/root/include/",
-"/storage/ATTPC/DAQ/src/EventQA/build/",
+"/storage/ATTPC/DAQ_dev/src/EventQA/build/",
 nullptr
     };
     static const char* fwdDeclCode = R"DICTFWDDCLS(
@@ -167,6 +167,18 @@ class __attribute__((annotate("$clingAutoload$EventQA.h")))  EventQA;
     static const char* payloadCode = R"DICTPAYLOAD(
 #line 1 "libEventQA dictionary payload"
 
+#ifndef USE_WEBSOCKET
+  #define USE_WEBSOCKET 1
+#endif
+#ifndef NO_SSL_DL
+  #define NO_SSL_DL 1
+#endif
+#ifndef HTTP_WITHOUT_FASTCGI
+  #define HTTP_WITHOUT_FASTCGI 1
+#endif
+#ifndef VECCORE_ENABLE_VC
+  #define VECCORE_ENABLE_VC 1
+#endif
 
 #define _BACKWARD_BACKWARD_WARNING_H
 // Inline headers

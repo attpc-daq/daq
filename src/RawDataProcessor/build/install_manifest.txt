@@ -1,4 +1,0 @@
-/usr/local/lib/libRawDataProcessor.so
-/usr/local/include/RawDataProcessor.h
-/usr/local/lib/libRawDataProcessor.rootmap
-/usr/local/lib/libRawDataProcessor_rdict.pcm

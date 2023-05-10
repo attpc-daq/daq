@@ -4,7 +4,7 @@
 # compile CXX with /usr/bin/c++
 CXX_DEFINES = -DRawEvent_EXPORTS
 
-CXX_INCLUDES = -I/storage/ATTPC/daq-dev-fastQueue/src/RawEvent -isystem /opt/root/include
+CXX_INCLUDES = -I/storage/ATTPC/DAQ_dev/src/RawEvent -isystem /opt/root/include
 
 CXX_FLAGS = -fPIC
 

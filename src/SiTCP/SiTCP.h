@@ -15,6 +15,10 @@
 #include <filesystem>
 #include <sstream>
 #include <string>
+#include "RawEvent.h"
+#include <TMessage.h>
+#include <TSocket.h>
+#include <deque>
 
 using namespace std;
 
@@ -22,28 +26,40 @@ class SiTCP:public TObject {
 public:
     SiTCP();
     virtual ~SiTCP();
-    void setDir(const char* dir);
-    void connectToDevice(const char* ip, int port);
+    void setDir(const char* dir="./output");
+    void clearDir();
+    void connectDevice(const char* ip, int port);
+    void disconnectDevice();
     void run();
     void stop();
     void sendToDevice(const char* msg);
+    void setDataProcessHost(int port=8002, const char* host="localhost");
     void setSocketBufferSize(int n=1024*1024);
-    void setFileMaxSize(int n=1024*1024*1024);
-    void setFilePrefix(const char* prefix);
-    int state(){return status;}
-    int connectionState(){return connectionStatus;}
-    void clearDir();
-    void updateFileID();
+    void setFileMaxSize(int n=16*1024*1024);
+    int getState(){return status;}
+    int getConnectionState(){return connectionStatus;}
+    float getRate(){return rate;}
+    int getNTasks(){return nTasks;}
 
 private:
-    string prefix;
+
+    int dataPort;
+    string dataHost;
+    
+    std::deque<TSocket*> sockDeque;
+
+    bool firstFile;
+
+    float rate;
     int fileMaxSize;
     char* socketBuffer=NULL;
     void createFile();
     void closeFile();
     ofstream file;
     string dir;
-    uint64_t fileID;
+    uint64_t daqFileID;
+    uint64_t decFileID;
+    uint64_t maxFileID;
     int socketBufferSize;
     void createSocket();
     
@@ -64,11 +80,15 @@ private:
     int disconnected = 0;
     atomic_int status;
     atomic_int connectionStatus;
+    atomic_int nTasks;
 
     mutex lock;
 
     void DAQLoop();
+    void DecodeLoop();
+    void DecodeTask(int id, TSocket* rootsock);
     thread * DAQThread;
+    thread * DecodeThread;
 
     ClassDef(SiTCP,1)
 };

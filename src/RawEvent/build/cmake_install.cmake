@@ -1,4 +1,4 @@
-# Install script for directory: /storage/ATTPC/daq-dev-fastQueue/src/RawEvent
+# Install script for directory: /storage/ATTPC/DAQ_dev/src/RawEvent
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -49,7 +49,7 @@ if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_
          FILE "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/libRawEvent.so"
          RPATH "")
   endif()
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE SHARED_LIBRARY FILES "/storage/ATTPC/daq-dev-fastQueue/src/RawEvent/build/libRawEvent.so")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE SHARED_LIBRARY FILES "/storage/ATTPC/DAQ_dev/src/RawEvent/build/libRawEvent.so")
   if(EXISTS "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/libRawEvent.so" AND
      NOT IS_SYMLINK "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/libRawEvent.so")
     file(RPATH_CHANGE
@@ -67,15 +67,15 @@ endif()
 
 if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_COMPONENT)
   file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/include" TYPE FILE FILES
-    "/storage/ATTPC/daq-dev-fastQueue/src/RawEvent/Channel.h"
-    "/storage/ATTPC/daq-dev-fastQueue/src/RawEvent/RawEvent.h"
+    "/storage/ATTPC/DAQ_dev/src/RawEvent/Channel.h"
+    "/storage/ATTPC/DAQ_dev/src/RawEvent/RawEvent.h"
     )
 endif()
 
 if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_COMPONENT)
   file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE FILE FILES
-    "/storage/ATTPC/daq-dev-fastQueue/src/RawEvent/build/libRawEvent.rootmap"
-    "/storage/ATTPC/daq-dev-fastQueue/src/RawEvent/build/libRawEvent_rdict.pcm"
+    "/storage/ATTPC/DAQ_dev/src/RawEvent/build/libRawEvent.rootmap"
+    "/storage/ATTPC/DAQ_dev/src/RawEvent/build/libRawEvent_rdict.pcm"
     )
 endif()
 
@@ -87,5 +87,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/storage/ATTPC/daq-dev-fastQueue/src/RawEvent/build/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/storage/ATTPC/DAQ_dev/src/RawEvent/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

@@ -1,4 +1,4 @@
-# Install script for directory: /storage/ATTPC/DAQ/src/Event
+# Install script for directory: /storage/ATTPC/DAQ_dev/src/Event
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -12,7 +12,7 @@ if(NOT DEFINED CMAKE_INSTALL_CONFIG_NAME)
     string(REGEX REPLACE "^[^A-Za-z0-9_]+" ""
            CMAKE_INSTALL_CONFIG_NAME "${BUILD_TYPE}")
   else()
-    set(CMAKE_INSTALL_CONFIG_NAME "Debug")
+    set(CMAKE_INSTALL_CONFIG_NAME "")
   endif()
   message(STATUS "Install configuration: \"${CMAKE_INSTALL_CONFIG_NAME}\"")
 endif()
@@ -49,7 +49,7 @@ if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_
          FILE "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/libEvent.so"
          RPATH "")
   endif()
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE SHARED_LIBRARY FILES "/storage/ATTPC/DAQ/src/Event/build/libEvent.so")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE SHARED_LIBRARY FILES "/storage/ATTPC/DAQ_dev/src/Event/build/libEvent.so")
   if(EXISTS "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/libEvent.so" AND
      NOT IS_SYMLINK "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/libEvent.so")
     file(RPATH_CHANGE
@@ -67,15 +67,15 @@ endif()
 
 if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_COMPONENT)
   file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/include" TYPE FILE FILES
-    "/storage/ATTPC/DAQ/src/Event/Pad.h"
-    "/storage/ATTPC/DAQ/src/Event/Event.h"
+    "/storage/ATTPC/DAQ_dev/src/Event/Pad.h"
+    "/storage/ATTPC/DAQ_dev/src/Event/Event.h"
     )
 endif()
 
 if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_COMPONENT)
   file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE FILE FILES
-    "/storage/ATTPC/DAQ/src/Event/build/libEvent.rootmap"
-    "/storage/ATTPC/DAQ/src/Event/build/libEvent_rdict.pcm"
+    "/storage/ATTPC/DAQ_dev/src/Event/build/libEvent.rootmap"
+    "/storage/ATTPC/DAQ_dev/src/Event/build/libEvent_rdict.pcm"
     )
 endif()
 
@@ -87,5 +87,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/storage/ATTPC/DAQ/src/Event/build/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/storage/ATTPC/DAQ_dev/src/Event/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

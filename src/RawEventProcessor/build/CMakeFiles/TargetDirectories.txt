@@ -1,8 +1,0 @@
-/storage/ATTPC/daq-dev-/src/RawEventProcessor/build/CMakeFiles/RawEventProcessor.dir
-/storage/ATTPC/daq-dev-/src/RawEventProcessor/build/CMakeFiles/RawEventProcessor_dict.dir
-/storage/ATTPC/daq-dev-/src/RawEventProcessor/build/CMakeFiles/edit_cache.dir
-/storage/ATTPC/daq-dev-/src/RawEventProcessor/build/CMakeFiles/rebuild_cache.dir
-/storage/ATTPC/daq-dev-/src/RawEventProcessor/build/CMakeFiles/list_install_components.dir
-/storage/ATTPC/daq-dev-/src/RawEventProcessor/build/CMakeFiles/install.dir
-/storage/ATTPC/daq-dev-/src/RawEventProcessor/build/CMakeFiles/install/local.dir
-/storage/ATTPC/daq-dev-/src/RawEventProcessor/build/CMakeFiles/install/strip.dir

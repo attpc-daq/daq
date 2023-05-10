@@ -1,7 +1,7 @@
 CMakeFiles/RawEvent.dir/RawEvent.o: \
- /storage/ATTPC/daq-dev-fastQueue/src/RawEvent/RawEvent.cpp \
+ /storage/ATTPC/DAQ_dev/src/RawEvent/RawEvent.cpp \
  /usr/include/stdc-predef.h \
- /storage/ATTPC/daq-dev-fastQueue/src/RawEvent/RawEvent.h \
+ /storage/ATTPC/DAQ_dev/src/RawEvent/RawEvent.h \
  /opt/root/include/TGClient.h /opt/root/include/TObject.h \
  /opt/root/include/Rtypes.h /opt/root/include/RtypesCore.h \
  /opt/root/include/ROOT/RConfig.hxx /opt/root/include/RVersion.h \
@@ -239,14 +239,5 @@ CMakeFiles/RawEvent.dir/RawEvent.o: \
  /opt/root/include/TInterpreterValue.h /usr/include/c++/11/map \
  /usr/include/c++/11/bits/stl_tree.h /usr/include/c++/11/bits/stl_map.h \
  /usr/include/c++/11/bits/stl_multimap.h /opt/root/include/TObject.h \
- /storage/ATTPC/daq-dev-fastQueue/src/RawEvent/Channel.h \
- /usr/include/c++/11/iostream /usr/include/c++/11/ostream \
- /usr/include/c++/11/ios /usr/include/c++/11/bits/basic_ios.h \
- /usr/include/c++/11/bits/locale_facets.h /usr/include/c++/11/cwctype \
- /usr/include/wctype.h /usr/include/x86_64-linux-gnu/bits/wctype-wchar.h \
- /usr/include/x86_64-linux-gnu/c++/11/bits/ctype_base.h \
- /usr/include/x86_64-linux-gnu/c++/11/bits/ctype_inline.h \
- /usr/include/c++/11/bits/locale_facets.tcc \
- /usr/include/c++/11/bits/basic_ios.tcc \
- /usr/include/c++/11/bits/ostream.tcc /usr/include/c++/11/istream \
- /usr/include/c++/11/bits/istream.tcc
+ /storage/ATTPC/DAQ_dev/src/RawEvent/Channel.h /opt/root/include/TList.h \
+ /opt/root/include/TIterator.h

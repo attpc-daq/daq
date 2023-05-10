@@ -1,130 +1,48 @@
-#————————————————————————————————————————浏览器注册
 register 
-#————————————————————————————————————————设置输出文件目录
-setdir  test
-setrawdatafilesize  1000000
 
-#————————————————————————————————————————log 文件
+setdir  test
+
 newlog
 
-#输入log内容，参数任意，多条log输入可以";"间隔
-log  this is a test run
-
-#浏览器端延迟，单位ms
+initsitcp
 #sleep 1000
 
-#usecppsitcp
-usepysitcp
+connectdevice 0.0.0.0 8801
+#sleep 1000
 
-#————————————————————————————————————————参数数据产生
-#初始化sitcp读取程序
-initsitcp
-
-#连接电子学 可选参数1:IP，参数2port
-connect2device 0.0.0.0 8001
+startsitcp
 #sleep 1000
 
 selftrigger
 #sleep 1000
+
+initdataprocessor
+#sleep 1000
+
+startdataprocessor
+
 #pause
-#初始化raw data处理程序
-initrawdataprocessor  5
-
-#初始化参数产生程序
-initparametergenerator
-
-#sleep 1000
-
-#运行sitcp读取，仅当使用cpp sitcp时有效
-startsitcp
-
-#sleep 1000
-startrawdataprocessor false
-
-#sleep 1000
-startparametergenerator 
 
 
-#等待参数文件产生完成
-#浏览器端暂停，
-#pause
-#————————————————————————————————————————关闭和清理文件
-#停止产生数据
 stopdata
-
-#关闭sitcp读取程序
-stopsitcp
-#sleep 1000
-
-#关闭raw data 处理程序
-stoprawdataprocessor
-
-#sleep 1000
-
-cleardir
-
 #pause
 
-#————————————————————————————————————————设置threshold
 
-initsitcp
+stopdataprocessor
 #sleep 1000
 
-connect2device  0.0.0.0 8001 
-#sleep 1000
-
-initrawdataprocessor 10
-#sleep 1000
-
-#初始化raw event 处理程序
-initraweventprocessor 
+stopsitcp
 #sleep 1000
 
 setupthreshold
-
 #pause
-
-
-#————————————————————————————————————————数据采集
-#触发斜率
-send2device 001128314350607083
-#sleep 1000
-#符合通道数
-send2device 021028314150607083
-#sleep 1000
-send2device 001028314150607083
-#sleep 1000
-send2device 081020384150607083
-#sleep 1000
-send2device 021020394F5F6F7F83
-#sleep 1000
-send2device 0410203A4150607083
-#sleep 1000
-
-#初始化QA程序
-initeventqa
-#sleep 1000
 
 startsitcp
-#sleep 1000
 
-startrawdataprocessor true
-#sleep 1000
-
-startraweventprocessor
-#sleep 1000
-
-starteventqa
+startdataprocessor
 
 #pause
-#————————————————————————————————————————停止
-stopdata
+stopdataprocessor
 stopsitcp
-stoprawdataprocessor
-stopraweventprocessor
-stopeventqa
-
 #pause
-#————————————————————————————————————————关机
-#关闭后台服务程序
 shutdown

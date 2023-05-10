@@ -8,8 +8,8 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "/storage/ATTPC/daq-dev-fastQueue/src/RawEvent/Channel.cpp" "CMakeFiles/RawEvent.dir/Channel.o" "gcc" "CMakeFiles/RawEvent.dir/Channel.o.d"
-  "/storage/ATTPC/daq-dev-fastQueue/src/RawEvent/RawEvent.cpp" "CMakeFiles/RawEvent.dir/RawEvent.o" "gcc" "CMakeFiles/RawEvent.dir/RawEvent.o.d"
+  "/storage/ATTPC/DAQ_dev/src/RawEvent/Channel.cpp" "CMakeFiles/RawEvent.dir/Channel.o" "gcc" "CMakeFiles/RawEvent.dir/Channel.o.d"
+  "/storage/ATTPC/DAQ_dev/src/RawEvent/RawEvent.cpp" "CMakeFiles/RawEvent.dir/RawEvent.o" "gcc" "CMakeFiles/RawEvent.dir/RawEvent.o.d"
   )
 
 # Targets to which this target links.

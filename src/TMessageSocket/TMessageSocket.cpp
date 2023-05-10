@@ -5,28 +5,40 @@
 
 ClassImp(TMessageSocket);
 
-TMessageSocket::TMessageSocket(int port, int bufferSize){
+TMessageSocket::TMessageSocket(int _port, int bufferSize){
     setBufferSize(bufferSize);
+    port = _port;
     asSender(port);
 }
-TMessageSocket::TMessageSocket(int port, const char* host, int bufferSize){
-    setBufferSize(bufferSize);
-    asReceiver(port, host);
+TMessageSocket::TMessageSocket(int _port, const char* _host, int bufferSize){
+    port = _port;
+    host = _host;
 }
 TMessageSocket::~TMessageSocket(){
-    if(buffer != NULL)
-        delete buffer;
     status = status_stopping;
     if(mSocketThreadSender!=NULL)mSocketThreadSender->join();
-    if(mSocketThreadReceiver!=NULL)mSocketThreadReceiver->join();
+    if(receiver!=NULL)receiver->Close();
+    if(buffer != NULL) delete buffer;
 }
 
 bool TMessageSocket::put(TObject* obj){
     return buffer->put(obj);
 }
 TObject* TMessageSocket::get(TClass* cl){
-    if(receiver == NULL)return NULL;
-    if(!receiver->IsValid())return NULL;
+    if(receiver == NULL ){
+        receiver = new TSocket(host.c_str(), port);
+        if(receiver->IsValid() == kFALSE){
+            receiver = NULL;
+            return NULL;
+        }
+        receiver->SetOption(kReuseAddr, 1);
+        receiver->SetOption(kNoBlock, 1);
+    }
+    if(receiver->IsValid() == kFALSE) {
+        receiver->Close();
+        receiver = NULL;
+        return NULL;
+    }
     TMessage *msg;
     int n = receiver->Recv(msg);
     if(n<=0)return NULL;
@@ -43,15 +55,24 @@ void TMessageSocket::asSender(int port){
 }
 void TMessageSocket::senderLoop(int port){
     status = status_running;
-    TServerSocket *server = new TServerSocket(port, kTRUE);
-    server->SetOption(kReuseAddr, 1);
+    TServerSocket *server = new TServerSocket(port, true);
+    server->SetOption(kNoBlock, 1);
+    TMonitor serverMonitor;
+    serverMonitor.Add(server);
     while(status == status_running){
-        TSocket *sender = server->Accept();//注意这里可能造成的阻塞
+        TSocket* s = serverMonitor.Select(1);
+        if(s == (TSocket *)-1) {
+            sleep(1);
+            continue;
+        }
+        TSocket *sender = ((TServerSocket*)s)->Accept();
+        if(sender == (TSocket *)-1) continue;
+        sender->SetOption(kNoBlock,1);
         while(status == status_running && sender->IsValid()){
             TMessage *msg = buffer->get();
             if (msg->What() == kMESS_OBJECT) {
-                sender->Send(*msg);
-                buffer->getDone();
+                int n = sender->Send(*msg);
+                if(n>0)buffer->getDone();
             }else{
                 sleep(0.1);
             }
@@ -59,24 +80,4 @@ void TMessageSocket::senderLoop(int port){
         sender->Close();
     }
     server->Close();
-}
-
-void TMessageSocket::asReceiver(int port, const char* host){
-    mSocketThreadReceiver = new thread(&TMessageSocket::receiverLoop, this, port, host);
-}
-void TMessageSocket::receiverLoop(int port, const char* host){
-    status = status_running;
-    while(status == status_running){
-        receiver = new TSocket(host, port);
-        if(receiver->IsValid() == kFALSE){
-            sleep(0.1);
-            //delete receiver;
-            continue;
-        }
-        receiver->SetOption(kReuseAddr, 1);
-        while(status == status_running && receiver->IsValid()){
-            sleep(0.1);
-        }
-    }
-    receiver->Close();
 }

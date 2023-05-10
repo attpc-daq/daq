@@ -8,4 +8,5 @@ def start(handler, host_port):
     '''
     server = WebSocket.Server(handler, host_port, '0.0.0.0')
     server.start()
-    server.join(5)
+    # server.join(5)
+    print("WebSocket Server started at port %s" % host_port)

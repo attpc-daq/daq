@@ -149,11 +149,11 @@ namespace {
 nullptr
     };
     static const char* includePaths[] = {
-"/storage/ATTPC/daq-dev-/src/ParameterGenerator",
-"/storage/ATTPC/daq-dev-/src/ParameterGenerator",
+"/storage/ATTPC/DAQ_dev/src/ParameterGenerator",
+"/storage/ATTPC/DAQ_dev/src/ParameterGenerator",
 "/opt/root/include",
 "/opt/root/include/",
-"/storage/ATTPC/daq-dev-/src/ParameterGenerator/build/",
+"/storage/ATTPC/DAQ_dev/src/ParameterGenerator/build/",
 nullptr
     };
     static const char* fwdDeclCode = R"DICTFWDDCLS(

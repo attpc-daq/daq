@@ -46,6 +46,6 @@ RawEvent_dict.cxx
  /opt/root/include/snprintf.h
  /opt/root/include/strlcpy.h
  /opt/root/include/strtok.h
- /storage/ATTPC/daq-dev-fastQueue/src/RawEvent/Channel.h
- /storage/ATTPC/daq-dev-fastQueue/src/RawEvent/Linkdef.h
- /storage/ATTPC/daq-dev-fastQueue/src/RawEvent/RawEvent.h
+ /storage/ATTPC/DAQ_dev/src/RawEvent/Channel.h
+ /storage/ATTPC/DAQ_dev/src/RawEvent/Linkdef.h
+ /storage/ATTPC/DAQ_dev/src/RawEvent/RawEvent.h

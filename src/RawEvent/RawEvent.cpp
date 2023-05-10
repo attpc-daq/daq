@@ -1,52 +1,42 @@
 #include "RawEvent.h"
-#include <iostream>
-
 ClassImp(RawEvent);
 
 RawEvent::RawEvent(){
     event_id = -1;
     timestamp = 0;
     hit_count = 0;
-    vector<Channel>().swap(channels);
+    channels = new TList();
 }
-
-bool RawEvent::Fill(const Channel& ch){
-    if(channels.size()==0){
-        event_id = ch.event_id;
-        timestamp = ch.timestamp;
+RawEvent& RawEvent::operator=(const RawEvent& other){
+    if(this == &other)return *this;
+    reset();
+    event_id = other.event_id;
+    timestamp = other.timestamp;
+    hit_count = other.hit_count;
+    for(auto obj: *(other.channels)){
+        AddChannel((Channel*)obj);
     }
-    if(event_id != ch.event_id){
-        return false;
-    }
-    channels.push_back(ch);
-    return true;
+    return *this;
 }
-bool RawEvent::fill(long _event_id, long _timestamp, long _FEE_id, long _channel_id, float* waveform){
-    if(channels.size()==0){
-        event_id = _event_id;
-        timestamp = _timestamp;
-    }
-    if(event_id != _event_id){
-        return false;
-    }
-
-    Channel ch;
-    ch.event_id = _event_id;
-    ch.timestamp = _timestamp;
-    ch.FEE_id = _FEE_id;
-    ch.channel_id = _channel_id;
-    for(int i = 0;i<1024;i++){
-        ch.waveform[i]=waveform[i];
-    }
-    channels.push_back(ch);
-
-    return true;
+void RawEvent::AddChannel(Channel* ch){
+    channels->Add(new Channel(ch));
+}
+void RawEvent::AddChannel(const Channel& ch){
+     channels->Add(new Channel(ch));
 }
 void RawEvent::reset(){
-    vector<Channel>().swap(channels);
+    for(auto obj: *channels){
+        channels->Remove(obj);
+        delete obj;
+    }
     event_id = -1;
     timestamp = 0;
     hit_count = 0;
 }
-
-RawEvent::~RawEvent(){}
+RawEvent::~RawEvent(){
+    for(auto obj: *channels){
+        channels->Remove(obj);
+        delete obj;
+    }
+    delete channels;
+}

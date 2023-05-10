@@ -7,43 +7,31 @@ import time
 import asyncio
 import os
 import json
-from src.PySiTCP.SiTCP import Process as SiTCP
-#from PySiTCP.SiTCP import Process as SiTCP
 import numpy as np
 
 sys.path.append('/usr/local/lib')
 ROOT.gInterpreter.Declare('#include "SiTCP.h"')
 ROOT.gInterpreter.Declare('#include "PacketDecoder.h"')
-ROOT.gInterpreter.Declare('#include "RawDataProcessor.h"')
 ROOT.gInterpreter.Declare('#include "ParameterGenerator.h"')
 ROOT.gInterpreter.Declare('#include "Event.h"')
-ROOT.gInterpreter.Declare('#include "EventMaker.h"')
+ROOT.gInterpreter.Declare('#include "EventConverter.h"')
 ROOT.gInterpreter.Declare('#include "EventQA.h"')
 ROOT.gInterpreter.Declare('#include "RawEvent.h"')
-ROOT.gInterpreter.Declare('#include "RawEventProcessor.h"')
 ROOT.gInterpreter.Declare('#include "TMessageBuffer.h"')
 ROOT.gInterpreter.Declare('#include "TMessageSocket.h"')
+ROOT.gInterpreter.Declare('#include "DataProcessor.h"')
 
 ROOT.gSystem.Load("libSiTCP.so")
 ROOT.gSystem.Load("libPacketDecoder.so")
-ROOT.gSystem.Load("libRawDataProcessor.so")
 ROOT.gSystem.Load("libParameterGenerator.so")
 ROOT.gSystem.Load("libEvent.so")
-ROOT.gSystem.Load("libEventMaker.so")
+ROOT.gSystem.Load("libEventConverter.so")
 ROOT.gSystem.Load("libEventQA.so")
 ROOT.gSystem.Load("libRawEvent.so")
-ROOT.gSystem.Load("libRawEventProcessor.so")
 ROOT.gSystem.Load("libTMessageBuffer.so")
 ROOT.gSystem.Load("libTMessageSocket.so")
 ROOT.gSystem.Load("libHist.so")
-
-# import websockets
-# import os
-# import secrets
-# import time
-# import math
-# import json
-
+ROOT.gSystem.Load("libDataProcessor.so")
 
 class DAQHandler(GUISocket.Utils.WebsocketHander):
     '''
@@ -51,17 +39,11 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
     '''
     def __init__(self):
         super(DAQHandler, self).__init__()
-        self.usepysitcp = True
         self.outputDir = './output/'
         self.sitcpBufferFileSize = 1024*1024
     #—————————————————————————————————————————————————————————————
     #自定义函数应为协程函数，前缀为'on_cmd_'，参数列表不可变更
     #—————————————————————————————————————————————————————————————
-    async def on_cmd_usepysitcp(self, websocket, cmd_list, client_key):
-        self.usepysitcp = True
-    async def on_cmd_usecppsitcp(self, websocket, cmd_list, client_key):
-        self.usepysitcp = False
-
     async def on_cmd_setrawdatafilesize(self, websocket, cmd_list, client_key):
         self.sitcpBufferFileSize = int(cmd_list[1])
 
@@ -69,79 +51,57 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
         '''
         初始化SiTCP
         '''
-        if self.usepysitcp is False:
-            self.sitcp = ROOT.SiTCP()       
-        else:
-            self.sitcp = SiTCP(self.outputDir,self.sitcpBufferFileSize)
-            self.sitcp.start()
-
-        # self.sitcp.connectToDevice("0.0.0.0",8002)
+        self.sitcp = ROOT.SiTCP()       
+        # self.sitcp.connectDevice("0.0.0.0",8002)
         self.sitcp.setDir(self.outputDir)
-        self.sitcp.setSocketBufferSize(1024*1024)
-        self.sitcp.setFileMaxSize(self.sitcpBufferFileSize)
-        self.sitcp.setFilePrefix("packet")
+        self.sitcp.setDataProcessHost(8802)
+        self.sitcp.setFileMaxSize(16*1024*1024)
+    
+    async def on_cmd_initdataprocessor(self, websocket, cmd_list, client_key):
+        '''
+        初始化DataProcessor
+        '''
+        self.dataProcessor = ROOT.DataProcessor()
+        self.dataProcessor.setDir(self.outputDir)
+        self.dataProcessor.setDataPort(8802)
+        self.dataProcessor.setQAPort(8803)
+        self.dataProcessor.setEventSave(False)
+        self.dataProcessor.setRawEventSave(True)
+        self.dataProcessor.setQA(True)
+        self.dataProcessor.generateParameters(10)
+        self.dataProcessor.setFileEvents(1000)
+
 
     async def on_cmd_startsitcp(self, websocket, cmd_list, client_key):
         '''
         启动SiTCP
         '''
-        if self.usepysitcp is False:
-            self.sitcp.run()
+        self.sitcp.run()
 
     async def on_cmd_stopsitcp(self, websocket, cmd_list, client_key):
         '''
         停止SiTCP
         '''
         self.sitcp.stop()
+    
+    async def on_cmd_startdataprocessor(self, websocket, cmd_list, client_key):
+        '''
+        '''
+        self.dataProcessor.run()
 
-    async def on_cmd_connect2device(self, websocket, cmd_list, client_key):
+    async def on_cmd_stopdataprocessor(self, websocket, cmd_list, client_key):
+        '''
+        '''
+        self.dataProcessor.stop()
+
+    async def on_cmd_connectdevice(self, websocket, cmd_list, client_key):
         '''
         连接设备
         '''
         if len(cmd_list) == 1:
-            self.sitcp.connectToDevice("192.168.10.16",4660)
+            self.sitcp.connectDevice("192.168.10.16",4660)
         else:
-            self.sitcp.connectToDevice(cmd_list[1],int(cmd_list[2]))
-
-    async def on_cmd_initrawdataprocessor(self, websocket, cmd_list, client_key):
-        '''
-        初始化RawDataProcessor
-        '''
-        self.rawDataProcessor = ROOT.RawDataProcessor()
-        self.rawDataProcessor.setRawDataDir(self.outputDir)
-        self.rawDataProcessor.setRawDataFilePrefix("packet")
-        self.rawDataProcessor.setReadingTempFileName("reading.dat")
-        self.rawDataProcessor.setOutputFileEvents(int(cmd_list[1]))
-        self.rawDataProcessor.setOutputDir(self.outputDir)
-        self.rawDataProcessor.setOutputFilePrefix("RawEvent")
-        self.rawDataProcessor.setWritingTempFileName("writing.root")
-        self.rawDataProcessor.setRawEventTreeName("raw_event_tree")
-        self.rawDataProcessor.setRawEventBranchName("raw_event")
-        self.rawDataProcessor.setSocketPort(8020)
-
-
-    async def on_cmd_startrawdataprocessor(self, websocket, cmd_list, client_key):
-        '''
-        启动RawDataProcessor
-        '''
-        if len(cmd_list)>1 and cmd_list[1]=='false':
-            self.rawDataProcessor.run(False)
-        else:
-            self.rawDataProcessor.run()
-    
-    async def on_cmd_stoprawdataprocessor(self, websocket, cmd_list, client_key):
-        '''
-        停止RawDataProcessor
-        '''
-        self.rawDataProcessor.stop()
-
-    async def on_cmd_initparametergenerator(self, websocket, cmd_list, client_key):
-        self.parameterGenerator = ROOT.ParameterGenerator()
-        self.parameterGenerator.setRawDataDir(self.outputDir)
-        self.parameterGenerator.setRawDataFilePrefix("packet")
-        self.parameterGenerator.setReadingTempFileName("reading.dat")
-        self.parameterGenerator.setOutputDir(self.outputDir)
-        self.parameterGenerator.setOutputFileName("thresholdes.json","eventParameters.json")
+            self.sitcp.connectDevice(cmd_list[1],int(cmd_list[2]))
 
     async def on_cmd_selftrigger(self, websocket, cmd_list, client_key):
         self.sitcp.sendToDevice(bytes.fromhex('0A1020384150607083'))
@@ -163,47 +123,14 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
         self.sitcp.sendToDevice(bytes.fromhex('0410203A4150607083'))
         time.sleep(1)
 
-    async def on_cmd_startparametergenerator(self, websocket, cmd_list, client_key):
-        await self.notifymonitor("starting parametergeneration...")
-        self.parameterGenerator.run(100)
-        while self.parameterGenerator.isFinish() is False:
-            await self.notifymonitor("parameter generation running")
-            time.sleep(3)
-        await self.notifymonitor("parameter generation finish")
-
-    async def on_cmd_stopparametergenerator(self, websocket, cmd_list, client_key):
-        self.sitcp.sendToDevice(bytes.fromhex('0410203A4050607083'))
-        time.sleep(1)
-        self.sitcp.sendToDevice(bytes.fromhex('081020384150607083'))
-        time.sleep(1)
-        self.parameterGenerator.stop()
-
-    async def on_cmd_initraweventprocessor(self, websocket, cmd_list, client_key):
-        self.rawEventProcessor = ROOT.RawEventProcessor()
-        file = open(os.path.join(self.outputDir,'./eventParameters.json'), 'r')
-        settingJson = file.read()
-        self.rawEventProcessor.updateSettings(settingJson)
-        self.rawEventProcessor.setOutputFilePrefix("Event")
-        self.rawEventProcessor.setDir(self.outputDir)
-        self.rawEventProcessor.setRawEventFilePrefix("RawEvent")
-        self.rawEventProcessor.setRawTreeName("raw_event_tree")
-        self.rawEventProcessor.setRawBranchName("raw_event")
-        self.rawEventProcessor.setEventTreeName("event_tree")
-        self.rawEventProcessor.setEventBranchName("event")
-        
-    async def on_cmd_startraweventprocessor(self, websocket, cmd_list, client_key):
-        self.rawEventProcessor.run()
-
-    async def on_cmd_stopraweventprocessor(self, websocket, cmd_list, client_key):
-        self.rawEventProcessor.stop()
-    
     async def on_cmd_initeventqa(self, websocket, cmd_list, client_key):
 
-        self.eventQA = ROOT.EventQA(8008)
-        self.eventQA.setMessageHost(8020,"0.0.0.0")
+        self.eventQA = ROOT.EventQA(8808)
+        self.eventQA.setMessageHost(8803,"0.0.0.0")
         file = open(os.path.join(self.outputDir,'./eventParameters.json'), 'r')
         settingJson = file.read()
         self.eventQA.updateSettings(settingJson)
+        self.eventQA.setDir(self.outputDir)
         
     async def on_cmd_starteventqa(self, websocket, cmd_list, client_key):
         self.eventQA.run()
@@ -283,39 +210,20 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
 
         GUISocket.Utils.LOGGER.info("SiTCP threshold setting:")
         
-        if self.usepysitcp is False:
-            for i in range(msgJson['count']):
-                for key in msgJson[str(i)]:
-                    for k, v in key.items():
-                        cmd = bytes.fromhex(v)
-                        try:
-                            self.sitcp.sendToDevice(cmd)
-                            time.sleep(0.01)
-                            GUISocket.Utils.LOGGER.info(f"{k}: {v}")
-                        except:
-                            await self.notifymonitor("SiTCP threshold setting error!")
-                if i%100 == 0:
-                    await self.notifymonitor("SiTCP threshold setting..."+str(int(i/20.48))+"%")
-            await self.notifymonitor("SiTCP threshold setting done!")
-        
-        else:
-            bytes_array =[]
-            for i in range(msgJson['count']):
-                for key in msgJson[str(i)]:
-                    for k, v in key.items():
-                        cmd = bytes.fromhex(v)
-                        bytes_array.append(cmd)
+        for i in range(msgJson['count']):
+            for key in msgJson[str(i)]:
+                for k, v in key.items():
+                    cmd = bytes.fromhex(v)
+                    try:
+                        self.sitcp.sendToDevice(cmd)
+                        time.sleep(0.01)
                         GUISocket.Utils.LOGGER.info(f"{k}: {v}")
-
-            self.sitcp.sendToDevice(bytes_array)
-            while True:
-                rsp = self.sitcp.wait()
-                await self.notifymonitor(rsp)
-                if rsp == "done":
-                    break
-
-            await self.notifymonitor("SiTCP threshold setting done!")
-
+                    except:
+                        await self.notifymonitor("SiTCP threshold setting error!")
+            if i%100 == 0:
+                await self.notifymonitor("SiTCP threshold setting..."+str(int(i/20.48))+"%")
+        await self.notifymonitor("SiTCP threshold setting done!")
+        
 
 def main():
     '''
@@ -323,7 +231,7 @@ def main():
     '''
     handler = DAQHandler()
     parser = argparse.ArgumentParser()
-    parser.add_argument('--gui_port', default=8003, help='The socket port from GUI connect to DAQ server')
+    parser.add_argument('--gui_port', default=8809, help='The socket port from GUI connect to DAQ server')
     args = parser.parse_args()
     GUISocket.start(handler,args.gui_port)
 

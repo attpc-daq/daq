@@ -53,10 +53,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /storage/ATTPC/DAQ/src/SiTCP
+CMAKE_SOURCE_DIR = /storage/ATTPC/DAQ_dev/src/SiTCP
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /storage/ATTPC/DAQ/src/SiTCP/build
+CMAKE_BINARY_DIR = /storage/ATTPC/DAQ_dev/src/SiTCP/build
 
 # Include any dependencies generated for this target.
 include CMakeFiles/SiTCP_dict.dir/depend.make
@@ -73,8 +73,8 @@ SiTCP_dict.cxx: ../Linkdef.h
 SiTCP_dict.cxx: ../SiTCP.h
 SiTCP_dict.cxx: ../SiTCP.h
 SiTCP_dict.cxx: ../Linkdef.h
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/storage/ATTPC/DAQ/src/SiTCP/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Generating SiTCP_dict.cxx, libSiTCP_rdict.pcm, libSiTCP.rootmap"
-	/usr/bin/cmake -E env LD_LIBRARY_PATH=/opt/root/lib:/usr/local/lib: /opt/root/bin/rootcling -v2 -f SiTCP_dict.cxx -s /storage/ATTPC/DAQ/src/SiTCP/build/libSiTCP.so -rml libSiTCP.so -rmf /storage/ATTPC/DAQ/src/SiTCP/build/libSiTCP.rootmap -compilerI/usr/include/c++/11 -compilerI/usr/include/x86_64-linux-gnu/c++/11 -compilerI/usr/include/c++/11/backward -compilerI/usr/lib/gcc/x86_64-linux-gnu/11/include -compilerI/usr/local/include -compilerI/usr/include/x86_64-linux-gnu -compilerI/usr/include -compilerI/usr/lib/gcc/x86_64-linux-gnu/11/include -compilerI/usr/local/include -compilerI/usr/include/x86_64-linux-gnu -compilerI/usr/include -I/storage/ATTPC/DAQ/src/SiTCP -I/storage/ATTPC/DAQ/src/SiTCP -I/opt/root/include SiTCP.h /storage/ATTPC/DAQ/src/SiTCP/Linkdef.h
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/storage/ATTPC/DAQ_dev/src/SiTCP/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Generating SiTCP_dict.cxx, libSiTCP_rdict.pcm, libSiTCP.rootmap"
+	/usr/bin/cmake -E env LD_LIBRARY_PATH=/opt/root/lib:/usr/local/lib: /opt/root/bin/rootcling -v2 -f SiTCP_dict.cxx -s /storage/ATTPC/DAQ_dev/src/SiTCP/build/libSiTCP.so -rml libSiTCP.so -rmf /storage/ATTPC/DAQ_dev/src/SiTCP/build/libSiTCP.rootmap -compilerI/usr/include/c++/11 -compilerI/usr/include/x86_64-linux-gnu/c++/11 -compilerI/usr/include/c++/11/backward -compilerI/usr/lib/gcc/x86_64-linux-gnu/11/include -compilerI/usr/local/include -compilerI/usr/include/x86_64-linux-gnu -compilerI/usr/include -compilerI/usr/lib/gcc/x86_64-linux-gnu/11/include -compilerI/usr/local/include -compilerI/usr/include/x86_64-linux-gnu -compilerI/usr/include -I/storage/ATTPC/DAQ_dev/src/SiTCP -I/storage/ATTPC/DAQ_dev/src/SiTCP -I/opt/root/include SiTCP.h /storage/ATTPC/DAQ_dev/src/SiTCP/Linkdef.h
 
 libSiTCP_rdict.pcm: SiTCP_dict.cxx
 	@$(CMAKE_COMMAND) -E touch_nocreate libSiTCP_rdict.pcm
@@ -85,16 +85,16 @@ libSiTCP.rootmap: SiTCP_dict.cxx
 CMakeFiles/SiTCP_dict.dir/SiTCP_dict.o: CMakeFiles/SiTCP_dict.dir/flags.make
 CMakeFiles/SiTCP_dict.dir/SiTCP_dict.o: SiTCP_dict.cxx
 CMakeFiles/SiTCP_dict.dir/SiTCP_dict.o: CMakeFiles/SiTCP_dict.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/storage/ATTPC/DAQ/src/SiTCP/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/SiTCP_dict.dir/SiTCP_dict.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/SiTCP_dict.dir/SiTCP_dict.o -MF CMakeFiles/SiTCP_dict.dir/SiTCP_dict.o.d -o CMakeFiles/SiTCP_dict.dir/SiTCP_dict.o -c /storage/ATTPC/DAQ/src/SiTCP/build/SiTCP_dict.cxx
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/storage/ATTPC/DAQ_dev/src/SiTCP/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/SiTCP_dict.dir/SiTCP_dict.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/SiTCP_dict.dir/SiTCP_dict.o -MF CMakeFiles/SiTCP_dict.dir/SiTCP_dict.o.d -o CMakeFiles/SiTCP_dict.dir/SiTCP_dict.o -c /storage/ATTPC/DAQ_dev/src/SiTCP/build/SiTCP_dict.cxx
 
 CMakeFiles/SiTCP_dict.dir/SiTCP_dict.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/SiTCP_dict.dir/SiTCP_dict.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /storage/ATTPC/DAQ/src/SiTCP/build/SiTCP_dict.cxx > CMakeFiles/SiTCP_dict.dir/SiTCP_dict.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /storage/ATTPC/DAQ_dev/src/SiTCP/build/SiTCP_dict.cxx > CMakeFiles/SiTCP_dict.dir/SiTCP_dict.i
 
 CMakeFiles/SiTCP_dict.dir/SiTCP_dict.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/SiTCP_dict.dir/SiTCP_dict.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /storage/ATTPC/DAQ/src/SiTCP/build/SiTCP_dict.cxx -o CMakeFiles/SiTCP_dict.dir/SiTCP_dict.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /storage/ATTPC/DAQ_dev/src/SiTCP/build/SiTCP_dict.cxx -o CMakeFiles/SiTCP_dict.dir/SiTCP_dict.s
 
 SiTCP_dict: CMakeFiles/SiTCP_dict.dir/SiTCP_dict.o
 SiTCP_dict: CMakeFiles/SiTCP_dict.dir/build.make
@@ -111,6 +111,6 @@ CMakeFiles/SiTCP_dict.dir/clean:
 CMakeFiles/SiTCP_dict.dir/depend: SiTCP_dict.cxx
 CMakeFiles/SiTCP_dict.dir/depend: libSiTCP.rootmap
 CMakeFiles/SiTCP_dict.dir/depend: libSiTCP_rdict.pcm
-	cd /storage/ATTPC/DAQ/src/SiTCP/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /storage/ATTPC/DAQ/src/SiTCP /storage/ATTPC/DAQ/src/SiTCP /storage/ATTPC/DAQ/src/SiTCP/build /storage/ATTPC/DAQ/src/SiTCP/build /storage/ATTPC/DAQ/src/SiTCP/build/CMakeFiles/SiTCP_dict.dir/DependInfo.cmake --color=$(COLOR)
+	cd /storage/ATTPC/DAQ_dev/src/SiTCP/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /storage/ATTPC/DAQ_dev/src/SiTCP /storage/ATTPC/DAQ_dev/src/SiTCP /storage/ATTPC/DAQ_dev/src/SiTCP/build /storage/ATTPC/DAQ_dev/src/SiTCP/build /storage/ATTPC/DAQ_dev/src/SiTCP/build/CMakeFiles/SiTCP_dict.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/SiTCP_dict.dir/depend
 

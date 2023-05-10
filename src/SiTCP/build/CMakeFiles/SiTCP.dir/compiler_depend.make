@@ -375,8 +375,12 @@ CMakeFiles/SiTCP.dir/SiTCP.o: ../SiTCP.cpp \
   /usr/include/c++/11/bits/sstream.tcc \
   /usr/include/c++/11/codecvt \
   /usr/include/c++/11/bits/fs_dir.h \
-  /usr/include/c++/11/bits/fs_ops.h
+  /usr/include/c++/11/bits/fs_ops.h \
+  /opt/root/include/TTime.h \
+  /opt/root/include/TTimeStamp.h
 
+
+/opt/root/include/TTime.h:
 
 /usr/include/c++/11/bits/fs_ops.h:
 
@@ -545,6 +549,8 @@ CMakeFiles/SiTCP.dir/SiTCP.o: ../SiTCP.cpp \
 /usr/include/c++/11/ext/alloc_traits.h:
 
 /usr/include/x86_64-linux-gnu/bits/sched.h:
+
+/opt/root/include/TTimeStamp.h:
 
 /opt/root/include/ROOT/RRangeCast.hxx:
 

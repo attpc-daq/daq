@@ -14,7 +14,7 @@ using namespace std;
 
 class TMessageBuffer:public TObject {
 public:
-    TMessageBuffer(int size);
+    TMessageBuffer(int size=100);
     virtual ~TMessageBuffer();
     bool put(TObject* obj);
     TMessage* get();

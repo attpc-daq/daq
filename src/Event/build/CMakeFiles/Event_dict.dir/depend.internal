@@ -46,6 +46,6 @@ Event_dict.cxx
  /opt/root/include/snprintf.h
  /opt/root/include/strlcpy.h
  /opt/root/include/strtok.h
- /storage/ATTPC/DAQ/src/Event/Event.h
- /storage/ATTPC/DAQ/src/Event/Linkdef.h
- /storage/ATTPC/DAQ/src/Event/Pad.h
+ /storage/ATTPC/DAQ_dev/src/Event/Event.h
+ /storage/ATTPC/DAQ_dev/src/Event/Linkdef.h
+ /storage/ATTPC/DAQ_dev/src/Event/Pad.h

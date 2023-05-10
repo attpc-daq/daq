@@ -1,7 +1,0 @@
-module "EventMaker" {
-  requires cplusplus
-  module "EventMaker.h" { header "EventMaker.h" export * }
-  link "libEventMaker.so"
-  export *
-}
-

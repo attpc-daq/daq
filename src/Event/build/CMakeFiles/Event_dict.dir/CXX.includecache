@@ -416,23 +416,23 @@ ROOT/RConfig.hxx
 cstring
 -
 
-/storage/ATTPC/DAQ/src/Event/Event.h
+/storage/ATTPC/DAQ_dev/src/Event/Event.h
 TGClient.h
-/storage/ATTPC/DAQ/src/Event/TGClient.h
+/storage/ATTPC/DAQ_dev/src/Event/TGClient.h
 TObject.h
-/storage/ATTPC/DAQ/src/Event/TObject.h
+/storage/ATTPC/DAQ_dev/src/Event/TObject.h
 Pad.h
-/storage/ATTPC/DAQ/src/Event/Pad.h
+/storage/ATTPC/DAQ_dev/src/Event/Pad.h
 vector
 -
 
-/storage/ATTPC/DAQ/src/Event/Linkdef.h
+/storage/ATTPC/DAQ_dev/src/Event/Linkdef.h
 
-/storage/ATTPC/DAQ/src/Event/Pad.h
+/storage/ATTPC/DAQ_dev/src/Event/Pad.h
 TGClient.h
-/storage/ATTPC/DAQ/src/Event/TGClient.h
+/storage/ATTPC/DAQ_dev/src/Event/TGClient.h
 TObject.h
-/storage/ATTPC/DAQ/src/Event/TObject.h
+/storage/ATTPC/DAQ_dev/src/Event/TObject.h
 vector
 -
 

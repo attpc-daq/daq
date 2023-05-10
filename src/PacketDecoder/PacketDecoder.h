@@ -18,7 +18,7 @@ public:
 
   virtual ~PacketDecoder();
 
-  bool Fill(const char* dataByte);
+  int Fill(const char* dataByte);
   RawEvent rawEvent;
 
   

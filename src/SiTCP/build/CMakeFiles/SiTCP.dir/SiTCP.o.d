@@ -1,5 +1,5 @@
-CMakeFiles/SiTCP.dir/SiTCP.o: /storage/ATTPC/DAQ/src/SiTCP/SiTCP.cpp \
- /usr/include/stdc-predef.h /storage/ATTPC/DAQ/src/SiTCP/SiTCP.h \
+CMakeFiles/SiTCP.dir/SiTCP.o: /storage/ATTPC/DAQ_dev/src/SiTCP/SiTCP.cpp \
+ /usr/include/stdc-predef.h /storage/ATTPC/DAQ_dev/src/SiTCP/SiTCP.h \
  /opt/root/include/TGClient.h /opt/root/include/TObject.h \
  /opt/root/include/Rtypes.h /opt/root/include/RtypesCore.h \
  /opt/root/include/ROOT/RConfig.hxx /opt/root/include/RVersion.h \
@@ -284,4 +284,5 @@ CMakeFiles/SiTCP.dir/SiTCP.o: /storage/ATTPC/DAQ/src/SiTCP/SiTCP.cpp \
  /usr/include/c++/11/bits/locale_conv.h /usr/include/c++/11/iomanip \
  /usr/include/c++/11/bits/quoted_string.h /usr/include/c++/11/sstream \
  /usr/include/c++/11/bits/sstream.tcc /usr/include/c++/11/codecvt \
- /usr/include/c++/11/bits/fs_dir.h /usr/include/c++/11/bits/fs_ops.h
+ /usr/include/c++/11/bits/fs_dir.h /usr/include/c++/11/bits/fs_ops.h \
+ /opt/root/include/TTime.h /opt/root/include/TTimeStamp.h

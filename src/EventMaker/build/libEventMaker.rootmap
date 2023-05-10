@@ -1,4 +1,0 @@
-[ libEventMaker.so ]
-# List of selected classes
-class EventMaker
-header EventMaker.h

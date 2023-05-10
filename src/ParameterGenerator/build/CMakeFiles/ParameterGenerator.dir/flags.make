@@ -4,7 +4,7 @@
 # compile CXX with /usr/bin/c++
 CXX_DEFINES = -DParameterGenerator_EXPORTS
 
-CXX_INCLUDES = -I/storage/ATTPC/daq-dev-/src/ParameterGenerator -isystem /opt/root/include
+CXX_INCLUDES = -I/storage/ATTPC/DAQ_dev/src/ParameterGenerator -isystem /opt/root/include
 
 CXX_FLAGS = -fPIC
 

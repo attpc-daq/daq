@@ -12,7 +12,7 @@
 #include <TBufferJSON.h>
 #include "RawEvent.h"
 #include "TMessageSocket.h"
-#include "EventMaker.h"
+#include "EventConverter.h"
 #include <mutex>
 #include <THttpServer.h>
 #include <filesystem>
@@ -50,7 +50,9 @@ private:
 
   int pad_numQA = 0;
 
-  EventMaker maker;
+  EventConverter converter;
+
+  int THttpServerPort;
 
   int socketPort;
   string socketHost;

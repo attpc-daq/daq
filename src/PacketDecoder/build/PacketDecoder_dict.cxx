@@ -149,11 +149,11 @@ namespace {
 nullptr
     };
     static const char* includePaths[] = {
-"/storage/ATTPC/DAQ/src/PacketDecoder",
-"/storage/ATTPC/DAQ/src/PacketDecoder",
+"/storage/ATTPC/DAQ_dev/src/PacketDecoder",
+"/storage/ATTPC/DAQ_dev/src/PacketDecoder",
 "/opt/root/include",
 "/opt/root/include/",
-"/storage/ATTPC/DAQ/src/PacketDecoder/build/",
+"/storage/ATTPC/DAQ_dev/src/PacketDecoder/build/",
 nullptr
     };
     static const char* fwdDeclCode = R"DICTFWDDCLS(

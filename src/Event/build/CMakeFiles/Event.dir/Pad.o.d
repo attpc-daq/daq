@@ -1,5 +1,5 @@
-CMakeFiles/Event.dir/Pad.o: /storage/ATTPC/DAQ/src/Event/Pad.cpp \
- /usr/include/stdc-predef.h /storage/ATTPC/DAQ/src/Event/Pad.h \
+CMakeFiles/Event.dir/Pad.o: /storage/ATTPC/DAQ_dev/src/Event/Pad.cpp \
+ /usr/include/stdc-predef.h /storage/ATTPC/DAQ_dev/src/Event/Pad.h \
  /opt/root/include/TGClient.h /opt/root/include/TObject.h \
  /opt/root/include/Rtypes.h /opt/root/include/RtypesCore.h \
  /opt/root/include/ROOT/RConfig.hxx /opt/root/include/RVersion.h \

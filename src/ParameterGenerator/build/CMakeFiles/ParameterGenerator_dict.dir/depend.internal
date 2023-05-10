@@ -46,5 +46,5 @@ ParameterGenerator_dict.cxx
  /opt/root/include/snprintf.h
  /opt/root/include/strlcpy.h
  /opt/root/include/strtok.h
- /storage/ATTPC/daq-dev-/src/ParameterGenerator/Linkdef.h
- /storage/ATTPC/daq-dev-/src/ParameterGenerator/ParameterGenerator.h
+ /storage/ATTPC/DAQ_dev/src/ParameterGenerator/Linkdef.h
+ /storage/ATTPC/DAQ_dev/src/ParameterGenerator/ParameterGenerator.h
