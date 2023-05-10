@@ -1,8 +1,0 @@
-/storage/ATTPC/DAQ_dev/src/EventConverter/build/CMakeFiles/EventConverter.dir
-/storage/ATTPC/DAQ_dev/src/EventConverter/build/CMakeFiles/EventConverter_dict.dir
-/storage/ATTPC/DAQ_dev/src/EventConverter/build/CMakeFiles/edit_cache.dir
-/storage/ATTPC/DAQ_dev/src/EventConverter/build/CMakeFiles/rebuild_cache.dir
-/storage/ATTPC/DAQ_dev/src/EventConverter/build/CMakeFiles/list_install_components.dir
-/storage/ATTPC/DAQ_dev/src/EventConverter/build/CMakeFiles/install.dir
-/storage/ATTPC/DAQ_dev/src/EventConverter/build/CMakeFiles/install/local.dir
-/storage/ATTPC/DAQ_dev/src/EventConverter/build/CMakeFiles/install/strip.dir

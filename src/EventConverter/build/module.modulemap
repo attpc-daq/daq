@@ -1,7 +1,0 @@
-module "EventConverter" {
-  requires cplusplus
-  module "EventConverter.h" { header "EventConverter.h" export * }
-  link "libEventConverter.so"
-  export *
-}
-

@@ -1,4 +1,0 @@
-/usr/local/lib/libTMessageBuffer.so
-/usr/local/include/TMessageBuffer.h
-/usr/local/lib/libTMessageBuffer.rootmap
-/usr/local/lib/libTMessageBuffer_rdict.pcm

@@ -1,8 +1,0 @@
-/storage/ATTPC/daq-dev-/src/TMessageBuffer/build/CMakeFiles/TMessageBuffer.dir
-/storage/ATTPC/daq-dev-/src/TMessageBuffer/build/CMakeFiles/TMessageBuffer_dict.dir
-/storage/ATTPC/daq-dev-/src/TMessageBuffer/build/CMakeFiles/edit_cache.dir
-/storage/ATTPC/daq-dev-/src/TMessageBuffer/build/CMakeFiles/rebuild_cache.dir
-/storage/ATTPC/daq-dev-/src/TMessageBuffer/build/CMakeFiles/list_install_components.dir
-/storage/ATTPC/daq-dev-/src/TMessageBuffer/build/CMakeFiles/install.dir
-/storage/ATTPC/daq-dev-/src/TMessageBuffer/build/CMakeFiles/install/local.dir
-/storage/ATTPC/daq-dev-/src/TMessageBuffer/build/CMakeFiles/install/strip.dir

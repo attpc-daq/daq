@@ -1,4 +1,0 @@
-[ libDataProcessor.so ]
-# List of selected classes
-class DataProcessor
-header DataProcessor.h

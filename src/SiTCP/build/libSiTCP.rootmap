@@ -1,4 +1,0 @@
-[ libSiTCP.so ]
-# List of selected classes
-class SiTCP
-header SiTCP.h

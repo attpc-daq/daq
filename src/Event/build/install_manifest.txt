@@ -1,5 +1,0 @@
-/usr/local/lib/libEvent.so
-/usr/local/include/Pad.h
-/usr/local/include/Event.h
-/usr/local/lib/libEvent.rootmap
-/usr/local/lib/libEvent_rdict.pcm

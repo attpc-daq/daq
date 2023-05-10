@@ -1,4 +1,0 @@
-[ libParameterGenerator.so ]
-# List of selected classes
-class ParameterGenerator
-header ParameterGenerator.h

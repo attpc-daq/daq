@@ -1,4 +1,0 @@
-[ libEventQA.so ]
-# List of selected classes
-class EventQA
-header EventQA.h

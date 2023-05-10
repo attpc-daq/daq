@@ -1,7 +1,0 @@
-module "PacketDecoder" {
-  requires cplusplus
-  module "PacketDecoder.h" { header "PacketDecoder.h" export * }
-  link "libPacketDecoder.so"
-  export *
-}
-

@@ -1,4 +1,0 @@
-/usr/local/lib/libParameterGenerator.so
-/usr/local/include/ParameterGenerator.h
-/usr/local/lib/libParameterGenerator.rootmap
-/usr/local/lib/libParameterGenerator_rdict.pcm

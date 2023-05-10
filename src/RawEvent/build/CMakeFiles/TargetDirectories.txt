@@ -1,8 +1,0 @@
-/storage/ATTPC/DAQ_dev/src/RawEvent/build/CMakeFiles/RawEvent.dir
-/storage/ATTPC/DAQ_dev/src/RawEvent/build/CMakeFiles/RawEvent_dict.dir
-/storage/ATTPC/DAQ_dev/src/RawEvent/build/CMakeFiles/edit_cache.dir
-/storage/ATTPC/DAQ_dev/src/RawEvent/build/CMakeFiles/rebuild_cache.dir
-/storage/ATTPC/DAQ_dev/src/RawEvent/build/CMakeFiles/list_install_components.dir
-/storage/ATTPC/DAQ_dev/src/RawEvent/build/CMakeFiles/install.dir
-/storage/ATTPC/DAQ_dev/src/RawEvent/build/CMakeFiles/install/local.dir
-/storage/ATTPC/DAQ_dev/src/RawEvent/build/CMakeFiles/install/strip.dir

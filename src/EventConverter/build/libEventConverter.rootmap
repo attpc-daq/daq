@@ -1,4 +1,0 @@
-[ libEventConverter.so ]
-# List of selected classes
-class EventConverter
-header EventConverter.h

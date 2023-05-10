@@ -1,7 +1,0 @@
-module "SiTCP" {
-  requires cplusplus
-  module "SiTCP.h" { header "SiTCP.h" export * }
-  link "libSiTCP.so"
-  export *
-}
-

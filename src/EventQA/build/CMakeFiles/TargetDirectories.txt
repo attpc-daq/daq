@@ -1,8 +1,0 @@
-/storage/ATTPC/DAQ_dev/src/EventQA/build/CMakeFiles/EventQA.dir
-/storage/ATTPC/DAQ_dev/src/EventQA/build/CMakeFiles/EventQA_dict.dir
-/storage/ATTPC/DAQ_dev/src/EventQA/build/CMakeFiles/edit_cache.dir
-/storage/ATTPC/DAQ_dev/src/EventQA/build/CMakeFiles/rebuild_cache.dir
-/storage/ATTPC/DAQ_dev/src/EventQA/build/CMakeFiles/list_install_components.dir
-/storage/ATTPC/DAQ_dev/src/EventQA/build/CMakeFiles/install.dir
-/storage/ATTPC/DAQ_dev/src/EventQA/build/CMakeFiles/install/local.dir
-/storage/ATTPC/DAQ_dev/src/EventQA/build/CMakeFiles/install/strip.dir

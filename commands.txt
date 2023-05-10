@@ -7,7 +7,7 @@ newlog
 initsitcp
 #sleep 1000
 
-connectdevice 0.0.0.0 8801
+connectdevice 0.0.0.0 8001
 #sleep 1000
 
 startsitcp
