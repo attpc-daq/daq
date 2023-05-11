@@ -19,8 +19,8 @@ void ParameterGenerator::reset(){
         }
 }
 void ParameterGenerator::fill(RawEvent* revt){
-    for(auto obj: *(revt->channels)){
-        Channel* ch = (Channel*) obj;
+    for(int i=0;i<revt->NChannel;i++){
+        Channel* ch = (Channel*) revt->channels->At(i);
         int len = sizeof(ch->waveform)/sizeof(UInt_t);
         int waveform_mean = TMath::Mean(len, ch->waveform);
         int waveform_rms = TMath::RMS(len, ch->waveform);

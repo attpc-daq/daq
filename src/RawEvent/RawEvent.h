@@ -3,7 +3,8 @@
 #include <TGClient.h>
 #include <TObject.h>
 #include "Channel.h"
-#include <TList.h>
+#include <TClonesArray.h>
+// #include <TList.h>
 using namespace std;
 class RawEvent :public TObject{
 public:
@@ -16,7 +17,8 @@ public:
   void AddChannel(Channel* ch);
   void AddChannel(const Channel& ch);
   void reset();
-  TList * channels;
+  TClonesArray * channels;
+  int NChannel;
 private:
   ClassDef(RawEvent,1)
 };

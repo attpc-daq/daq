@@ -65,7 +65,7 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
         self.dataProcessor.setDir(self.outputDir)
         self.dataProcessor.setDataPort(8002)
         self.dataProcessor.setQAPort(8003)
-        self.dataProcessor.setEventSave(False)
+        self.dataProcessor.setEventSave(True)
         self.dataProcessor.setRawEventSave(True)
         self.dataProcessor.setQA(True)
         self.dataProcessor.generateParameters(10)

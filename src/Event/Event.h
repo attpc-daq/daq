@@ -3,7 +3,8 @@
 #include "TGClient.h"
 #include "TObject.h"
 #include "Pad.h"
-#include <TList.h>
+#include <TClonesArray.h>
+// #include <TList.h>
 
 using namespace std;
 
@@ -19,7 +20,8 @@ public:
   uint64_t timestamp;
   float WValue; //unit: eV
   float Vdrift; //unit: mm/ns
-  TList* pads;
+  TClonesArray* pads;
+  int NPad;
 private:
   ClassDef(Event,1)
 };

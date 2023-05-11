@@ -5,8 +5,8 @@
 class Channel:public TObject{
 public:
     Channel();
-    Channel(const Channel& ch);
-    Channel(Channel* ch);
+    Channel(const Channel& other);
+    Channel(Channel* other);
     ~Channel();
     uint64_t event_id;
     uint64_t timestamp;

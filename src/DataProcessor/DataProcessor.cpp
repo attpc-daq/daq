@@ -249,7 +249,7 @@ void DataProcessor::createRawEventFile(){
     rawEventFile->cd();
     rawEventTree = new TTree(rawEventTreeName.c_str(), rawEventTreeName.c_str());
     rawEventTree->Branch(rawEventBranchName.c_str(), &rawEvent);
-
+    
     cout<<"raw event file created:"<<(dir+rawEventFilePrefix+to_string(rawEventFileID)+".root")<<endl;
 }
 void DataProcessor::updateEventFileID(){

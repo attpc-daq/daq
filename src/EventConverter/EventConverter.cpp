@@ -64,8 +64,8 @@ Event* EventConverter::convert(const RawEvent &REvt){
     event->timestamp = REvt.timestamp;
     event->WValue = WValue;
     event->Vdrift = Vdrift;
-    for(auto obj: *(REvt.channels)){
-        Channel* iter = (Channel*)obj;
+    for(int i=0;i<REvt.NChannel;i++){
+        Channel* iter = (Channel*) REvt.channels->At(i);
         if(iter->FEE_id>=32 || iter->channel_id>64)continue;
         Pad pad;
         if(iter->FEE_id%2==0){}

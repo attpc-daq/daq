@@ -159,8 +159,8 @@ void EventQA::fill(const RawEvent &revt, const Event &evt){
     float mesh_charge = 0;
     track_2D->Reset();
     track_3D->Reset();
-    for(auto channelIter: *(revt.channels)){
-        Channel* ch = (Channel*)channelIter;
+    for(int i=0;i<revt.NChannel;i++){
+        Channel* ch = (Channel*) revt.channels->At(i);
         for(auto padIter : *(evt.pads)){
             Pad* pad = (Pad*)padIter;
             int padrow = pad->padRow;

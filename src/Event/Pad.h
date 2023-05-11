@@ -8,8 +8,8 @@ using namespace std;
 class Pad:public TObject{
 public:
     Pad();
-    Pad(const Pad& pad);
-    Pad(Pad* ch);
+    Pad(const Pad& other);
+    Pad(Pad* other);
     ~Pad();
     int padRow;
     int padColumn;

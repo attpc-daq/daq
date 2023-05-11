@@ -11,9 +11,9 @@ Pad::Pad(){
 }
 Pad::~Pad(){}
 
-Pad::Pad(const Pad& pad){
-    *this = pad;
+Pad::Pad(const Pad& other){
+    *this = other;
 }
-Pad::Pad(Pad* pad){
-    *this = *pad;
+Pad::Pad(Pad* other){
+    *this = *other;
 }
