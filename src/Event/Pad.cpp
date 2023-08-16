@@ -11,9 +11,21 @@ Pad::Pad(){
 }
 Pad::~Pad(){}
 
-Pad::Pad(const Pad& other){
-    *this = other;
-}
-Pad::Pad(Pad* other){
-    *this = *other;
-}
+Pad::Pad(const Pad& other):
+padRow(other.padRow),
+padColumn(other.padColumn),
+padNumber(other.padNumber),
+adc(other.adc),
+ChargeDeposited(other.ChargeDeposited),
+Energy(other.Energy),
+DriftTime(other.DriftTime)
+{}
+Pad::Pad(Pad* other):
+padRow(other->padRow),
+padColumn(other->padColumn),
+padNumber(other->padNumber),
+adc(other->adc),
+ChargeDeposited(other->ChargeDeposited),
+Energy(other->Energy),
+DriftTime(other->DriftTime)
+{}

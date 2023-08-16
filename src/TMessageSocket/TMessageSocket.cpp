@@ -24,8 +24,9 @@ TMessageSocket::~TMessageSocket(){
 bool TMessageSocket::put(TObject* obj){
     return buffer->put(obj);
 }
-TObject* TMessageSocket::get(TClass* cl){
+TMessage* TMessageSocket::getMessage(){
     if(receiver == NULL ){
+        cout<<"QA connecting to DP data port ..."<<endl;
         receiver = new TSocket(host.c_str(), port);
         if(receiver->IsValid() == kFALSE){
             receiver = NULL;
@@ -41,8 +42,10 @@ TObject* TMessageSocket::get(TClass* cl){
     }
     TMessage *msg;
     int n = receiver->Recv(msg);
-    if(n<=0)return NULL;
-    return msg->ReadObject(cl);
+    if(n<=0){
+        return NULL;
+    }
+    return msg;
 }
 
 void TMessageSocket::setBufferSize(int size){
@@ -56,18 +59,20 @@ void TMessageSocket::asSender(int port){
 void TMessageSocket::senderLoop(int port){
     status = status_running;
     TServerSocket *server = new TServerSocket(port, true);
-    server->SetOption(kNoBlock, 1);
-    TMonitor serverMonitor;
+    // server->SetOption(kNoBlock, 1);
+    TMonitor serverMonitor, clientMonitor;
     serverMonitor.Add(server);
     while(status == status_running){
-        TSocket* s = serverMonitor.Select(1);
+        serverMonitor.ResetInterrupt();
+        TSocket* s = serverMonitor.Select(5); 
         if(s == (TSocket *)-1) {
             sleep(1);
             continue;
         }
         TSocket *sender = ((TServerSocket*)s)->Accept();
         if(sender == (TSocket *)-1) continue;
-        sender->SetOption(kNoBlock,1);
+        clientMonitor.Add(sender);
+        // sender->SetOption(kNoBlock,1);
         while(status == status_running && sender->IsValid()){
             TMessage *msg = buffer->get();
             if (msg->What() == kMESS_OBJECT) {

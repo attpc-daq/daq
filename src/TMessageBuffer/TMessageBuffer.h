@@ -7,7 +7,6 @@
 #include "stdio.h"
 #include "TMessage.h"
 #include <atomic>
-#include "RawEvent.h"
 #include <mutex>
 
 using namespace std;

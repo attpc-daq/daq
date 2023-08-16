@@ -28,11 +28,10 @@ public:
     virtual ~SiTCP();
     void setDir(const char* dir="./output");
     void clearDir();
-    void connectDevice(const char* ip, int port);
-    void disconnectDevice();
+
     void run();
     void stop();
-    void sendToDevice(const char* msg);
+    // bool sendToDevice(const char* msg);
     void setDataProcessHost(int port=8002, const char* host="localhost");
     void setSocketBufferSize(int n=1024*1024);
     void setFileMaxSize(int n=16*1024*1024);
@@ -40,8 +39,14 @@ public:
     int getConnectionState(){return connectionStatus;}
     float getRate(){return rate;}
     int getNTasks(){return nTasks;}
+    bool getDecoderState(){return writeBuffer;}
+    void enableDecoder();
+    void disableDecoder();
+    void setupServerAddress(const char* ip, int port);
 
 private:
+    void connectDevice();
+    void disconnectDevice();
 
     int dataPort;
     string dataHost;
@@ -81,6 +86,8 @@ private:
     atomic_int status;
     atomic_int connectionStatus;
     atomic_int nTasks;
+
+    atomic_bool writeBuffer;
 
     mutex lock;
 

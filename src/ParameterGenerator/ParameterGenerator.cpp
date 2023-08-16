@@ -76,50 +76,77 @@ string ParameterGenerator::getThreshold(){
     return js.dump(2);
 }
 
-string ParameterGenerator::getSettings(int WValue, int Vdrift) {
-    // 创建 FPC2 数组
-    std::vector<std::map<std::string, int>> FPC2 = {
-        {{"0", 2}},
-        {{"1", 2}},
-        {{"2", 0}},
-        {{"3", 0}},
-        {{"4", 10}},
-        {{"5", 10}},
-        {{"6", 8}},
-        {{"7", 8}},
-        {{"8", 15}},
-        {{"9", 15}},
-        {{"10", 15}},
-        {{"11", 15}},
-        {{"12", 15}},
-        {{"13", 15}},
-        {{"14", 15}},
-        {{"15", 15}},
-        {{"16", 15}},
-        {{"17", 15}},
-        {{"18", 15}},
-        {{"19", 15}},
-        {{"20", 15}},
-        {{"21", 15}},
-        {{"22", 15}},
-        {{"23", 15}},
-        {{"24", 15}},
-        {{"25", 15}},
-        {{"26", 15}},
-        {{"27", 15}},
-        {{"28", 15}},
-        {{"29", 15}},
-        {{"30", 15}},
-        {{"31", 15}}
-    };
+// string ParameterGenerator::getSettings(int WValue, int Vdrift) {
+//     // 创建 FPC2 数组
+//     std::vector<std::map<std::string, int>> FPC2 = {
+//         {{"0", 2}},
+//         {{"1", 2}},
+//         {{"2", 0}},
+//         {{"3", 0}},
+//         {{"4", 10}},
+//         {{"5", 10}},
+//         {{"6", 8}},
+//         {{"7", 8}},
+//         {{"8", 15}},
+//         {{"9", 15}},
+//         {{"10", 15}},
+//         {{"11", 15}},
+//         {{"12", 15}},
+//         {{"13", 15}},
+//         {{"14", 15}},
+//         {{"15", 15}},
+//         {{"16", 15}},
+//         {{"17", 15}},
+//         {{"18", 15}},
+//         {{"19", 15}},
+//         {{"20", 15}},
+//         {{"21", 15}},
+//         {{"22", 15}},
+//         {{"23", 15}},
+//         {{"24", 15}},
+//         {{"25", 15}},
+//         {{"26", 15}},
+//         {{"27", 15}},
+//         {{"28", 15}},
+//         {{"29", 15}},
+//         {{"30", 15}},
+//         {{"31", 15}}
+//     };
 
-    // 创建 Micromegas_Gain 数组
+//     // 创建 Micromegas_Gain 数组
+//     std::vector<std::map<std::string, double>> Micromegas_Gain(2048);
+//     for (int i = 0; i < 2048; i++) {
+//         Micromegas_Gain[i][std::to_string(i)] = 1000.0;
+//     }
+
+//     //创建 Electronic_Gain 数组
+//     std::vector<std::map<std::string, double>> Electronic_Gain(2048);
+//     for (int i = 0; i < 2048; i++) {
+//         Electronic_Gain[i][std::to_string(i)] = 0.75;
+//     }
+
+//     // 创建整个 JSON 对象
+//     json json_data = {
+//         {"WValue", WValue},//unit: eV
+//         {"Vdrift", Vdrift},//unit: mm/ns
+//         {"FPC2", FPC2},
+//         {"Micromegas_Gain", Micromegas_Gain},
+//         {"Electronic_Gain", Electronic_Gain}
+//     };
+
+//     // 将 JSON 对象转换为字符串
+//     std::string eventSettingJson = json_data.dump(2);
+//     return eventSettingJson;
+// }
+
+string ParameterGenerator::getSettings(int WValue, int Vdrift, std::vector<std::map<string,int>> FPC2, const char* ElectronicFIle, const char* MicromegasFile) {
+    //TODO: 根据MicromegasFile读取解析并创建 Micromegas_Gain 数组
     std::vector<std::map<std::string, double>> Micromegas_Gain(2048);
     for (int i = 0; i < 2048; i++) {
         Micromegas_Gain[i][std::to_string(i)] = 1000.0;
     }
 
-    //创建 Electronic_Gain 数组
+    //TODO: 根据ElectronicFIle读取解析并创建 Electronic_Gain 数组
     std::vector<std::map<std::string, double>> Electronic_Gain(2048);
     for (int i = 0; i < 2048; i++) {
         Electronic_Gain[i][std::to_string(i)] = 0.75;
@@ -127,8 +154,8 @@ string ParameterGenerator::getSettings(int WValue, int Vdrift) {
 
     // 创建整个 JSON 对象
     json json_data = {
-        {"WValue", WValue},
-        {"Vdrift", Vdrift},
+        {"WValue", WValue},//unit: eV
+        {"Vdrift", Vdrift},//unit: mm/ns
         {"FPC2", FPC2},
         {"Micromegas_Gain", Micromegas_Gain},
         {"Electronic_Gain", Electronic_Gain}

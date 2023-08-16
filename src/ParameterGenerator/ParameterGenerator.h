@@ -13,6 +13,7 @@
 #include <filesystem>
 #include <sstream>
 #include <string>
+#include <vector>
 
 #include <fcntl.h>
 
@@ -24,7 +25,8 @@ public:
     virtual ~ParameterGenerator();
     void reset();
     void fill(RawEvent* revt);
-    string getSettings(int WValue, int Vdrift);
+    // string getSettings(int WValue, int Vdrift);
+    string getSettings(int WValue, int Vdrift, std::vector<std::map<std::string, int>> FPC2, const char* ElectrnicFIle, const char* MicromegasFile);
     string getThreshold();
 
 private:

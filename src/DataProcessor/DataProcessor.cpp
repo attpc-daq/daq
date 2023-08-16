@@ -23,6 +23,49 @@ DataProcessor::DataProcessor(){
     setRawEventSave();
     setEventSave();
     setQA();
+    rate = 0;
+    WValue = 30.0;//unit: eV
+    Vdrift = 10.0;//unit: mm/ns
+    FPC2 = {
+        {{"0", 15}},
+        {{"1", 15}},
+        {{"2", 15}},
+        {{"3", 15}},
+        {{"4", 15}},
+        {{"5", 15}},
+        {{"6", 15}},
+        {{"7", 15}},
+        {{"8", 15}},
+        {{"9", 15}},
+        {{"10", 15}},
+        {{"11", 15}},
+        {{"12", 15}},
+        {{"13", 15}},
+        {{"14", 15}},
+        {{"15", 15}},
+        {{"16", 15}},
+        {{"17", 15}},
+        {{"18", 15}},
+        {{"19", 15}},
+        {{"20", 15}},
+        {{"21", 15}},
+        {{"22", 15}},
+        {{"23", 15}},
+        {{"24", 15}},
+        {{"25", 15}},
+        {{"26", 15}},
+        {{"27", 15}},
+        {{"28", 15}},
+        {{"29", 15}},
+        {{"30", 15}},
+        {{"31", 15}}
+    };
+    cout<<"initdataprocessor\n";
+    ss = NULL;
+    rawEventCount = 0;
+    eventCount = 0;
+    nMakePar = -1;
+    rawEventFileID =0;
 }
 DataProcessor::~DataProcessor(){}
 void DataProcessor::setDir(const char* _dir){
@@ -67,6 +110,13 @@ void DataProcessor::setEventSave(bool k){
 void DataProcessor::setQA(bool k){
     kQA = k;
 }
+float DataProcessor::getRate(){
+    now.Set();
+    elapsed = now - start_time;
+    double t = static_cast<double>(elapsed.AsDouble());
+    if(t>6) rate =0;
+    return rate;
+}
 void DataProcessor::generateParameters(int n){
     parameter.reset();
     nMakePar = n;
@@ -104,6 +154,7 @@ string DataProcessor::getEventFileList(int n){
 
 void DataProcessor::stop(){
     status = status_stopping;
+    cout<<"Dataprocessor stopping"<<endl;
     mThread->join();
     cout<<"DataProcessor stop"<<endl;
 }
@@ -118,18 +169,19 @@ void DataProcessor::loop(){
     rawEventCount = 0;
     updateEventFileID();
     updateRawEventFileID();
-    TServerSocket* ss = new TServerSocket(dataPort, true);
+    ss = new TServerSocket(dataPort, true);
     ss->SetOption(kNoBlock, 1);
     TSocket* sc;
-    TMonitor serverMonitor, clientMonitor;
     serverMonitor.Add(ss);
     status = status_running;
-    TTimeStamp start_time, now, elapsed;
+    
     start_time.Set();
     rateCount = 0;
+    int nEvents4Rate = 1;
     while(status == status_running){
         sc = clientMonitor.Select(1);
         if(sc == (TSocket *)-1){
+            serverMonitor.ResetInterrupt();
             TSocket* s = serverMonitor.Select(1);
             if(s == (TSocket *)-1) continue;
             sc = ((TServerSocket *)s)->Accept();
@@ -142,18 +194,26 @@ void DataProcessor::loop(){
         auto ptr = msg->ReadObjectAny(RawEvent::Class());
         if(ptr == NULL) continue;
         rateCount++;
-        if(rateCount == nEvents){
-            rateCount = 0;
+        if(rateCount >= nEvents4Rate){
             now.Set();
             elapsed = now - start_time;
-            rate = nEvents/elapsed.AsDouble();
-            cout<<"event rate: "<<rate<<" Hz"<<endl;
+            double t = static_cast<double>(elapsed.AsDouble());
+            if(t < 3){
+                nEvents4Rate++;
+            }else{
+                rate = rateCount/t;
+                // cout<<"event rate: "<<rate<<" Hz"<<endl;
+                start_time.Set();
+                rateCount = 0;
+            }
         }
         RawEvent* revt =(RawEvent*) ptr;
         if(kRawEventSave)saveRawEvent(revt);
         if(kEventSave)saveEvent(revt);
         if(nMakePar>0)makePar(revt);
         if(kQA)QA(revt);
+        delete msg;
+        delete revt;
     }
     for(auto ptr:*(clientMonitor.GetListOfActives())){
         cout<<"waiting for client to close"<<endl;
@@ -161,13 +221,6 @@ void DataProcessor::loop(){
         clientMonitor.Remove(sc);
         sc->Close();
     }
-
-        // cout<<"waiting for client to close"<<endl;
-        // if(clientMonitor.GetActive() == 0)break;
-        // sc = clientMonitor.Select(1); 
-        // if(sc == (TSocket *)-1) continue;
-        // clientMonitor.Remove(sc);
-        // sc->Close();
 
     ss->Close();
     if(QASocket != NULL) {
@@ -213,7 +266,8 @@ void DataProcessor::makePar(RawEvent* revt){
         file1<<parameter.getThreshold();
         file1.close();
         ofstream file2((dir+"eventParameters.json").c_str());
-        file2<<parameter.getSettings(33.2,10);
+        // file2<<parameter.getSettings(WValue,Vdrift);
+        file2<<parameter.getSettings(WValue,Vdrift,FPC2,ElectronicFile,MicromegasFile);
         file2.close();
         cout<<"parameter generations done"<<endl;
     }
@@ -222,6 +276,7 @@ void DataProcessor::QA(RawEvent* revt){
     if(QASocket==NULL){
         QASocket = new TMessageSocket(QAPort);
     }
+    // cout<<"DataProcessor::QA "<<revt->event_id<<endl;
     QASocket->put(revt);
 }
 void DataProcessor::closeEventFile(){
@@ -236,7 +291,7 @@ void DataProcessor::createEventFile(){
     eventTree = new TTree(eventTreeName.c_str(), eventTreeName.c_str());
     eventTree->Branch(eventBranchName.c_str(), &event);
 
-    cout<<"event file created:"<<(dir+eventFilePrefix+to_string(eventFileID)+".root")<<endl;
+    // cout<<"event file created:"<<(dir+eventFilePrefix+to_string(eventFileID)+".root")<<endl;
 }
 void DataProcessor::closeRawEventFile(){
     rawEventFile->cd();
@@ -250,7 +305,7 @@ void DataProcessor::createRawEventFile(){
     rawEventTree = new TTree(rawEventTreeName.c_str(), rawEventTreeName.c_str());
     rawEventTree->Branch(rawEventBranchName.c_str(), &rawEvent);
     
-    cout<<"raw event file created:"<<(dir+rawEventFilePrefix+to_string(rawEventFileID)+".root")<<endl;
+    // cout<<"raw event file created:"<<(dir+rawEventFilePrefix+to_string(rawEventFileID)+".root")<<endl;
 }
 void DataProcessor::updateEventFileID(){
     eventFileID = 0;
@@ -262,7 +317,7 @@ void DataProcessor::updateEventFileID(){
         int id = stoi(name.substr(eventFilePrefix.size(),name.size() - suffix.size()));
         if(id>eventFileID)eventFileID = id;
     }
-    cout<<"event file id:"<<eventFileID<<endl;
+    // cout<<"event file id:"<<eventFileID<<endl;
 }
 void DataProcessor::updateRawEventFileID(){
     rawEventFileID = 0;
@@ -274,5 +329,16 @@ void DataProcessor::updateRawEventFileID(){
         int id = stoi(name.substr(rawEventFilePrefix.size(),name.size() - suffix.size()));
         if(id>rawEventFileID)rawEventFileID = id;
     }
-    cout<<"raw event file id:"<<rawEventFileID<<endl;
+    // cout<<"raw event file id:"<<rawEventFileID<<endl;
+}
+
+void DataProcessor::setFPC2(std::vector<std::map<string,int>> fpc2){
+    std::vector<std::map<string, int>>().swap(FPC2);
+    for (const auto& map : fpc2) {
+        FPC2.push_back(map);
+        // 输出map的键和值
+        // for (const auto& pair : map) {
+        //     cout << "Key: " << pair.first << ", Value: " << pair.second << endl;
+        // }
+    }
 }

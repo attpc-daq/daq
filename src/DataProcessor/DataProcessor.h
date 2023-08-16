@@ -19,6 +19,10 @@
 #include <TFileCollection.h>
 #include "ParameterGenerator.h"
 
+#include <iostream>
+#include <vector>
+#include <string>
+#include <map>
 
 using namespace std;
 class DataProcessor :public TObject{
@@ -50,11 +54,27 @@ public:
   string getRawEventFileList(int n = -1);
   string getEventFileList(int n = -1);
 
+  uint64_t getNRawEventFiles(){return rawEventFileID;}
+
   int getState(){return status;}
-  float getRate(){return rate;}
+  float getRate();
   int getNMakePar(){return nMakePar;}
 
+  //update: by whk
+  void setWValue(float value){WValue = value;}
+  void setVdrift(float value){Vdrift = value;}
+  void setFPC2(std::vector<std::map<string,int>> fpc2);
+  void setGainFile(const char* E_file,const char* M_file){ElectronicFile=E_file;MicromegasFile=M_file;}
+  void setElectronicFile(const char* E_file){ElectronicFile=E_file;}
+  void setMicromegasFile(const char* M_file){MicromegasFile=M_file;}
+
 private:
+  //UPDATE: by whk
+  float WValue; //unit: eV
+  float Vdrift; //unit: mm/ns
+  std::vector<std::map<string,int>> FPC2;
+  const char* ElectronicFile = nullptr;
+  const char* MicromegasFile = nullptr;
 
   float rate;
   uint64_t rateCount;
@@ -73,10 +93,10 @@ private:
   RawEvent rawEvent;
   Event event;
 
-  uint64_t rawEventCount;
-  uint64_t eventCount;
-  uint64_t rawEventFileID;
-  uint64_t eventFileID;
+  uint64_t rawEventCount=0;
+  uint64_t eventCount=0;
+  uint64_t rawEventFileID=0;
+  uint64_t eventFileID=0;
 
   int QAPort;
   int dataPort;
@@ -84,7 +104,7 @@ private:
   atomic_bool kRawEventSave;
   atomic_bool kEventSave;
   atomic_bool kQA;
-  atomic_int nMakePar;
+  atomic_int nMakePar=0;
 
   string rawEventBranchName;
   string rawEventTreeName;
@@ -116,6 +136,11 @@ private:
   int status_stopped = 4;
   atomic_int status;
   thread * mThread;
+
+  TTimeStamp start_time, now, elapsed;
+
+  TServerSocket* ss;
+  TMonitor serverMonitor, clientMonitor;
 
   ClassDef(DataProcessor,1)
 };

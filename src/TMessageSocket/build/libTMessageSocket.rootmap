@@ -1,0 +1,4 @@
+[ libTMessageSocket.so ]
+# List of selected classes
+class TMessageSocket
+header TMessageSocket.h

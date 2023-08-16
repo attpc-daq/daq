@@ -1,0 +1,8 @@
+/storage/ATTPC/DAQ/src/TMessageSocket/build/CMakeFiles/TMessageSocket.dir
+/storage/ATTPC/DAQ/src/TMessageSocket/build/CMakeFiles/TMessageSocket_dict.dir
+/storage/ATTPC/DAQ/src/TMessageSocket/build/CMakeFiles/edit_cache.dir
+/storage/ATTPC/DAQ/src/TMessageSocket/build/CMakeFiles/rebuild_cache.dir
+/storage/ATTPC/DAQ/src/TMessageSocket/build/CMakeFiles/list_install_components.dir
+/storage/ATTPC/DAQ/src/TMessageSocket/build/CMakeFiles/install.dir
+/storage/ATTPC/DAQ/src/TMessageSocket/build/CMakeFiles/install/local.dir
+/storage/ATTPC/DAQ/src/TMessageSocket/build/CMakeFiles/install/strip.dir

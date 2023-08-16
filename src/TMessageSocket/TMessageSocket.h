@@ -22,7 +22,7 @@ public:
     TMessageSocket(int port, const char* host, int bufferSize = 100);
     virtual ~TMessageSocket();
     bool put(TObject* obj);
-    TObject* get(TClass* cl);
+    TMessage* getMessage();
    
 private:
     int port;

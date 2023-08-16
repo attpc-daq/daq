@@ -17,6 +17,7 @@ public:
   EventConverter(const char* filename);
   virtual ~EventConverter();
   void updateSettings(const char* jsonString);
+  double CFD(UInt_t* waveform, Int_t baseline, uint64_t timestampe, double attenuate_factor=0.5);
 
   Event* convert(const RawEvent &evt);
   Event *event;
@@ -25,7 +26,7 @@ private:
   RawEvent rawEvent;
 
   //电子学通道映射转换函数
-  void PadMap(int *XPos,int *ZPos);
+  void PadMap();
 
   float WValue; //unit: eV  气体平均电离能
   float Vdrift; //unit: mm/ns  电子漂移速度

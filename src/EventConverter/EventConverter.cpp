@@ -9,13 +9,13 @@ ClassImp(EventConverter);
 EventConverter::EventConverter(){
     WValue = 30.0; //unit: eV  气体平均电离能
     Vdrift = 1.0; //unit: mm/ns  电子漂移速度
-    PadMap(XPos,ZPos);
+    PadMap();
     event = new Event();
 }
 EventConverter::EventConverter(const char* name){
   WValue = 30.0; //unit: eV  气体平均电离能
   Vdrift = 1.0; //unit: mm/ns  电子漂移速度
-  PadMap(XPos,ZPos);
+  PadMap();
   event = new Event();
   ifstream file(name);
   string content((istreambuf_iterator<char>(file)),(istreambuf_iterator<char>()));
@@ -31,11 +31,12 @@ void EventConverter::updateSettings(const char* jsonString){
   json json_object = json::parse(jsonString);
   WValue = json_object["WValue"];
   Vdrift = json_object["Vdrift"];
-  // std::cout << "FPC2:" << std::endl;
+  std::cout<<"WValue: "<<WValue<<" eV   Vdrift: "<<Vdrift<<" mm/ns"<<std::endl;
+  std::cout << "FPC2:" << std::endl;
   for (const auto& elem : json_object["FPC2"]) {
       for (const auto& [key, value] : elem.items()) {
           int int_key = std::stoi(key);
-          // std::cout << int_key << ": " << value << std::endl;
+          std::cout << int_key << ": " << value << std::endl;
           FPC2[int_key] = value;
       }
   }
@@ -84,38 +85,108 @@ Event* EventConverter::convert(const RawEvent &REvt){
         Int_t n = sizeof(iter->waveform)/sizeof(iter->waveform[0]); // 计算数组长度
         Int_t maxIndex = distance(iter->waveform, max_element(iter->waveform, iter->waveform+n)); // 找到最大值索引
         UInt_t max_waveform = iter->waveform[maxIndex];
-        //小于575一般是噪声过阈值
-        if(max_waveform<575)continue;
         Int_t ADC = max_waveform - baseline;
+        //小于575一般是噪声过阈值
+        if(max_waveform<575||ADC<15)continue;
         Int_t Q = round(ADC/Electronic_Gain[padRow][padColumn])*1e-15*6.24150975E+18; //unit:电子数
         Float_t En = Q/Micromegas_Gain[padRow][padColumn]*WValue/1E+6; //unit:MeV
         // cout<<"En: "<<En<<" Micromegas_Gain[padRow][padColumn]: "<<Micromegas_Gain[padRow][padColumn]<<" Q: "<<Q<<endl;
         pad.adc = ADC;
         pad.ChargeDeposited = Q;
         pad.Energy = En;
-        // 找到90%峰值对应的前后两个点的索引,用线性插值计算90%峰值对应的时间
-        // pad.DriftTime = iter->timestamp * 8.33 + (maxIndex + 1 - 624) * 25;//unit: ns
-        const double threshold = max_waveform * 0.9;
-        int idx1 = 0, idx2 = n - 1;
-        for (int i = maxIndex; i >= 0; i--) {
-            if (iter->waveform[i] <= threshold) {
-                idx1 = i;
-                idx2 = i+1;
-                break;
-            }
-        }
-        // 计算90%峰值对应的时间
-        double t1 = iter->timestamp * 8.33 + (idx1 + 1 - 624) * 25;//unit: ns
-        double t2 = iter->timestamp * 8.33 + (idx2 + 1 - 624) * 25;//unit: ns
-        double slope = (threshold - iter->waveform[idx1]) / (iter->waveform[idx2] - iter->waveform[idx1]);
-        pad.DriftTime = t1 + slope * (t2 - t1);//unit: ns
+
+        // /*=================================
+        // **************前沿定时**************
+        // ===================================*/
+        // // 找到50%峰值对应的前后两个点的索引,用线性插值计算50%峰值对应的时间
+        // // pad.DriftTime = iter->timestamp * 8.33 + (maxIndex + 1 - 624) * 25;//unit: ns
+        // const double threshold = ADC*0.5 + baseline;
+        // int idx1 = 0, idx2 = n - 1;
+        // for (int i = maxIndex; i >= 0; i--) {
+        //     if (iter->waveform[i] <= threshold) {
+        //         idx1 = i;
+        //         idx2 = i+1;
+        //         break;
+        //     }
+        // }
+        // // 计算50%峰值对应的时间
+        // double t1 = iter->timestamp * 8.33 + (idx1 + 1 - 624) * 25;//unit: ns
+        // double t2 = iter->timestamp * 8.33 + (idx2 + 1 - 624) * 25;//unit: ns
+        // double slope = (threshold - iter->waveform[idx1]) / (iter->waveform[idx2] - iter->waveform[idx1]);
+        // pad.DriftTime = t1 + slope * (t2 - t1);//unit: ns
+
+        /*=================================
+        **************CFD定时**************
+        ===================================*/
+        pad.DriftTime = CFD(iter->waveform, baseline, iter->timestamp, 0.5);
 
         event->AddPad(pad);
     }
     return event;
 }
 
-void EventConverter::PadMap(int *XPos,int *ZPos){
+double EventConverter::CFD(UInt_t* waveform, Int_t baseline, uint64_t timestampe, double attenuate_factor){
+    double delaytime[1024];
+    UInt_t attenuateAndinvert[1024];
+    double T0=0;//
+    UInt_t CFD_waveform[1024];
+
+
+    int maxIndex,minIndex=0;
+    maxIndex = distance(waveform, max_element(waveform, waveform+1024)); // 找到最大值索引
+    UInt_t max_waveform = (UInt_t)waveform[maxIndex]; 
+    int ADC = max_waveform - baseline;
+    const double Tr_90 = ADC*0.9 + baseline;
+    const double Tr_10 = ADC*0.1 + baseline;
+    //计算从10%到90%的时间
+    int idx1;
+    for(int j=maxIndex;j>0;j--){
+        if(waveform[j]<Tr_90){
+            idx1=j;
+            break;
+        }
+    }
+    int idx2;
+    for(int j=idx1;j>0;j--){
+        if(waveform[j]<Tr_10){
+            idx2=j;
+            break;
+        }
+    }
+    int Tr=(idx1-idx2)*25;
+    double Td=Tr*(1-attenuate_factor);
+
+    for(int j=0;j<1024;j++){
+        attenuateAndinvert[j]=baseline-attenuate_factor*(waveform[j]-baseline);
+        delaytime[j]=timestampe * 8.33 + (j+1-624) * 25 + Td;
+        CFD_waveform[j]=baseline;
+    }
+
+    for(int j=0;j<1024;j++){
+        int index = j+Td/25;
+        if(index>=1024)continue;
+        CFD_waveform[j]=waveform[j]+attenuateAndinvert[index]-baseline;
+    }
+
+     //寻找CFD_waveform最大与最小值，并求出两者之间过baseline的值
+    int n_cfd = sizeof(CFD_waveform)/sizeof(CFD_waveform[0]); // 计算数组长度
+    maxIndex = distance(CFD_waveform, max_element(CFD_waveform, CFD_waveform+n_cfd)); // 找到最大值索引
+    minIndex = distance(CFD_waveform, min_element(CFD_waveform, CFD_waveform+n_cfd)); // 找到最小值索引
+
+    // cout<<i<<"  maxIndex: "<<maxIndex<<"  max: "<<CFD_waveform[maxIndex]<<"  minIndex: "<<minIndex<<"  min: "<<CFD_waveform[minIndex]<<endl;
+    for(int j=minIndex;j<maxIndex;j++){
+        //线性差值求过baseline的时间
+        if(CFD_waveform[j]<=baseline&&CFD_waveform[j+1]>=baseline){
+            T0=(delaytime[j+1]-delaytime[j])/(CFD_waveform[j+1]-CFD_waveform[j])*(baseline-CFD_waveform[j])+delaytime[j];
+            // cout<<"T0: "<<T0<<" ns"<<endl;
+            break;
+        }
+    }
+
+    return T0;
+}
+
+void EventConverter::PadMap(){
     int IDD[200];
 
     int PAD[32][64];
@@ -236,10 +307,10 @@ void EventConverter::PadMap(int *XPos,int *ZPos){
       //==================================Connector2(ID11,IDD);
       int AID[128];
       int BID[128];
-      int GG2[64]={57,41,25,9,49,33,17,1,56,40,24,8,48,32,16,0,61,45,29,13,53,37,21,5,60,62,28,12,52,36,20,4,
-                   27,11,59,43,19,3,51,35,31,15,63,47,23,7,55,39,26,10,58,42,18,2,50,34,30,14,44,46,22,6,54,38};
-      int GG1[64]={57,41,25,9,49,33,17,1,56,40,24,8 ,48,32,16,0,61,45,29,13,53,37,21,5,60,62,28,12,52,36,20,4,
-                   27,11,59,43,19,3,51,35,31,15,63,47,23,7,55,39,26,10,58,42,18,2,50,34,30,14,44,46,22,6,54,38};  
+      int GG2[64]={57,41,25,9,49,33,17,1,56,40,24,8,48,32,16,0,61,45,29,13,53,37,21,5,60,44,28,12,52,36,20,4,
+               27,11,59,43,19,3,51,35,31,15,63,47,23,7,55,39,26,10,58,42,18,2,50,34,30,14,62,46,22,6,54,38};
+      int GG1[64]={57,41,25,9,49,33,17,1,56,40,24,8,48,32,16,0,61,45,29,13,53,37,21,5,60,44,28,12,52,36,20,4,
+               27,11,59,43,19,3,51,35,31,15,63,47,23,7,55,39,26,10,58,42,18,2,50,34,30,14,62,46,22,6,54,38};  
 
       for(int i=0;i<128;i++)IDD[i]=-1;
 

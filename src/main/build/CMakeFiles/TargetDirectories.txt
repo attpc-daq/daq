@@ -1,0 +1,3 @@
+/storage/ATTPC/DAQ/src/main/build/CMakeFiles/myprogram.dir
+/storage/ATTPC/DAQ/src/main/build/CMakeFiles/edit_cache.dir
+/storage/ATTPC/DAQ/src/main/build/CMakeFiles/rebuild_cache.dir

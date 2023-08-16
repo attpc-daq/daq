@@ -9,6 +9,8 @@ using namespace std;
 class RawEvent :public TObject{
 public:
   RawEvent();
+  // RawEvent(const RawEvent& other);
+  // RawEvent(RawEvent* other);
   RawEvent& operator=(const RawEvent& other);
   virtual ~RawEvent();
   uint64_t event_id;

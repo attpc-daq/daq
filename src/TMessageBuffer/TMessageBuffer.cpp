@@ -1,6 +1,4 @@
 #include "TMessageBuffer.h"
-#include "RawEvent.h"
-#include "TH1F.h"
 ClassImp(TMessageBuffer);
 
 TMessageBuffer::TMessageBuffer(int size){

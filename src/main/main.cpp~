@@ -1,0 +1,18 @@
+#include <iostream>
+#include "TH1F.h"
+#include "TMessage.h"
+
+
+int test() {
+    TH1F *h1 = new TH1F("hpx","This is the px distribution",100,-4,4);
+    TMessage::EnableSchemaEvolutionForAll(false); 
+    TMessage mess(kMESS_OBJECT);
+    mess.WriteObject(h1);
+
+    // cout<<"put "<<((RawEvent*)obj)->event_id<<endl;
+    // cout<<"class"<<buffer[tail]->GetClass()<<endl;
+    std::cout<<"class "<<mess.GetClass()<<std::endl;
+ 
+
+    return 0;
+}
