@@ -1,0 +1,8 @@
+module "RawEvent" {
+  requires cplusplus
+  module "Channel.h" { header "Channel.h" export * }
+  module "RawEvent.h" { header "RawEvent.h" export * }
+  link "libRawEvent.so"
+  export *
+}
+

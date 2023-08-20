@@ -64,6 +64,8 @@ void SiTCP::createSocket(){
     setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
 }
 void SiTCP::setupServerAddress(const char* ip, int port){
+    IP = ip;
+    Port = port;
     server_address.sin_family = AF_INET;
     server_address.sin_addr.s_addr = inet_addr(ip);
     server_address.sin_port = htons(port);
@@ -92,7 +94,7 @@ void SiTCP::run(){
     status = status_running;
     DAQThread = new thread(&SiTCP::DAQLoop, this);
     DecodeThread = new thread(&SiTCP::DecodeLoop, this);
-}
+} 
 // bool SiTCP::sendToDevice(const char* msg){
 //     lock.lock();
 //     disconnectDevice();
@@ -202,12 +204,14 @@ void SiTCP::DecodeLoop(){
 
 void SiTCP::DecodeTask(int id, TSocket* rootsock){
     nTasks++;
+    cout<<"running decoder: "<<nTasks<<" file ID:"<<id<<" start"<<endl;
     char byte;
     PacketDecoder decoder;
     ifstream file;
     string filename = dir+to_string(id)+".b";
     rename((dir+to_string(id)+".a").c_str(), filename.c_str());
     file.open(filename.c_str(), std::ios::binary);
+    cout<<"decoding file:"<<filename.c_str()<<endl;
     while(file.read(&byte,1) && (status == status_running)){
         int state = decoder.Fill(&byte);
         if(state >0) {
@@ -246,6 +250,7 @@ void SiTCP::DecodeTask(int id, TSocket* rootsock){
             mess.WriteObject(&(decoder.rawEvent));
             while(!(rootsock->Send(mess))){
                 if(status != status_running)break;
+                sleep(0.1);
             }
             decoder.rawEvent.reset();
             break ;
@@ -256,5 +261,6 @@ void SiTCP::DecodeTask(int id, TSocket* rootsock){
     std::filesystem::path filepath= filename.c_str();
     std::filesystem::remove(filepath);
     nTasks--;
+    cout<<"running decoder: "<<nTasks<<" file ID:"<<id<<" finish"<<endl;
     if(rootsock->IsValid())sockDeque.push_back(rootsock);
 }

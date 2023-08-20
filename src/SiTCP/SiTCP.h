@@ -43,8 +43,12 @@ public:
     void enableDecoder();
     void disableDecoder();
     void setupServerAddress(const char* ip, int port);
+    string getIP(){return IP;}
+    int getPort(){return Port;}
 
 private:
+    string IP;
+    int Port;
     void connectDevice();
     void disconnectDevice();
 

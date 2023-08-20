@@ -69,6 +69,8 @@ public:
   void setMicromegasFile(const char* M_file){MicromegasFile=M_file;}
 
 private:
+  vector<RawEvent*> rawEventBuffer;
+  int BufferMark[10000];
   //UPDATE: by whk
   float WValue; //unit: eV
   float Vdrift; //unit: mm/ns

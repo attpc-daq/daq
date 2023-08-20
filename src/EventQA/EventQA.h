@@ -37,6 +37,7 @@ public:
 
   void setDir(const char* dir);
   float getRate();
+  int getState(){return status;}
 
 private:
 

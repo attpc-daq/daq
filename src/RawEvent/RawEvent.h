@@ -13,6 +13,7 @@ public:
   // RawEvent(RawEvent* other);
   RawEvent& operator=(const RawEvent& other);
   virtual ~RawEvent();
+  bool Add(RawEvent* revt);
   uint64_t event_id;
   uint64_t timestamp;
   uint hit_count;

@@ -10,6 +10,10 @@
 ClassImp(DataProcessor);
 
 DataProcessor::DataProcessor(){
+    for(int i=0;i<10000;i++){
+        rawEventBuffer.push_back(new RawEvent());
+        BufferMark[i]=0;
+    }
     setDir();
     setDataPort();
     setQAPort();
@@ -208,10 +212,27 @@ void DataProcessor::loop(){
             }
         }
         RawEvent* revt =(RawEvent*) ptr;
-        if(kRawEventSave)saveRawEvent(revt);
-        if(kEventSave)saveEvent(revt);
-        if(nMakePar>0)makePar(revt);
-        if(kQA)QA(revt);
+        // cout<<"recved raw event id:"<<revt->event_id<<endl;
+        int idInBuffer = revt->event_id%10000;
+        if(BufferMark[idInBuffer]==0){
+            rawEventBuffer[idInBuffer]=revt;
+            BufferMark[idInBuffer]=1;
+        }else{
+            if(rawEventBuffer[idInBuffer]->Add(revt)){
+                BufferMark[idInBuffer]=2;
+            }else{
+                rawEventBuffer[idInBuffer]=revt;
+                BufferMark[idInBuffer]=1; 
+            }
+        }
+        if(BufferMark[idInBuffer]==2){
+            if(kRawEventSave)saveRawEvent(rawEventBuffer[idInBuffer]);
+            if(kEventSave)saveEvent(rawEventBuffer[idInBuffer]);
+            if(nMakePar>0)makePar(rawEventBuffer[idInBuffer]);
+            if(kQA)QA(rawEventBuffer[idInBuffer]);
+            BufferMark[idInBuffer]=0;
+        }
+
         delete msg;
         delete revt;
     }

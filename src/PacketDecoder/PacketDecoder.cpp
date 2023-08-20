@@ -63,7 +63,7 @@ int PacketDecoder::Fill(const char* dataByte){
         case 3:
           packetSize += static_cast<unsigned int>(*dataByte);
           if(packetSize != 20){
-            cout<<"packet size error: head:"<<packetSize<<endl;
+            // cout<<"packet size error: head:"<<packetSize<<endl;
             firstEvent = true;
             firstPacket = true;
             packetType = 0;
@@ -146,7 +146,7 @@ int PacketDecoder::Fill(const char* dataByte){
         case 3:
           packetSize += static_cast<unsigned int>(*dataByte);
           if(packetSize != 2060){
-            cout<<"packetSize error, Body:"<<packetSize<<endl;
+            // cout<<"packetSize error, Body:"<<packetSize<<endl;
             firstEvent = true;
             firstPacket = true;
             packetType = 0;
@@ -171,7 +171,7 @@ int PacketDecoder::Fill(const char* dataByte){
               firstPacket = true;
               packetType = 0;
               rawEvent.reset();
-              cout<<"ADC data error"<<endl;
+              // cout<<"ADC data error"<<endl;
               return -1;
             }
           }else{
@@ -207,7 +207,7 @@ int PacketDecoder::Fill(const char* dataByte){
         case 3:
           packetSize += static_cast<unsigned int>(*dataByte);
           if(packetSize != 12){
-            cout<<"packet size error, End:"<<packetSize<<endl;
+            // cout<<"packet size error, End:"<<packetSize<<endl;
             firstEvent = true;
             firstPacket = true;
             packetType = 0;

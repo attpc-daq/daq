@@ -18,6 +18,18 @@ RawEvent& RawEvent::operator=(const RawEvent& other){
     NChannel = other.NChannel;
     return *this;
 }
+bool RawEvent::Add(RawEvent* revt){
+
+    if(event_id != revt->event_id) return false;
+    hit_count += revt->hit_count;
+
+    for(int i=0;i<revt->NChannel;i++){
+        Channel* ch = (Channel*) revt->channels->At(i);
+        AddChannel(ch);
+    }
+
+    return true;
+}
 void RawEvent::AddChannel(Channel* ch){
     *(Channel*)channels->ConstructedAt(NChannel++) = *ch;
 }
