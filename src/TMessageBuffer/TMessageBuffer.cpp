@@ -22,14 +22,11 @@ bool TMessageBuffer::put(TObject* obj){
     if(dataLength>=bufferLength){
         return false;
     }
-    // dataLengthLock.lock();
-    // tailLock.lock();
     buffer[tail]->WriteObject(obj);
     buffer[tail]->SetWhat(kMESS_OBJECT);
     tail = (tail + 1) % bufferLength;
     dataLength++;
-    // dataLengthLock.unlock();
-    // tailLock.unlock();
+    // cout<<"message buffer length: "<<dataLength<<endl;
     return true;
 }
 int TMessageBuffer::size(){
@@ -43,12 +40,9 @@ TMessage* TMessageBuffer::get(){
     return buffer[head];
 }
 void TMessageBuffer::getDone(){
-    // dataLengthLock.lock();
-    // headLock.lock();
+    // cout<<"message buffer length: "<<dataLength<<endl;
     buffer[head]->Reset();
     buffer[head]->SetWhat(kMESS_ANY);
     head = (head + 1) % bufferLength;
     dataLength--;
-    // dataLengthLock.unlock();
-    // headLock.unlock();
 }

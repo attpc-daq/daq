@@ -57,7 +57,9 @@ public:
   uint64_t getNRawEventFiles(){return rawEventFileID;}
 
   int getState(){return status;}
-  float getRate();
+  // float getRate();
+  uint64_t getTotalEvent(){return totalEvent;}
+  uint64_t getCurrentTotalEventID(){return currentEventID;}
   int getNMakePar(){return nMakePar;}
 
   //update: by whk
@@ -69,6 +71,8 @@ public:
   void setMicromegasFile(const char* M_file){MicromegasFile=M_file;}
 
 private:
+  uint64_t totalEvent;
+  uint64_t currentEventID;
   vector<RawEvent*> rawEventBuffer;
   int BufferMark[10000];
   //UPDATE: by whk
@@ -78,8 +82,8 @@ private:
   const char* ElectronicFile = nullptr;
   const char* MicromegasFile = nullptr;
 
-  float rate;
-  uint64_t rateCount;
+  // float rate;
+  // uint64_t rateCount;
 
   EventConverter * converter=NULL;
 

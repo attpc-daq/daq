@@ -13,9 +13,6 @@ EventQA::EventQA(int port){
     Pad_ADC = new TH1D("Pad_ADC","Pad_ADC",4096,0,4095);//ADC码值
     Pad_ADC->GetXaxis()->SetTitle("channels");
     Pad_ADC->GetYaxis()->SetTitle("counts");
-    Laser_Dir = new TH1D("Laser_Dir","Laser_Dir",1024,-12.8,12.8);//激光方向用于判断激光是否水平入射 unit: us 每一个bin代表25ns
-    Laser_Dir->GetXaxis()->SetTitle("time(us)");
-    Laser_Dir->GetYaxis()->SetTitle("counts");
     Mesh_Energy_Spectrum = new TH1D("Mesh_Energy_Spectrum","Mesh_Energy_Spectrum",1000,0,10);//unit: MeV
     Mesh_Energy_Spectrum->GetXaxis()->SetTitle("energy(MeV)");
     Mesh_Energy_Spectrum->GetYaxis()->SetTitle("counts");
@@ -52,7 +49,8 @@ EventQA::EventQA(int port){
     track_3D->GetYaxis()->SetTitle("X(mm)");
     track_3D->GetZaxis()->SetTitle("Y(mm)");
     setpad_numQA(16,32);
-
+    totalEvent = 0;
+    currentEventID = 0;
     cout<<"initEventQA\n";
 }
 EventQA::~EventQA(){
@@ -79,12 +77,6 @@ string EventQA::get(const char* name){
     if (strcasecmp(name, "Pad_ADC") == 0){
         lock.lock();
         string str =  TBufferJSON::ToJSON(Pad_ADC).Data();
-        lock.unlock();
-        return str;
-    }
-    if (strcasecmp(name, "Laser_Dir") == 0){
-        lock.lock();
-        string str =  TBufferJSON::ToJSON(Laser_Dir).Data();
         lock.unlock();
         return str;
     }
@@ -117,8 +109,6 @@ string EventQA::getList(){
     list += "\t";
     list += "Pad_ADC";
     list += "\t";
-    list += "Laser_Dir";
-    list += "\t";
     list += "mesh_energy";
     list += "\t";
     list += "mesh_adc";
@@ -142,13 +132,13 @@ void EventQA::run(){
     mQAThread = new thread(&EventQA::mQALoop, this);
     mTServThread = new thread(&EventQA::mTServLoop, this);
 }
-float EventQA::getRate(){
-    now.Set();
-    elapsed = now - start_time;
-    double t = static_cast<double>(elapsed.AsDouble());
-    if(t>6) rate =0;
-    return rate;
-}
+// float EventQA::getRate(){
+//     now.Set();
+//     elapsed = now - start_time;
+//     double t = static_cast<double>(elapsed.AsDouble());
+//     if(t>6) rate =0;
+//     return rate;
+// }
 void EventQA::mTServLoop(){
     cout<<"THttp Server start"<<endl;
     TServ = new THttpServer(Form("http:%d",THttpServerPort));
@@ -162,9 +152,10 @@ void EventQA::mTServLoop(){
 }
 void EventQA::mQALoop(){
     TMessageSocket *socket = new TMessageSocket(socketPort, socketHost.c_str());
-    int rateCount = 0;
-    int nEvents4Rate = 1;
+    // int rateCount = 0;
+    // int nEvents4Rate = 1;
     cout<<"Event QA loop start"<<endl;
+    totalEvent = 0;
     while(status == status_running){
         TMessage *msg = socket->getMessage();
         if(msg == NULL){
@@ -172,20 +163,21 @@ void EventQA::mQALoop(){
             continue;
         }
         if(msg->What() != kMESS_OBJECT) continue;
+        totalEvent++;
         RawEvent *revt = (RawEvent*)msg->ReadObjectAny(RawEvent::Class());
-        rateCount++;
-        if(rateCount >= nEvents4Rate){
-            now.Set();
-            elapsed = now - start_time;
-            double t = static_cast<double>(elapsed.AsDouble());
-            if(t < 3){
-                nEvents4Rate++;
-            }else{
-                rate = rateCount/t;
-                start_time.Set();
-                rateCount = 0;
-            }
-        }
+        // rateCount++;
+        // if(rateCount >= nEvents4Rate){
+        //     now.Set();
+        //     elapsed = now - start_time;
+        //     double t = static_cast<double>(elapsed.AsDouble());
+        //     if(t < 3){
+        //         nEvents4Rate++;
+        //     }else{
+        //         rate = rateCount/t;
+        //         start_time.Set();
+        //         rateCount = 0;
+        //     }
+        // }
         Event *evt = converter.convert(*revt);
         //---------------------------------
         // Do QA with the event here
@@ -204,18 +196,20 @@ void EventQA::updateSettings(const char* msg){
 }
 
 void EventQA::fill(const RawEvent &revt, const Event &evt){
+    // cout<<"QA Event ID "<<evt.event_id<<endl;
+    currentEventID = evt.event_id;
     if(mg!=nullptr)delete mg;
     mg = new TMultiGraph();
 
+    int time_x[1024]; //ns, 25ns per bin
+    for(int i=0;i<1024;i++)time_x[i]=i*25;
+    
     const int numberofrows = 64;
     const int numberofcols = 32;
 
     float mesh_energy = 0;
     float mesh_charge = 0;
-    vector<Double_t> t[numberofrows];
-    for(int i=0;i<numberofrows;i++){
-        vector<Double_t>().swap(t[i]);
-    }
+
     track_2D->Reset();
     track_3D->Reset();
     for(int i=0;i<revt.NChannel;i++){
@@ -240,40 +234,20 @@ void EventQA::fill(const RawEvent &revt, const Event &evt){
             //track_3D->SetBinContent(padcol+1,padrow+1,180-height,charge); 
             track_3D->SetBinContent(padcol+1,padrow+1,90,charge); 
             
-            TGraph* gr = new TGraph();
+            TGraph* gr = new TGraph(1024,time_x,ch->waveform);
             gr->GetXaxis()->SetTitle("Time (ns)");
             gr->GetYaxis()->SetTitle("ADC");
-            // gr->SetName(Form( "event-%li: raw-%i col-%i",evt.event_id,padrow,padcol));
-            // gr->SetTitle(Form("event-%lli: raw-%i col-%i",evt.event_id,padrow,padcol));
+            gr->SetName(Form( "event-%li: raw-%i col-%i",evt.event_id,padrow,padcol));
+            gr->SetTitle(Form("event-%li: raw-%i col-%i",evt.event_id,padrow,padcol));
             gr->SetLineColor(colorindex[i%12]);
-            for(int j=0;j<1024;j++){
-                unsigned int waveform = ch->waveform[j];
-                gr->SetPoint(j,j*25,waveform);
-            }
+            // for(int j=0;j<1024;j++){
+            //     unsigned int waveform = ch->waveform[j];
+            //     gr->SetPoint(j,j*25,waveform);
+            // }
+            // cout<<"fill graph"<<endl;
             mg->Add(gr,"PL");
-
-            for(int j=0;j<64;j++){
-                if(padrow==j)t[j].push_back(pad->DriftTime);
-                break;
-            }
         }
     }
-    //计算t[64]中每一个与前一个vector平均值的差值
-    Double_t t_average[numberofrows]={0};
-    for(int i=0;i<numberofrows;i++){
-        if(t[i].size()==0)continue;
-        Double_t sum=0;
-        for(int j=0;j<t[i].size();j++){
-            sum+=t[i][j];
-        }
-        t_average[i]=sum/t[i].size();
-    }
-
-    for(int i=1;i<numberofrows;i++){
-        if(t[i].size()==0||t_average[i-1]==0)continue;
-        for(int j=0;j<t[i].size();j++)Laser_Dir->Fill((t[i][j]-t_average[i-1])/1000.);
-    }
-
     // cout<<"=================>>>mesh_energy: "<<mesh_energy<<endl;
     Mesh_ADC_Spectrum->Fill(mesh_charge*1E+15/6.24150975E+18*0.75/10*4096/4000);//mesh_charge*1E+15/6.24150975E+18 unit:fc  假设ADC量程为4V=4000mV，精度为12bit  主放增益为10，前放增益为0.75mv/fc
     Mesh_Energy_Spectrum->Fill(mesh_energy);//unit: MeV

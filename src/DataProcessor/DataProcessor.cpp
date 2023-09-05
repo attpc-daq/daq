@@ -10,7 +10,7 @@
 ClassImp(DataProcessor);
 
 DataProcessor::DataProcessor(){
-    for(int i=0;i<10000;i++){
+    for(int i=0;i<1000;i++){
         rawEventBuffer.push_back(new RawEvent());
         BufferMark[i]=0;
     }
@@ -27,7 +27,7 @@ DataProcessor::DataProcessor(){
     setRawEventSave();
     setEventSave();
     setQA();
-    rate = 0;
+    // rate = 0;
     WValue = 30.0;//unit: eV
     Vdrift = 10.0;//unit: mm/ns
     FPC2 = {
@@ -70,6 +70,8 @@ DataProcessor::DataProcessor(){
     eventCount = 0;
     nMakePar = -1;
     rawEventFileID =0;
+    totalEvent = 0;
+    currentEventID = 0;
 }
 DataProcessor::~DataProcessor(){}
 void DataProcessor::setDir(const char* _dir){
@@ -112,15 +114,21 @@ void DataProcessor::setEventSave(bool k){
     kEventSave = k;
 }
 void DataProcessor::setQA(bool k){
+    if(!k){
+        if(QASocket!=NULL){
+            delete QASocket;
+            QASocket = NULL;
+        }
+    }
     kQA = k;
 }
-float DataProcessor::getRate(){
-    now.Set();
-    elapsed = now - start_time;
-    double t = static_cast<double>(elapsed.AsDouble());
-    if(t>6) rate =0;
-    return rate;
-}
+// float DataProcessor::getRate(){
+//     now.Set();
+//     elapsed = now - start_time;
+//     double t = static_cast<double>(elapsed.AsDouble());
+//     if(t>6) rate =0;
+//     return rate;
+// }
 void DataProcessor::generateParameters(int n){
     parameter.reset();
     nMakePar = n;
@@ -169,6 +177,8 @@ void DataProcessor::run(){
 }
 
 void DataProcessor::loop(){
+    converter = NULL;
+    QASocket = NULL;
     eventCount = 0;
     rawEventCount = 0;
     updateEventFileID();
@@ -180,64 +190,70 @@ void DataProcessor::loop(){
     status = status_running;
     
     start_time.Set();
-    rateCount = 0;
-    int nEvents4Rate = 1;
+    // rateCount = 0;
+    // int nEvents4Rate = 400;
+    int clientnumber=0;
     while(status == status_running){
         sc = clientMonitor.Select(1);
         if(sc == (TSocket *)-1){
+            // cout<<"no decoder client active"<<endl;
             serverMonitor.ResetInterrupt();
             TSocket* s = serverMonitor.Select(1);
-            if(s == (TSocket *)-1) continue;
+            if(s == (TSocket *)-1) {
+                sleep(1);
+                continue;
+            }
             sc = ((TServerSocket *)s)->Accept();
-            if(sc == (TSocket *)-1) continue;
+            if(sc == (TSocket *)-1) {
+                sleep(1);
+                continue;
+            }
             clientMonitor.Add(sc);
+            clientnumber++;
+            // cout<<"clients "<<clientnumber<<endl;
         }
         TMessage* msg;
         int n = sc->Recv(msg);
         if(n<=0)continue;
-        auto ptr = msg->ReadObjectAny(RawEvent::Class());
-        if(ptr == NULL) continue;
-        rateCount++;
-        if(rateCount >= nEvents4Rate){
-            now.Set();
-            elapsed = now - start_time;
-            double t = static_cast<double>(elapsed.AsDouble());
-            if(t < 3){
-                nEvents4Rate++;
-            }else{
-                rate = rateCount/t;
-                // cout<<"event rate: "<<rate<<" Hz"<<endl;
-                start_time.Set();
-                rateCount = 0;
-            }
-        }
-        RawEvent* revt =(RawEvent*) ptr;
-        // cout<<"recved raw event id:"<<revt->event_id<<endl;
-        int idInBuffer = revt->event_id%10000;
+        RawEvent* revt = (RawEvent*)msg->ReadObjectAny(RawEvent::Class());
+        // if(ptr == NULL) continue;
+        // RawEvent* revt =(RawEvent*) ptr;
+        int idInBuffer = revt->event_id%1000;
         if(BufferMark[idInBuffer]==0){
-            rawEventBuffer[idInBuffer]=revt;
+            *rawEventBuffer[idInBuffer] = *revt;
             BufferMark[idInBuffer]=1;
         }else{
             if(rawEventBuffer[idInBuffer]->Add(revt)){
                 BufferMark[idInBuffer]=2;
             }else{
-                rawEventBuffer[idInBuffer]=revt;
+                *rawEventBuffer[idInBuffer] = *revt;
                 BufferMark[idInBuffer]=1; 
             }
         }
+        delete revt;
         if(BufferMark[idInBuffer]==2){
+            totalEvent++;
+            currentEventID = rawEventBuffer[idInBuffer]->event_id;
             if(kRawEventSave)saveRawEvent(rawEventBuffer[idInBuffer]);
-            if(kEventSave)saveEvent(rawEventBuffer[idInBuffer]);
+            if(kEventSave){
+                saveEvent(rawEventBuffer[idInBuffer]);
+            }else if (converter != NULL){
+                delete converter;
+                converter = NULL;
+            }
             if(nMakePar>0)makePar(rawEventBuffer[idInBuffer]);
-            if(kQA)QA(rawEventBuffer[idInBuffer]);
+            if(kQA){
+                QA(rawEventBuffer[idInBuffer]);
+            }else if(QASocket!=NULL){
+                delete QASocket;
+                QASocket = NULL;
+            }
             BufferMark[idInBuffer]=0;
         }
-
         delete msg;
-        delete revt;
     }
     for(auto ptr:*(clientMonitor.GetListOfActives())){
-        cout<<"waiting for client to close"<<endl;
+        // cout<<"waiting for client to close"<<endl;
         TSocket* sc = (TSocket*)ptr;
         clientMonitor.Remove(sc);
         sc->Close();
@@ -290,7 +306,7 @@ void DataProcessor::makePar(RawEvent* revt){
         // file2<<parameter.getSettings(WValue,Vdrift);
         file2<<parameter.getSettings(WValue,Vdrift,FPC2,ElectronicFile,MicromegasFile);
         file2.close();
-        cout<<"parameter generations done"<<endl;
+        // cout<<"parameter generations done"<<endl;
     }
 }
 void DataProcessor::QA(RawEvent* revt){

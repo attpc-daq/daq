@@ -44,6 +44,7 @@ private:
     int status_stopping = 3;
     int status_stopped = 4;
     atomic_int status;
+    TMonitor serverMonitor, clientMonitor;
    
     ClassDef(TMessageSocket,1)
 };

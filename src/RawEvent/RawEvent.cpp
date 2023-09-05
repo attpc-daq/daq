@@ -1,4 +1,7 @@
 #include "RawEvent.h"
+#include <iostream>
+using namespace std;
+
 ClassImp(RawEvent);
 
 RawEvent::RawEvent(){
@@ -21,6 +24,7 @@ RawEvent& RawEvent::operator=(const RawEvent& other){
 bool RawEvent::Add(RawEvent* revt){
 
     if(event_id != revt->event_id) return false;
+    // std::cout<<" event_id "<<revt->event_id<<" time "<<revt->timestamp<<" time "<<timestamp<<endl;
     hit_count += revt->hit_count;
 
     for(int i=0;i<revt->NChannel;i++){

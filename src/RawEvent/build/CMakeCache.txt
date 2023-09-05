@@ -539,5 +539,5 @@ ROOT_rootmv_CMD-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: ROOT_rootrm_CMD
 ROOT_rootrm_CMD-ADVANCED:INTERNAL=1
 //modules_idx_deps
-modules_idx_deps:INTERNAL=RawEvent;RawEvent;RawEvent
+modules_idx_deps:INTERNAL=RawEvent
 

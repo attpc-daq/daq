@@ -89,6 +89,7 @@ void SiTCP::stop(){
     status = status_stopping;
     DAQThread->join();
     DecodeThread->join();
+    rate=0;
 }
 void SiTCP::run(){
     status = status_running;
@@ -125,6 +126,7 @@ void SiTCP::disableDecoder(){
 }
 void SiTCP::DAQLoop(){
     std::cout<<"data acquisition loop start"<<endl;
+    
     int fileSize = 0;
     uint64_t dataSize = 0;
     int nDaq4Count = 1;
@@ -133,6 +135,7 @@ void SiTCP::DAQLoop(){
     int length;
     TTimeStamp start_time, now, elapsed;
     start_time.Set();
+    std::cout<<"IP: "<<IP<<" port: "<<Port<<endl;
     while(status == status_running){
         connectDevice();
         if(connectionStatus == disconnected){
@@ -142,7 +145,7 @@ void SiTCP::DAQLoop(){
         length = recv(sock, socketBuffer, socketBufferSize, 0);
         if(length <=0 ){
             sleep(0.1);
-            // cout<<"sitcp get data length "<<length<<endl;
+            std::cout<<"IP: "<<IP<<"sitcp get data length "<<length<<endl;
             rate = length;
             continue;
         }
@@ -188,6 +191,9 @@ void SiTCP::DecodeLoop(){
             if(sockDeque.size()==0){
                 rootsock = new TSocket(dataHost.c_str(), dataPort);
                 if(rootsock->IsValid() == kFALSE){
+                    cout<<"Decoder can not connect to DP..."<<endl;
+                    rootsock->Close();
+                    sleep(1);
                     continue;
                 }   
             }else{
@@ -197,6 +203,8 @@ void SiTCP::DecodeLoop(){
             new thread(&SiTCP::DecodeTask, this, decFileID, rootsock);
             decFileID++;
             if(decFileID == maxFileID) decFileID = 0;
+        }else{
+            sleep(1);
         }
     }
     cout<<"data decoding loop stop"<<endl;
@@ -212,11 +220,12 @@ void SiTCP::DecodeTask(int id, TSocket* rootsock){
     rename((dir+to_string(id)+".a").c_str(), filename.c_str());
     file.open(filename.c_str(), std::ios::binary);
     cout<<"decoding file:"<<filename.c_str()<<endl;
+    TMessage mess(kMESS_OBJECT);
     while(file.read(&byte,1) && (status == status_running)){
         int state = decoder.Fill(&byte);
         if(state >0) {
             // cout<<"decoder: event id "<<decoder.rawEvent.event_id<<endl;
-            TMessage mess(kMESS_OBJECT);
+            mess.Reset();
             mess.WriteObject(&(decoder.rawEvent));
             while(!(rootsock->Send(mess))){
                 if(status != status_running)break;
@@ -236,17 +245,22 @@ void SiTCP::DecodeTask(int id, TSocket* rootsock){
     if(nextID == maxFileID) nextID = 0;
     filename =  dir+to_string(nextID)+".c";
     while(!std::filesystem::exists(filename)){
-        if(status != status_running) {
+        if(status != status_running || ! writeBuffer) {
             nTasks--;
-            if(rootsock->IsValid())sockDeque.push_back(rootsock);
+            if(rootsock->IsValid()){
+                sockDeque.push_back(rootsock);
+            }else{
+                rootsock->Close();
+            }
             return;
         }
+        sleep(1);
     }
     file.open(filename.c_str(), std::ios::binary);
     while(file.read(&byte,1) && (status == status_running)){
         int state = decoder.Fill(&byte);
         if(state >0) {
-            TMessage mess(kMESS_OBJECT);
+            mess.Reset();
             mess.WriteObject(&(decoder.rawEvent));
             while(!(rootsock->Send(mess))){
                 if(status != status_running)break;
@@ -262,5 +276,9 @@ void SiTCP::DecodeTask(int id, TSocket* rootsock){
     std::filesystem::remove(filepath);
     nTasks--;
     cout<<"running decoder: "<<nTasks<<" file ID:"<<id<<" finish"<<endl;
-    if(rootsock->IsValid())sockDeque.push_back(rootsock);
+    if(rootsock->IsValid()){
+        sockDeque.push_back(rootsock);
+    }else{
+        rootsock->Close();
+    }
 }

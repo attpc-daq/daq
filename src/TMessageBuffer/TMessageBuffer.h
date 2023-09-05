@@ -22,9 +22,6 @@ public:
     TMessage *msgNull;
 private:
     TMessage** buffer;
-    mutex headLock;
-    mutex tailLock;
-    mutex dataLengthLock;
 
     int bufferLength;
     atomic_int dataLength;

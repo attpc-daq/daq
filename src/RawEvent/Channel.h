@@ -12,7 +12,7 @@ public:
     uint64_t timestamp;
     int FEE_id;
     int channel_id;
-    UInt_t waveform[1024];
+    int waveform[1024];
     ClassDef(Channel,1)
 };
 #endif // CHANNEL_H

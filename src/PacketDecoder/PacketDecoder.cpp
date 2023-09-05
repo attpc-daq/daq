@@ -165,7 +165,7 @@ int PacketDecoder::Fill(const char* dataByte){
         case 7:
           packetPose--;
           if(waveformFillStatusCode%2 == 0){
-            channel.waveform[waveformFillStatusCode/2] = static_cast<unsigned int>(*dataByte)&0b1111;
+            channel.waveform[waveformFillStatusCode/2] = static_cast<unsigned int>(*dataByte)&0b1111;//TODO:与channel数据类型相关
             if((static_cast<unsigned int>(*dataByte)&0b11110000)!= 0b10000){
               firstEvent = true;
               firstPacket = true;
@@ -175,7 +175,7 @@ int PacketDecoder::Fill(const char* dataByte){
               return -1;
             }
           }else{
-            channel.waveform[waveformFillStatusCode/2] = (channel.waveform[waveformFillStatusCode/2]<<8) | (static_cast<unsigned int>(*dataByte)&0b11111111);
+            channel.waveform[waveformFillStatusCode/2] = (channel.waveform[waveformFillStatusCode/2]<<8) | (static_cast<unsigned int>(*dataByte)&0b11111111);//TODO:与channel数据类型相关
           }
           waveformFillStatusCode++;
           if(waveformFillStatusCode == 2048){

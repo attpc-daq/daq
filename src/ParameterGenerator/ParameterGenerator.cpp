@@ -21,7 +21,7 @@ void ParameterGenerator::reset(){
 void ParameterGenerator::fill(RawEvent* revt){
     for(int i=0;i<revt->NChannel;i++){
         Channel* ch = (Channel*) revt->channels->At(i);
-        int len = sizeof(ch->waveform)/sizeof(UInt_t);
+        int len = sizeof(ch->waveform)/sizeof(UInt_t);//TODO: 检查数据类型
         int waveform_mean = TMath::Mean(len, ch->waveform);
         int waveform_rms = TMath::RMS(len, ch->waveform);
         int threshold = waveform_mean+ 20* waveform_rms;
@@ -76,69 +76,6 @@ string ParameterGenerator::getThreshold(){
     return js.dump(2);
 }
 
-// string ParameterGenerator::getSettings(int WValue, int Vdrift) {
-//     // 创建 FPC2 数组
-//     std::vector<std::map<std::string, int>> FPC2 = {
-//         {{"0", 2}},
-//         {{"1", 2}},
-//         {{"2", 0}},
-//         {{"3", 0}},
-//         {{"4", 10}},
-//         {{"5", 10}},
-//         {{"6", 8}},
-//         {{"7", 8}},
-//         {{"8", 15}},
-//         {{"9", 15}},
-//         {{"10", 15}},
-//         {{"11", 15}},
-//         {{"12", 15}},
-//         {{"13", 15}},
-//         {{"14", 15}},
-//         {{"15", 15}},
-//         {{"16", 15}},
-//         {{"17", 15}},
-//         {{"18", 15}},
-//         {{"19", 15}},
-//         {{"20", 15}},
-//         {{"21", 15}},
-//         {{"22", 15}},
-//         {{"23", 15}},
-//         {{"24", 15}},
-//         {{"25", 15}},
-//         {{"26", 15}},
-//         {{"27", 15}},
-//         {{"28", 15}},
-//         {{"29", 15}},
-//         {{"30", 15}},
-//         {{"31", 15}}
-//     };
-
-//     // 创建 Micromegas_Gain 数组
-//     std::vector<std::map<std::string, double>> Micromegas_Gain(2048);
-//     for (int i = 0; i < 2048; i++) {
-//         Micromegas_Gain[i][std::to_string(i)] = 1000.0;
-//     }
-
-//     //创建 Electronic_Gain 数组
-//     std::vector<std::map<std::string, double>> Electronic_Gain(2048);
-//     for (int i = 0; i < 2048; i++) {
-//         Electronic_Gain[i][std::to_string(i)] = 0.75;
-//     }
-
-//     // 创建整个 JSON 对象
-//     json json_data = {
-//         {"WValue", WValue},//unit: eV
-//         {"Vdrift", Vdrift},//unit: mm/ns
-//         {"FPC2", FPC2},
-//         {"Micromegas_Gain", Micromegas_Gain},
-//         {"Electronic_Gain", Electronic_Gain}
-//     };
-
-//     // 将 JSON 对象转换为字符串
-//     std::string eventSettingJson = json_data.dump(2);
-//     return eventSettingJson;
-// }
-
 string ParameterGenerator::getSettings(int WValue, int Vdrift, std::vector<std::map<string,int>> FPC2, const char* ElectronicFIle, const char* MicromegasFile) {
     //TODO: 根据MicromegasFile读取解析并创建 Micromegas_Gain 数组
     std::vector<std::map<std::string, double>> Micromegas_Gain(2048);
@@ -148,9 +85,52 @@ string ParameterGenerator::getSettings(int WValue, int Vdrift, std::vector<std::
 
     //TODO: 根据ElectronicFIle读取解析并创建 Electronic_Gain 数组
     std::vector<std::map<std::string, double>> Electronic_Gain(2048);
+    std::vector<std::map<std::string, double>> Electronic_time_offset(2048);
+    //默认赋值
     for (int i = 0; i < 2048; i++) {
-        Electronic_Gain[i][std::to_string(i)] = 0.75;
+        Electronic_Gain[i][std::to_string(i)] = 1.0;
+        Electronic_time_offset[i][std::to_string(i)] = 0.0;
     }
+    std::ifstream file(ElectronicFIle);
+    if (!file.is_open() || !file.good()) {
+        std::cout << "Error opening file " << ElectronicFIle << std::endl;
+        exit(1);
+    }
+
+    std::string content((std::istreambuf_iterator<char>(file)), (std::istreambuf_iterator<char>()));
+    file.close();
+
+    json js = json::parse(content);
+
+    for (const auto& elem : js["Electronic_Gain"]) {
+        // std::map<std::string, double> gainEntry;
+        for (const auto& [key, value] : elem.items()) {
+            // gainEntry[key] = value;
+            Electronic_Gain[std::stoi(key)][key] = value;
+        }
+        // Electronic_Gain.push_back(gainEntry);
+    }
+
+    for (const auto& elem : js["Electronic_time_offset"]) {
+        // std::map<std::string, double> offsetEntry;
+        for (const auto& [key, value] : elem.items()) {
+            // offsetEntry[key] = value;
+            Electronic_time_offset[std::stoi(key)][key] = value;
+        }
+        // Electronic_time_offset.push_back(offsetEntry);
+    }
+    // // 打印读取的数据
+    // for (const auto& gainEntry : Electronic_Gain) {
+    //     for (const auto& [key, value] : gainEntry) {
+    //         std::cout << "Gain: " << key << " -> " << value << std::endl;
+    //     }
+    // }
+
+    // for (const auto& offsetEntry : Electronic_time_offset) {
+    //     for (const auto& [key, value] : offsetEntry) {
+    //         std::cout << "Time Offset: " << key << " -> " << value << std::endl;
+    //     }
+    // }
 
     // 创建整个 JSON 对象
     json json_data = {
@@ -158,7 +138,8 @@ string ParameterGenerator::getSettings(int WValue, int Vdrift, std::vector<std::
         {"Vdrift", Vdrift},//unit: mm/ns
         {"FPC2", FPC2},
         {"Micromegas_Gain", Micromegas_Gain},
-        {"Electronic_Gain", Electronic_Gain}
+        {"Electronic_Gain", Electronic_Gain},
+        {"Electronic_time_offset", Electronic_time_offset}
     };
 
     // 将 JSON 对象转换为字符串

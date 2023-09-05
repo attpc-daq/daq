@@ -31,8 +31,9 @@ private:
   float WValue; //unit: eV  气体平均电离能
   float Vdrift; //unit: mm/ns  电子漂移速度
   int FPC2[32]={0};
-  float Electronic_Gain[32][64];
-  float Micromegas_Gain[32][64];
+  float Electronic_Gain[32][64]={0.};
+  float Electronic_time_offset[32][64]={0.};
+  float Micromegas_Gain[32][64]={0.};
 
   //电子学通道映射转换需要的变量
   int XPos[2048];
