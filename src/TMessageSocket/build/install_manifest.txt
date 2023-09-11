@@ -1,4 +1,0 @@
-/usr/local/lib/libTMessageSocket.so
-/usr/local/include/TMessageSocket.h
-/usr/local/lib/libTMessageSocket.rootmap
-/usr/local/lib/libTMessageSocket_rdict.pcm

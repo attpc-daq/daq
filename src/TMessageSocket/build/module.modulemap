@@ -1,7 +1,0 @@
-module "TMessageSocket" {
-  requires cplusplus
-  module "TMessageSocket.h" { header "TMessageSocket.h" export * }
-  link "libTMessageSocket.so"
-  export *
-}
-

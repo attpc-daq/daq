@@ -1,8 +1,0 @@
-/storage/ATTPC/DAQ/src/AutoSocket/build/CMakeFiles/AutoSocket.dir
-/storage/ATTPC/DAQ/src/AutoSocket/build/CMakeFiles/AutoSocket_dict.dir
-/storage/ATTPC/DAQ/src/AutoSocket/build/CMakeFiles/edit_cache.dir
-/storage/ATTPC/DAQ/src/AutoSocket/build/CMakeFiles/rebuild_cache.dir
-/storage/ATTPC/DAQ/src/AutoSocket/build/CMakeFiles/list_install_components.dir
-/storage/ATTPC/DAQ/src/AutoSocket/build/CMakeFiles/install.dir
-/storage/ATTPC/DAQ/src/AutoSocket/build/CMakeFiles/install/local.dir
-/storage/ATTPC/DAQ/src/AutoSocket/build/CMakeFiles/install/strip.dir

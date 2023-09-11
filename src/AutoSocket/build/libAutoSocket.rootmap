@@ -1,4 +1,0 @@
-[ libAutoSocket.so ]
-# List of selected classes
-class AutoSocket
-header AutoSocket.h

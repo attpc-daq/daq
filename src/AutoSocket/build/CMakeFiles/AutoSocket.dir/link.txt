@@ -1,1 +1,0 @@
-/usr/bin/c++ -fPIC -shared -Wl,-soname,libAutoSocket.so -o libAutoSocket.so CMakeFiles/AutoSocket.dir/AutoSocket.o CMakeFiles/AutoSocket_dict.dir/AutoSocket_dict.o  -Wl,-rpath,/opt/root/lib: /opt/root/lib/libNet.so.6.26.04 /opt/root/lib/libRIO.so.6.26.04 /opt/root/lib/libThread.so.6.26.04 /opt/root/lib/libCore.so.6.26.04 
