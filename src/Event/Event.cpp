@@ -13,7 +13,11 @@ Event::Event(){
     pads = new TClonesArray(Pad::Class(),2048);//TODO:Pad最大数量是多少？
 }
 Event::~Event(){
-    delete pads;
+    for(int i=0;i<NPad;i++){
+        Pad* iter = (Pad*) pads->At(i);
+        delete iter;
+    }
+    pads->Delete();
 }
 
 Event& Event::operator=(const Event& other){
