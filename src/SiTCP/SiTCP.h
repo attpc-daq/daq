@@ -9,7 +9,7 @@
 #include <thread>
 #include <atomic>
 #include <mutex>
-
+#include <condition_variable>
 #include <fstream>
 #include <cstdlib>
 #include <filesystem>
@@ -19,6 +19,8 @@
 #include <TMessage.h>
 #include <TSocket.h>
 #include <deque>
+#include "TMessageBuffer.h"
+#include "AutoSocket.h"
 
 using namespace std;
 
@@ -31,8 +33,8 @@ public:
 
     void run();
     void stop();
-    // bool sendToDevice(const char* msg);
-    void setDataProcessHost(int port=8002, const char* host="localhost");
+
+    void setDataPort(int port);
     void setSocketBufferSize(int n=1024*1024);
     void setFileMaxSize(int n=16*1024*1024);
     int getState(){return status;}
@@ -47,15 +49,14 @@ public:
     int getPort(){return Port;}
 
 private:
+    AutoSocket* autoSocket=NULL;
+
     string IP;
     int Port;
     void connectDevice();
     void disconnectDevice();
 
     int dataPort;
-    string dataHost;
-    
-    std::deque<TSocket*> sockDeque;
 
     bool firstFile;
 
@@ -93,11 +94,12 @@ private:
 
     atomic_bool writeBuffer;
 
-    mutex lock;
+    mutex mtx;
+    condition_variable cv;
 
     void DAQLoop();
     void DecodeLoop();
-    void DecodeTask(int id, TSocket* rootsock);
+    void DecodeTask(int id);
     thread * DAQThread;
     thread * DecodeThread;
 

@@ -246,6 +246,7 @@ void EventQA::fill(const RawEvent &revt, const Event &evt){
             // }
             // cout<<"fill graph"<<endl;
             mg->Add(gr,"PL");
+            i++;
         }
     }
     // cout<<"=================>>>mesh_energy: "<<mesh_energy<<endl;

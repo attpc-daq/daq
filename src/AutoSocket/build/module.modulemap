@@ -1,0 +1,7 @@
+module "AutoSocket" {
+  requires cplusplus
+  module "AutoSocket.h" { header "AutoSocket.h" export * }
+  link "libAutoSocket.so"
+  export *
+}
+

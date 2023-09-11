@@ -1,0 +1,4 @@
+/usr/local/lib/libAutoSocket.so
+/usr/local/include/AutoSocket.h
+/usr/local/lib/libAutoSocket.rootmap
+/usr/local/lib/libAutoSocket_rdict.pcm

@@ -10,10 +10,6 @@
 ClassImp(DataProcessor);
 
 DataProcessor::DataProcessor(){
-    for(int i=0;i<1000;i++){
-        rawEventBuffer.push_back(new RawEvent());
-        BufferMark[i]=0;
-    }
     setDir();
     setDataPort();
     setQAPort();
@@ -27,7 +23,7 @@ DataProcessor::DataProcessor(){
     setRawEventSave();
     setEventSave();
     setQA();
-    // rate = 0;
+
     WValue = 30.0;//unit: eV
     Vdrift = 10.0;//unit: mm/ns
     FPC2 = {
@@ -65,22 +61,25 @@ DataProcessor::DataProcessor(){
         {{"31", 15}}
     };
     cout<<"initdataprocessor\n";
-    ss = NULL;
-    rawEventCount = 0;
-    eventCount = 0;
+
     nMakePar = -1;
     rawEventFileID =0;
     totalEvent = 0;
     currentEventID = 0;
+
 }
-DataProcessor::~DataProcessor(){}
+DataProcessor::~DataProcessor(){
+}
 void DataProcessor::setDir(const char* _dir){
     dir = _dir;
     if(dir[dir.length()-1]!='/')dir.append("/");
     std::filesystem::create_directory(dir.c_str());
 }
-void DataProcessor::setDataPort(int port){
-    dataPort = port;
+void DataProcessor::setDataPort(int port1,const char* host1, int port2, const char* host2){
+    dataPort1=port1;
+    dataHost1=host1;
+    dataPort2=port2;
+    dataHost2=host2;
 }
 void DataProcessor::setQAPort(int port){
     QAPort = port;
@@ -106,7 +105,6 @@ void DataProcessor::setEventTreeName(const char* name){
 void DataProcessor::setEventBranchName(const char* name){
     eventBranchName = name;
 }
-
 void DataProcessor::setRawEventSave(bool k){
     kRawEventSave = k;
 }
@@ -121,14 +119,10 @@ void DataProcessor::setQA(bool k){
         }
     }
     kQA = k;
+    if(kQA){
+        QASocket = new TMessageSocket(QAPort, nEvents);
+    }
 }
-// float DataProcessor::getRate(){
-//     now.Set();
-//     elapsed = now - start_time;
-//     double t = static_cast<double>(elapsed.AsDouble());
-//     if(t>6) rate =0;
-//     return rate;
-// }
 void DataProcessor::generateParameters(int n){
     parameter.reset();
     nMakePar = n;
@@ -163,137 +157,240 @@ string DataProcessor::getEventFileList(int n){
     }
     return list;
 }
-
 void DataProcessor::stop(){
     status = status_stopping;
     cout<<"Dataprocessor stopping"<<endl;
-    mThread->join();
+
+    mMsgThread1->join();
+    mMsgThread2->join();
+    mAssembleThread->join();
+    mBufferProcess->join();
     cout<<"DataProcessor stop"<<endl;
-}
-void DataProcessor::run(){
-    status = status_starting;
-    cout<<"DataProcessor start"<<endl;
-    mThread = new thread(&DataProcessor::loop, this);
-}
-
-void DataProcessor::loop(){
-    converter = NULL;
-    QASocket = NULL;
-    eventCount = 0;
-    rawEventCount = 0;
-    updateEventFileID();
-    updateRawEventFileID();
-    ss = new TServerSocket(dataPort, true);
-    ss->SetOption(kNoBlock, 1);
-    TSocket* sc;
-    serverMonitor.Add(ss);
-    status = status_running;
-    
-    start_time.Set();
-    // rateCount = 0;
-    // int nEvents4Rate = 400;
-    int clientnumber=0;
-    while(status == status_running){
-        sc = clientMonitor.Select(1);
-        if(sc == (TSocket *)-1){
-            // cout<<"no decoder client active"<<endl;
-            serverMonitor.ResetInterrupt();
-            TSocket* s = serverMonitor.Select(1);
-            if(s == (TSocket *)-1) {
-                sleep(1);
-                continue;
-            }
-            sc = ((TServerSocket *)s)->Accept();
-            if(sc == (TSocket *)-1) {
-                sleep(1);
-                continue;
-            }
-            clientMonitor.Add(sc);
-            clientnumber++;
-            // cout<<"clients "<<clientnumber<<endl;
-        }
-        TMessage* msg;
-        int n = sc->Recv(msg);
-        if(n<=0)continue;
-        RawEvent* revt = (RawEvent*)msg->ReadObjectAny(RawEvent::Class());
-        // if(ptr == NULL) continue;
-        // RawEvent* revt =(RawEvent*) ptr;
-        int idInBuffer = revt->event_id%1000;
-        if(BufferMark[idInBuffer]==0){
-            *rawEventBuffer[idInBuffer] = *revt;
-            BufferMark[idInBuffer]=1;
-        }else{
-            if(rawEventBuffer[idInBuffer]->Add(revt)){
-                BufferMark[idInBuffer]=2;
-            }else{
-                *rawEventBuffer[idInBuffer] = *revt;
-                BufferMark[idInBuffer]=1; 
-            }
-        }
-        delete revt;
-        if(BufferMark[idInBuffer]==2){
-            totalEvent++;
-            currentEventID = rawEventBuffer[idInBuffer]->event_id;
-            if(kRawEventSave)saveRawEvent(rawEventBuffer[idInBuffer]);
-            if(kEventSave){
-                saveEvent(rawEventBuffer[idInBuffer]);
-            }else if (converter != NULL){
-                delete converter;
-                converter = NULL;
-            }
-            if(nMakePar>0)makePar(rawEventBuffer[idInBuffer]);
-            if(kQA){
-                QA(rawEventBuffer[idInBuffer]);
-            }else if(QASocket!=NULL){
-                delete QASocket;
-                QASocket = NULL;
-            }
-            BufferMark[idInBuffer]=0;
-        }
-        delete msg;
-    }
-    for(auto ptr:*(clientMonitor.GetListOfActives())){
-        // cout<<"waiting for client to close"<<endl;
-        TSocket* sc = (TSocket*)ptr;
-        clientMonitor.Remove(sc);
-        sc->Close();
-    }
-
-    ss->Close();
-    if(QASocket != NULL) {
-        delete QASocket;
-        QASocket = NULL;
-    }
-    if(eventCount>0)closeEventFile();
-    if(rawEventCount>0)closeRawEventFile();
     status = status_stopped;
 }
-void DataProcessor::saveRawEvent(RawEvent* revt){
-    if(rawEventCount == 0){
-        createRawEventFile();
-    }
-    rawEvent = *revt;
-    rawEventTree->Fill();
-    rawEventCount++;
-    if(rawEventCount == nEvents){
-        rawEventCount = 0;
-        closeRawEventFile();
-    }
+void DataProcessor::run(){
+    status = status_running;
+    cout<<"DataProcessor start"<<endl;
+
+    mMsgThread1 = new thread(&DataProcessor::msgReceiver, this, dataPort1,dataHost1.c_str(), &bufferDQ01);
+    mMsgThread2 = new thread(&DataProcessor::msgReceiver, this, dataPort2,dataHost2.c_str(), &bufferDQ02);
+    mAssembleThread = new thread(&DataProcessor::assemble, this);
+    mBufferProcess = new thread(&DataProcessor::bufferProcess,this);
 }
-void DataProcessor::saveEvent(RawEvent* revt){
-    if(eventCount == 0){
-        createEventFile();
+void DataProcessor::bufferProcess(){
+    updateRawEventFileID();
+    updateEventFileID();
+    outputFileID = eventFileID > rawEventFileID ? eventFileID : rawEventFileID;
+    while(status == status_running){
+        if(bufferDQ.size()>0){
+            outputFileID++;
+            new thread(&DataProcessor::rawEventProcess,this,bufferDQ.front(),outputFileID);
+            bufferDQ.pop_front();
+        }else{
+            sleep(1);
+        }
     }
-    if(converter == NULL){
+    if(QASocket!=NULL)delete QASocket;
+}
+void DataProcessor::rawEventProcess(RawEvent** ptrArray, int fileID){
+    cout<<"outputfileID "<<fileID<<endl;
+    RawEvent** rawEventPtrArray = new RawEvent*[nEvents];
+    TFile* rawEventFile=NULL;
+    TTree* rawEventTree=NULL;
+    TFile* eventFile=NULL;
+    TTree* eventTree=NULL;
+    EventConverter* converter;
+    RawEvent rawEvent;
+    Event event;
+
+    if(kRawEventSave){
+        rawEventFile = new TFile((dir+rawEventFilePrefix+to_string(fileID)+".root").c_str(), "RECREATE");
+        rawEventFile->cd();
+        rawEventTree = new TTree(rawEventTreeName.c_str(), rawEventTreeName.c_str());
+        rawEventTree->Branch(rawEventBranchName.c_str(), &rawEvent);
+    }
+    if(kEventSave){
+        eventFile = new TFile((dir+eventFilePrefix+to_string(fileID)+".root").c_str(), "RECREATE");
+        eventFile->cd();
+        eventTree = new TTree(eventTreeName.c_str(), eventTreeName.c_str());
+        eventTree->Branch(eventBranchName.c_str(), &event);
         converter = new EventConverter((dir+"eventParameters.json").c_str());
     }
-    event = *(converter->convert(*revt));
-    eventTree->Fill();
-    eventCount++;
-    if(eventCount == nEvents){
-        eventCount = 0;
-        closeEventFile();
+    for(int i =0 ;i<nEvents;i++){
+        if(ptrArray[i*2]!=NULL && ptrArray[i*2+1]!=NULL){
+            rawEventPtrArray[i]=ptrArray[i*2];
+            rawEventPtrArray[i]->Add(ptrArray[i*2+1]);
+            delete ptrArray[i*2+1];
+        }else if(ptrArray[i*2]==NULL && ptrArray[i*2+1]!=NULL){
+            rawEventPtrArray[i]=ptrArray[i*2+1];
+        }
+        else if(ptrArray[i*2]!=NULL && ptrArray[i*2+1]==NULL){
+            rawEventPtrArray[i]=ptrArray[i*2];
+        }
     }
+    for(int i=0;i<nEvents;i++){
+        if(rawEventFile!=NULL){  
+            rawEvent = *(rawEventPtrArray[i]);
+            rawEventTree->Fill();
+        }
+        if(eventFile!=NULL){
+            event = *(converter->convert(*(rawEventPtrArray[i])));
+            eventTree->Fill();
+        }
+    }
+    std::unique_lock<std::mutex> lock(mtx);
+    for(int i=0;i<nEvents;i++){
+        if(QASocket!=NULL){
+            QASocket->put(rawEventPtrArray[i]);
+        }
+        delete rawEventPtrArray[i];
+    }
+    cv.notify_one();
+    if(rawEventFile!=NULL){
+        rawEventFile->cd();
+        rawEventFile->Write();
+        rawEventFile->Close();
+    }
+    if(eventFile!=NULL){
+        eventFile->cd();
+        eventFile->Write();
+        eventFile->Close();
+        delete converter;
+    }
+    delete rawEventPtrArray;
+}
+void DataProcessor::msgReceiver(int port, const char* host, deque<RawEvent**> * bufferDQ){
+    AutoSocket* autoSocket= new AutoSocket(port,host);
+    TMessage* msg;
+    RawEvent* revt;
+    while(status == status_running){
+        if(bufferDQ->size()>10){
+            sleep(1);
+            continue;
+        }
+        RawEvent** ptrArray=new RawEvent*[nEvents];
+        for(int i=0;i<nEvents;i++){
+            while(true){
+                if(status != status_running){
+                    for(int j=0;j<i;j++){
+                        delete ptrArray[j];
+                        delete ptrArray;
+                        delete autoSocket;
+                    }
+                    return;
+                }
+                msg = autoSocket->get();
+                if(msg==NULL)continue;
+                revt = (RawEvent*)msg->ReadObjectAny(RawEvent::Class());
+                delete msg;
+                if(!revt)continue;
+                break;
+            }
+            ptrArray[i]=revt;
+        }
+        bufferDQ->push_back(ptrArray);
+    }
+    delete autoSocket;
+}
+void DataProcessor::assemble(){
+    RawEvent* revt1=NULL;
+    RawEvent* revt2=NULL;
+    RawEvent** ptrArray01=NULL;
+    RawEvent** ptrArray02=NULL;
+    int index1;
+    int index2;
+    RawEvent** ptrArray=NULL;
+    int index;
+
+    while(status == status_running){
+        if(ptrArray01==NULL){
+            while(bufferDQ01.size()<=0){
+                if(status != status_running)return;
+                sleep(1);
+            }
+            ptrArray01 = bufferDQ01.front();
+            bufferDQ01.pop_front();
+            index1=0;
+        }
+        if(ptrArray02==NULL){
+            while(bufferDQ02.size()<=0){
+                if(status != status_running)return;
+                sleep(1);
+            }
+            ptrArray02 = bufferDQ02.front();
+            bufferDQ02.pop_front();
+            index2=0;
+        }
+        if(ptrArray01[index1]->event_id == ptrArray02[index2]->event_id){
+            revt1 = ptrArray01[index1];
+            revt2 = ptrArray02[index2];
+            index1++;
+            index2++;
+	    }else if(ptrArray01[index1]->event_id > ptrArray02[index2]->event_id){
+            revt1 = NULL;
+            revt2 = ptrArray02[index2];
+            index2++;
+	    }else if(ptrArray01[index1]->event_id < ptrArray02[index2]->event_id){
+            revt1 = ptrArray01[index1];
+            revt2 = NULL;
+            index1++;
+	    }
+        if(index1>=nEvents){
+            delete ptrArray01;
+            ptrArray01=NULL;
+        }
+        if(index2>=nEvents){
+            delete ptrArray02;
+            ptrArray02=NULL;
+        }
+        if(nMakePar>0){
+            RawEvent* revt;
+            if(revt1!=NULL && revt2!=NULL){
+                revt = revt1;
+                revt->Add(revt2);
+                delete revt2;
+            }else if(revt1==NULL){
+                revt = revt2;
+            }else{
+                revt = revt1;
+            }
+	        makePar(revt);
+            delete revt;
+	        continue;
+        }
+        if(bufferDQ.size()>10){//限制最大缓存数，也会影响最大线程数
+            sleep(1);
+            cout<<" Raw Event Buffer More Than 10, stop receiving"<<endl;
+            continue;
+        }
+        totalEvent++;
+        if(ptrArray==NULL){
+            ptrArray=new RawEvent*[nEvents*2];
+            index=0;
+        }
+        ptrArray[index*2]=revt1;
+        ptrArray[index*2+1]=revt2;
+        if(revt1!=NULL){
+            currentEventID=revt1->event_id;
+        }else{
+            currentEventID=revt2->event_id;
+        }
+        index++;
+        if(index>=nEvents){
+            bufferDQ.push_back(ptrArray);
+            ptrArray=NULL;
+        }
+        index1++;
+        if(index1>=nEvents){
+            delete ptrArray01;
+            ptrArray01=NULL;
+        }
+        index2++;
+        if(index2>=nEvents){
+            delete ptrArray02;
+            ptrArray02=NULL;
+        }
+    }   
 }
 void DataProcessor::makePar(RawEvent* revt){
     parameter.fill(revt);
@@ -309,41 +406,6 @@ void DataProcessor::makePar(RawEvent* revt){
         // cout<<"parameter generations done"<<endl;
     }
 }
-void DataProcessor::QA(RawEvent* revt){
-    if(QASocket==NULL){
-        QASocket = new TMessageSocket(QAPort);
-    }
-    // cout<<"DataProcessor::QA "<<revt->event_id<<endl;
-    QASocket->put(revt);
-}
-void DataProcessor::closeEventFile(){
-    eventFile->cd();
-    eventFile->Write();
-    eventFile->Close();
-}
-void DataProcessor::createEventFile(){
-    eventFileID++;
-    eventFile = new TFile((dir+eventFilePrefix+to_string(eventFileID)+".root").c_str(), "RECREATE");
-    eventFile->cd();
-    eventTree = new TTree(eventTreeName.c_str(), eventTreeName.c_str());
-    eventTree->Branch(eventBranchName.c_str(), &event);
-
-    // cout<<"event file created:"<<(dir+eventFilePrefix+to_string(eventFileID)+".root")<<endl;
-}
-void DataProcessor::closeRawEventFile(){
-    rawEventFile->cd();
-    rawEventFile->Write();
-    rawEventFile->Close();
-}
-void DataProcessor::createRawEventFile(){
-    rawEventFileID++;
-    rawEventFile = new TFile((dir+rawEventFilePrefix+to_string(rawEventFileID)+".root").c_str(), "RECREATE");
-    rawEventFile->cd();
-    rawEventTree = new TTree(rawEventTreeName.c_str(), rawEventTreeName.c_str());
-    rawEventTree->Branch(rawEventBranchName.c_str(), &rawEvent);
-    
-    // cout<<"raw event file created:"<<(dir+rawEventFilePrefix+to_string(rawEventFileID)+".root")<<endl;
-}
 void DataProcessor::updateEventFileID(){
     eventFileID = 0;
     for (const auto & file : std::filesystem::directory_iterator(dir)){
@@ -354,7 +416,6 @@ void DataProcessor::updateEventFileID(){
         int id = stoi(name.substr(eventFilePrefix.size(),name.size() - suffix.size()));
         if(id>eventFileID)eventFileID = id;
     }
-    // cout<<"event file id:"<<eventFileID<<endl;
 }
 void DataProcessor::updateRawEventFileID(){
     rawEventFileID = 0;
@@ -366,9 +427,7 @@ void DataProcessor::updateRawEventFileID(){
         int id = stoi(name.substr(rawEventFilePrefix.size(),name.size() - suffix.size()));
         if(id>rawEventFileID)rawEventFileID = id;
     }
-    // cout<<"raw event file id:"<<rawEventFileID<<endl;
 }
-
 void DataProcessor::setFPC2(std::vector<std::map<string,int>> fpc2){
     std::vector<std::map<string, int>>().swap(FPC2);
     for (const auto& map : fpc2) {

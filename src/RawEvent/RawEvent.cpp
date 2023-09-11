@@ -24,14 +24,11 @@ RawEvent& RawEvent::operator=(const RawEvent& other){
 bool RawEvent::Add(RawEvent* revt){
 
     if(event_id != revt->event_id) return false;
-    // std::cout<<" event_id "<<revt->event_id<<" time "<<revt->timestamp<<" time "<<timestamp<<endl;
     hit_count += revt->hit_count;
-
     for(int i=0;i<revt->NChannel;i++){
         Channel* ch = (Channel*) revt->channels->At(i);
         AddChannel(ch);
     }
-
     return true;
 }
 void RawEvent::AddChannel(Channel* ch){
@@ -41,12 +38,16 @@ void RawEvent::AddChannel(const Channel& ch){
     *(Channel*)channels->ConstructedAt(NChannel++) = ch;
 }
 void RawEvent::reset(){
-    channels->Clear();
+    channels->Clear("C");
     event_id = -1;
     timestamp = 0;
     hit_count = 0;
     NChannel = 0;
 }
 RawEvent::~RawEvent(){
-    delete channels;
+    for(int i=0;i<NChannel;i++){
+        Channel* iter = (Channel*) channels->At(i);
+        delete iter;
+    }
+    channels->Delete();
 }

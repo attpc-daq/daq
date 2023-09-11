@@ -10,19 +10,22 @@ SiTCP::SiTCP(){
     setFileMaxSize();
     setSocketBufferSize();
     setDir();
-    setDataProcessHost();
     rate = 0;
     nTasks = 0;
     maxFileID = std::numeric_limits<uint64_t>::max();
     firstFile = true;
     writeBuffer = false;
+
     cout<<"initsitcp\n";
 }
 SiTCP::~SiTCP(){
+    if(autoSocket!=NULL)delete autoSocket;
+    if(socketBuffer!=NULL)delete socketBuffer;
 }
-void SiTCP::setDataProcessHost(int port, const char* host){
+void SiTCP::setDataPort(int port){
     dataPort = port;
-    dataHost = host;
+    if(autoSocket!=NULL)delete autoSocket;
+    autoSocket = new AutoSocket(port);
 }
 void SiTCP::setDir(const char* _dir){
     dir = _dir;
@@ -96,22 +99,9 @@ void SiTCP::run(){
     DAQThread = new thread(&SiTCP::DAQLoop, this);
     DecodeThread = new thread(&SiTCP::DecodeLoop, this);
 } 
-// bool SiTCP::sendToDevice(const char* msg){
-//     lock.lock();
-//     disconnectDevice();
-//     connectDevice();
-//     if(connectionStatus == disconnected){
-//         std::cout<<"Can Not Connection to SiTCP"<<endl;
-//         lock.unlock();
-//         return false;
-//     }
-//     int length = send(sock, msg, 9, 0);
-//     disconnectDevice();
-//     lock.unlock();
-//     if(length == 9) return true;
-//     return false;
-// }
+
 void SiTCP::setSocketBufferSize(int n){
+    if(socketBuffer!=NULL)delete socketBuffer;
     socketBufferSize = n;
     socketBuffer = new char[n];
 }
@@ -187,20 +177,7 @@ void SiTCP::DecodeLoop(){
     while(status == status_running){
         string name = dir+to_string(decFileID)+".a";
         if (std::filesystem::exists(name)){
-            TSocket* rootsock;
-            if(sockDeque.size()==0){
-                rootsock = new TSocket(dataHost.c_str(), dataPort);
-                if(rootsock->IsValid() == kFALSE){
-                    cout<<"Decoder can not connect to DP..."<<endl;
-                    rootsock->Close();
-                    sleep(1);
-                    continue;
-                }   
-            }else{
-                rootsock = *sockDeque.begin();
-                sockDeque.pop_front();
-            }
-            new thread(&SiTCP::DecodeTask, this, decFileID, rootsock);
+            new thread(&SiTCP::DecodeTask, this, decFileID);
             decFileID++;
             if(decFileID == maxFileID) decFileID = 0;
         }else{
@@ -210,27 +187,27 @@ void SiTCP::DecodeLoop(){
     cout<<"data decoding loop stop"<<endl;
 }
 
-void SiTCP::DecodeTask(int id, TSocket* rootsock){
+void SiTCP::DecodeTask(int id){
     nTasks++;
-    cout<<"running decoder: "<<nTasks<<" file ID:"<<id<<" start"<<endl;
-    char byte;
+    // cout<<"running decoder: "<<nTasks<<" file ID:"<<id<<" start"<<endl;
+
+    TMessageBuffer *messBuffer = new TMessageBuffer(1000);
+
     PacketDecoder decoder;
     ifstream file;
     string filename = dir+to_string(id)+".b";
     rename((dir+to_string(id)+".a").c_str(), filename.c_str());
     file.open(filename.c_str(), std::ios::binary);
-    cout<<"decoding file:"<<filename.c_str()<<endl;
-    TMessage mess(kMESS_OBJECT);
+
+    char byte;
+    bool endmark;
     while(file.read(&byte,1) && (status == status_running)){
         int state = decoder.Fill(&byte);
+        endmark = false;
         if(state >0) {
-            // cout<<"decoder: event id "<<decoder.rawEvent.event_id<<endl;
-            mess.Reset();
-            mess.WriteObject(&(decoder.rawEvent));
-            while(!(rootsock->Send(mess))){
-                if(status != status_running)break;
-            }
+            messBuffer->put(&(decoder.rawEvent));
             decoder.rawEvent.reset();
+            endmark = true;
         }
     }
     file.close();
@@ -247,38 +224,36 @@ void SiTCP::DecodeTask(int id, TSocket* rootsock){
     while(!std::filesystem::exists(filename)){
         if(status != status_running || ! writeBuffer) {
             nTasks--;
-            if(rootsock->IsValid()){
-                sockDeque.push_back(rootsock);
-            }else{
-                rootsock->Close();
-            }
             return;
         }
         sleep(1);
     }
     file.open(filename.c_str(), std::ios::binary);
     while(file.read(&byte,1) && (status == status_running)){
+        if(endmark)break;
         int state = decoder.Fill(&byte);
         if(state >0) {
-            mess.Reset();
-            mess.WriteObject(&(decoder.rawEvent));
-            while(!(rootsock->Send(mess))){
-                if(status != status_running)break;
-                sleep(0.1);
-            }
-            decoder.rawEvent.reset();
+            messBuffer->put(&(decoder.rawEvent));
+            // decoder.rawEvent.reset();
             break ;
         }
         if(state <0) break;
     }
+    decoder.rawEvent.reset();
     file.close();
     std::filesystem::path filepath= filename.c_str();
     std::filesystem::remove(filepath);
-    nTasks--;
-    cout<<"running decoder: "<<nTasks<<" file ID:"<<id<<" finish"<<endl;
-    if(rootsock->IsValid()){
-        sockDeque.push_back(rootsock);
-    }else{
-        rootsock->Close();
+
+    std::unique_lock<std::mutex> lock(mtx);
+    while (messBuffer->size()>0) {
+        bool state = autoSocket->send(messBuffer->get());
+        if(state){
+            messBuffer->getDone();
+        }
+        if(status != status_running||! writeBuffer)break;
     }
+    cv.notify_one();
+    delete messBuffer;
+    nTasks--;
+    // cout<<"running decoder: "<<nTasks<<" file ID:"<<id<<" finish"<<endl;
 }

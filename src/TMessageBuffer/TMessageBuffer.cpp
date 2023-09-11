@@ -26,7 +26,6 @@ bool TMessageBuffer::put(TObject* obj){
     buffer[tail]->SetWhat(kMESS_OBJECT);
     tail = (tail + 1) % bufferLength;
     dataLength++;
-    // cout<<"message buffer length: "<<dataLength<<endl;
     return true;
 }
 int TMessageBuffer::size(){
@@ -40,7 +39,6 @@ TMessage* TMessageBuffer::get(){
     return buffer[head];
 }
 void TMessageBuffer::getDone(){
-    // cout<<"message buffer length: "<<dataLength<<endl;
     buffer[head]->Reset();
     buffer[head]->SetWhat(kMESS_ANY);
     head = (head + 1) % bufferLength;

@@ -4,13 +4,12 @@
 #include <TObject.h>
 #include "Channel.h"
 #include <TClonesArray.h>
-// #include <TList.h>
+#include <vector>
+
 using namespace std;
 class RawEvent :public TObject{
 public:
   RawEvent();
-  // RawEvent(const RawEvent& other);
-  // RawEvent(RawEvent* other);
   RawEvent& operator=(const RawEvent& other);
   virtual ~RawEvent();
   bool Add(RawEvent* revt);

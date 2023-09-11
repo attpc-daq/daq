@@ -14,6 +14,7 @@
 #include "TMessageSocket.h"
 #include "EventConverter.h"
 #include <mutex>
+#include <condition_variable>
 #include <THttpServer.h>
 #include <filesystem>
 #include <TFileCollection.h>
@@ -23,6 +24,8 @@
 #include <vector>
 #include <string>
 #include <map>
+#include "AutoSocket.h"
+#include<deque>
 
 using namespace std;
 class DataProcessor :public TObject{
@@ -33,7 +36,7 @@ public:
   void run();
   
   void setDir(const char* dir="./output");
-  void setDataPort(int port=8002);
+  void setDataPort(int port1=8010,const char* host1="localhost",int port2=8011, const char* host2="localhost");
   void setQAPort(int port=8003);
   void setFileEvents(uint64_t n=1000);
 
@@ -54,10 +57,10 @@ public:
   string getRawEventFileList(int n = -1);
   string getEventFileList(int n = -1);
 
-  uint64_t getNRawEventFiles(){return rawEventFileID;}
+  uint64_t getOutputFileID(){return outputFileID;}
 
   int getState(){return status;}
-  // float getRate();
+
   uint64_t getTotalEvent(){return totalEvent;}
   uint64_t getCurrentTotalEventID(){return currentEventID;}
   int getNMakePar(){return nMakePar;}
@@ -71,10 +74,23 @@ public:
   void setMicromegasFile(const char* M_file){MicromegasFile=M_file;}
 
 private:
+
+  int dataPort1=8010;
+  string dataHost1="localhost";
+  int dataPort2=8011;
+  string dataHost2="localhost";
+
+  deque<RawEvent**> bufferDQ01;
+  deque<RawEvent**> bufferDQ02;
+  deque<RawEvent**> bufferDQ;
+
+  void msgReceiver(int port, const char* host, deque<RawEvent**> * bufferDQ);
+  void assemble();
+  void rawEventProcess(RawEvent** ptrArray, int fileID);
+  void bufferProcess();
   uint64_t totalEvent;
   uint64_t currentEventID;
-  vector<RawEvent*> rawEventBuffer;
-  int BufferMark[10000];
+
   //UPDATE: by whk
   float WValue; //unit: eV
   float Vdrift; //unit: mm/ns
@@ -82,30 +98,17 @@ private:
   const char* ElectronicFile = nullptr;
   const char* MicromegasFile = nullptr;
 
-  // float rate;
-  // uint64_t rateCount;
-
   EventConverter * converter=NULL;
 
   TMessageSocket* QASocket=NULL;
 
   ParameterGenerator parameter;
 
-  TFile * rawEventFile;
-  TTree* rawEventTree;
-  TFile * eventFile;
-  TTree* eventTree;
-
-  RawEvent rawEvent;
-  Event event;
-
-  uint64_t rawEventCount=0;
-  uint64_t eventCount=0;
   uint64_t rawEventFileID=0;
   uint64_t eventFileID=0;
+  uint64_t outputFileID=0;
 
   int QAPort;
-  int dataPort;
 
   atomic_bool kRawEventSave;
   atomic_bool kEventSave;
@@ -123,17 +126,9 @@ private:
   string dir;
   uint64_t nEvents;
 
-  void loop();
-  void saveRawEvent(RawEvent* revt);
-  void saveEvent(RawEvent* revt);
   void makePar(RawEvent* revt);
-  void QA(RawEvent* revt);
   void updateRawEventFileID();
-  void createRawEventFile();
-  void closeRawEventFile();
   void updateEventFileID();
-  void createEventFile();
-  void closeEventFile();
 
   int status_not_started = 0;
   int status_starting = 1;
@@ -141,13 +136,14 @@ private:
   int status_stopping = 3;
   int status_stopped = 4;
   atomic_int status;
-  thread * mThread;
+  
+  thread* mMsgThread1;
+  thread* mMsgThread2;
+  thread* mAssembleThread;
+  thread* mBufferProcess;
 
-  TTimeStamp start_time, now, elapsed;
-
-  TServerSocket* ss;
-  TMonitor serverMonitor, clientMonitor;
-
+  mutex mtx;
+  condition_variable cv;
   ClassDef(DataProcessor,1)
 };
 #endif

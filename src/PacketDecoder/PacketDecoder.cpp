@@ -117,7 +117,7 @@ int PacketDecoder::Fill(const char* dataByte){
               return 0;
             }
             // cout<<"event id "<<rawEvent.event_id<<" CH "<<rawEvent.channels.size()<<" timestamp "<<rawEvent.timestamp<<" "<<rawEvent.hit_count<<endl;
-            return 1;
+            return 1;//finish a event
           }
           break;
         case 15://hit count
