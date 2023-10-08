@@ -56,8 +56,8 @@ private:
   string rawEventFilePrefix;
   string eventFilePrefix;
 
- 
-  
+  THttpServer* TServ = NULL;
+
   void fill(const RawEvent &revt, const Event &evt);
   TH2D* track_2D_ZX = NULL;
   TH2D* track_2D_ZY = NULL;
@@ -77,7 +77,6 @@ private:
   EventConverter converter;
 
   void mQALoop();
-  void mTServLoop();
   string getRawEventFileName();
   string getEventFileName();
 

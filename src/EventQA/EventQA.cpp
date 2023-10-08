@@ -7,8 +7,11 @@
 #include "TColor.h"
 #include "TVector3.h"
 #include "AutoSocket.h"
+#include "TTimer.h"
+#include <TROOT.h>
 
 EventQA::EventQA(){
+    ROOT::EnableThreadSafety();
     status = 0;
     totalEvent = 0;
     currentEventID = 0;
@@ -81,6 +84,11 @@ EventQA::~EventQA(){
 }
 void EventQA::start(){
     status = status_starting;
+    TServ = new THttpServer(Form("http:%d",THttpServerPort));
+    TServ->SetReadOnly(kFALSE);
+    TServ->Register("",mg);
+    TServ->CreateServerThread();
+
     mQAThread = new thread(&EventQA::mQALoop, this);
     while(status != status_running){
         sleep(1);
@@ -89,7 +97,7 @@ void EventQA::start(){
 void EventQA::stop(){
     status = status_stopping;
     mQAThread->join();
-    mQAThread = NULL;
+    delete TServ;
 }
 void EventQA::run(){}
 
@@ -202,18 +210,14 @@ string EventQA::getList(){
 
 void EventQA::mQALoop(){
     status = status_running;
-    THttpServer *TServ = new THttpServer(Form("http:%d",THttpServerPort));
-    TServ->SetReadOnly(kFALSE);
-    TServ->Register("",mg);
     int finishedFileID = 0;
     totalEvent = 0;
     RawEvent *rawEvent;
     Event *event;
     while(status == status_running){
-        TServ->ProcessRequests();
         string fileName = getRawEventFileName();
         if(finishedFileID == currentRawEventFileID){
-            sleep(2);
+            sleep(0.1);
             continue;
         }
         TFile file(fileName.c_str());
@@ -222,7 +226,6 @@ void EventQA::mQALoop(){
         tree->SetBranchAddress("rawEvent",&rawEvent);
         int nentries = tree->GetEntriesFast();
         for(int jentry=0;jentry<nentries;jentry++){
-            TServ->ProcessRequests();
             tree->GetEntry(jentry);
             totalEvent++;
             currentEventID = rawEvent->event_id;
@@ -236,7 +239,6 @@ void EventQA::mQALoop(){
         }
         finishedFileID = currentRawEventFileID;
     }
-    delete TServ;
     status = status_stopped;
 }
 void EventQA::updateSettings(const char* msg){
@@ -306,6 +308,8 @@ void EventQA::fill(const RawEvent &revt, const Event &evt){
         gr[i]->GetYaxis()->SetTitle("ADC");
         // gr[i]->SetName(Form( "event-%li: raw-%i col-%i",evt.event_id,padrow,padcol));
         // gr[i]->SetTitle(Form("event-%li: raw-%i col-%i",evt.event_id,padrow,padcol));
+        gr[i]->SetName(Form( "channel-%i:%i",ch->channel_id,i));
+        gr[i]->SetTitle(Form("channel-%i:%i",ch->channel_id,i));
         mg->Add(gr[i],"PL");
         i++;
     }
