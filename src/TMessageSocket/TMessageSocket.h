@@ -1,7 +1,7 @@
 #ifndef __TMessageSocket_h__
 #define __TMessageSocket_h__
-#include "TGClient.h"
-#include "TObject.h"
+// #include "TGClient.h"
+// #include "TObject.h"
 #include <iostream>
 #include <string.h>
 #include "stdio.h"
@@ -16,7 +16,7 @@
 
 using namespace std;
 
-class TMessageSocket:public TObject {
+class TMessageSocket {
 public:
     TMessageSocket(int port, int bufferSize = 100);
     TMessageSocket(int port, const char* host, int bufferSize = 100);
@@ -45,8 +45,6 @@ private:
     int status_stopped = 4;
     atomic_int status;
     TMonitor serverMonitor, clientMonitor;
-   
-    ClassDef(TMessageSocket,1)
 };
 
 #endif

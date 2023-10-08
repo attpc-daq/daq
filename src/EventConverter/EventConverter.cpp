@@ -4,8 +4,6 @@
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
-ClassImp(EventConverter);
-
 EventConverter::EventConverter(){
     WValue = 30.0; //unit: eV  气体平均电离能
     Vdrift = 1.0; //unit: mm/ns  电子漂移速度
@@ -31,12 +29,12 @@ void EventConverter::updateSettings(const char* jsonString){
   json json_object = json::parse(jsonString);
   WValue = json_object["WValue"];
   Vdrift = json_object["Vdrift"];
-  std::cout<<"WValue: "<<WValue<<" eV   Vdrift: "<<Vdrift<<" mm/ns"<<std::endl;
-  std::cout << "FPC2:" << std::endl;
+  // std::cout<<"WValue: "<<WValue<<" eV   Vdrift: "<<Vdrift<<" mm/ns"<<std::endl;
+  // std::cout << "FPC2:" << std::endl;
   for (const auto& elem : json_object["FPC2"]) {
       for (const auto& [key, value] : elem.items()) {
           int int_key = std::stoi(key);
-          std::cout << int_key << ": " << value << std::endl;
+          // std::cout << int_key << ": " << value << std::endl;
           FPC2[int_key] = value;
       }
   }
@@ -67,14 +65,13 @@ void EventConverter::updateSettings(const char* jsonString){
   }
 }
 
-Event* EventConverter::convert(const RawEvent &REvt){
+Event* EventConverter::convert(RawEvent &REvt){
     event->reset();
     event->event_id = REvt.event_id;
     event->timestamp = REvt.timestamp;
     event->WValue = WValue;
     event->Vdrift = Vdrift;
-    for(int i=0;i<REvt.NChannel;i++){
-        Channel* iter = (Channel*) REvt.channels->At(i);
+    for(auto iter = REvt.channels.begin(); iter != REvt.channels.end(); ++iter){
         if(iter->FEE_id>=32 || iter->channel_id>64)continue;
         Pad pad;
         if(iter->FEE_id%2==0){}
@@ -92,7 +89,7 @@ Event* EventConverter::convert(const RawEvent &REvt){
         //找到波形中最大值的索引 int waveform[1024]
         Int_t n = sizeof(iter->waveform)/sizeof(iter->waveform[0]); // 计算数组长度
         Int_t maxIndex = distance(iter->waveform, max_element(iter->waveform, iter->waveform+n)); // 找到最大值索引
-        UInt_t max_waveform = iter->waveform[maxIndex];//TODO:检查数据类型是否正确
+        UInt_t max_waveform = iter->waveform[maxIndex];
         Int_t ADC = max_waveform - baseline;
         //小于575一般是噪声过阈值
         if(iter->FEE_id !=3 && iter->channel_id !=38){if(max_waveform<575||ADC<10)continue;}
@@ -142,7 +139,7 @@ double EventConverter::CFD(UInt_t* waveform, Int_t baseline, uint64_t timestampe
 
     int maxIndex,minIndex=0;
     maxIndex = distance(waveform, max_element(waveform, waveform+1024)); // 找到最大值索引
-    UInt_t max_waveform = (UInt_t)waveform[maxIndex]; //TODO: 检查数据类型是否正确
+    UInt_t max_waveform = (UInt_t)waveform[maxIndex];
     int ADC = max_waveform - baseline;
     const double Tr_90 = ADC*0.9 + baseline;
     const double Tr_10 = ADC*0.1 + baseline;

@@ -8,8 +8,5 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 add_library(ParameterGenerator SHARED ParameterGenerator.cpp)
 target_link_libraries(ParameterGenerator PUBLIC ROOT::RIO ROOT::Net RawEvent PacketDecoder)
 
-ROOT_GENERATE_DICTIONARY(ParameterGenerator_dict ParameterGenerator.h LINKDEF Linkdef.h MODULE ParameterGenerator)
-
 install(TARGETS ParameterGenerator DESTINATION lib)
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/ParameterGenerator.h DESTINATION include)
-install(FILES ${PROJECT_BINARY_DIR}/libParameterGenerator.rootmap ${PROJECT_BINARY_DIR}/libParameterGenerator_rdict.pcm DESTINATION lib)

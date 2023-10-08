@@ -8,8 +8,5 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 add_library(TMessageSocket SHARED TMessageSocket.cpp)
 target_link_libraries(TMessageSocket PUBLIC ROOT::RIO ROOT::Net TMessageBuffer RawEvent)
 
-ROOT_GENERATE_DICTIONARY(TMessageSocket_dict TMessageSocket.h LINKDEF Linkdef.h MODULE TMessageSocket)
-
 install(TARGETS TMessageSocket DESTINATION lib)
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/TMessageSocket.h DESTINATION include)
-install(FILES ${PROJECT_BINARY_DIR}/libTMessageSocket.rootmap ${PROJECT_BINARY_DIR}/libTMessageSocket_rdict.pcm DESTINATION lib)

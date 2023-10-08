@@ -3,8 +3,6 @@
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
-ClassImp(ParameterGenerator);
-
 ParameterGenerator::ParameterGenerator(){
     reset();
 }
@@ -19,9 +17,8 @@ void ParameterGenerator::reset(){
         }
 }
 void ParameterGenerator::fill(RawEvent* revt){
-    for(int i=0;i<revt->NChannel;i++){
-        Channel* ch = (Channel*) revt->channels->At(i);
-        int len = sizeof(ch->waveform)/sizeof(UInt_t);//TODO: 检查数据类型
+    for(auto ch = revt->channels.begin(); ch != revt->channels.end(); ++ch){
+        int len = sizeof(ch->waveform)/sizeof(int);
         int waveform_mean = TMath::Mean(len, ch->waveform);
         int waveform_rms = TMath::RMS(len, ch->waveform);
         int threshold = waveform_mean+ 20* waveform_rms;
@@ -76,7 +73,8 @@ string ParameterGenerator::getThreshold(){
     return js.dump(2);
 }
 
-string ParameterGenerator::getSettings(int WValue, int Vdrift, std::vector<std::map<string,int>> FPC2, const char* ElectronicFIle, const char* MicromegasFile) {
+// string ParameterGenerator::getSettings(int WValue, int Vdrift, std::vector<std::map<string,int>> FPC2, const char* ElectronicFIle, const char* MicromegasFile) {
+   string ParameterGenerator::getSettings(int WValue, int Vdrift, const char* FPC2Buffer, const char* ElectronicFIle, const char* MicromegasFile) {
     //TODO: 根据MicromegasFile读取解析并创建 Micromegas_Gain 数组
     std::vector<std::map<std::string, double>> Micromegas_Gain(2048);
     for (int i = 0; i < 2048; i++) {
@@ -91,6 +89,7 @@ string ParameterGenerator::getSettings(int WValue, int Vdrift, std::vector<std::
         Electronic_Gain[i][std::to_string(i)] = 1.0;
         Electronic_time_offset[i][std::to_string(i)] = 0.0;
     }
+    
     std::ifstream file(ElectronicFIle);
     if (!file.is_open() || !file.good()) {
         std::cout << "Error opening file " << ElectronicFIle << std::endl;
@@ -119,19 +118,28 @@ string ParameterGenerator::getSettings(int WValue, int Vdrift, std::vector<std::
         }
         // Electronic_time_offset.push_back(offsetEntry);
     }
-    // // 打印读取的数据
-    // for (const auto& gainEntry : Electronic_Gain) {
-    //     for (const auto& [key, value] : gainEntry) {
-    //         std::cout << "Gain: " << key << " -> " << value << std::endl;
-    //     }
-    // }
+    // 打印读取的数据
+    for (const auto& gainEntry : Electronic_Gain) {
+        for (const auto& [key, value] : gainEntry) {
+            std::cout << "Gain: " << key << " -> " << value << std::endl;
+        }
+    }
 
-    // for (const auto& offsetEntry : Electronic_time_offset) {
-    //     for (const auto& [key, value] : offsetEntry) {
-    //         std::cout << "Time Offset: " << key << " -> " << value << std::endl;
-    //     }
-    // }
-
+    for (const auto& offsetEntry : Electronic_time_offset) {
+        for (const auto& [key, value] : offsetEntry) {
+            std::cout << "Time Offset: " << key << " -> " << value << std::endl;
+        }
+    }
+    // 从buffer中读取FPC2
+    json FPC2Json = json::parse(FPC2Buffer);
+    std::vector<std::map<string,int>> FPC2;
+    for(const auto& element:FPC2Json){
+        std::map<string, int> mapData;
+        for(const auto& pair:element.items()){
+            mapData[pair.key()] = pair.value();
+        }
+        FPC2.push_back(mapData);
+    }
     // 创建整个 JSON 对象
     json json_data = {
         {"WValue", WValue},//unit: eV

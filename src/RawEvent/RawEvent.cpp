@@ -8,8 +8,7 @@ RawEvent::RawEvent(){
     event_id = -1;
     timestamp = 0;
     hit_count = 0;
-    NChannel = 0;
-    channels = new TClonesArray(Channel::Class(),2048);
+    channels.reserve(2048);
 }
 RawEvent& RawEvent::operator=(const RawEvent& other){
     if(this == &other)return *this;
@@ -17,37 +16,25 @@ RawEvent& RawEvent::operator=(const RawEvent& other){
     event_id = other.event_id;
     timestamp = other.timestamp;
     hit_count = other.hit_count;
-    *channels = *(other.channels);
-    NChannel = other.NChannel;
+    channels = other.channels;
     return *this;
 }
 bool RawEvent::Add(RawEvent* revt){
-
     if(event_id != revt->event_id) return false;
     hit_count += revt->hit_count;
-    for(int i=0;i<revt->NChannel;i++){
-        Channel* ch = (Channel*) revt->channels->At(i);
-        AddChannel(ch);
-    }
+    channels.insert(channels.end(),revt->channels.begin(),revt->channels.end());
     return true;
 }
 void RawEvent::AddChannel(Channel* ch){
-    *(Channel*)channels->ConstructedAt(NChannel++) = *ch;
+    channels.push_back(*ch);
 }
 void RawEvent::AddChannel(const Channel& ch){
-    *(Channel*)channels->ConstructedAt(NChannel++) = ch;
+    channels.push_back(ch);
 }
 void RawEvent::reset(){
-    channels->Clear("C");
+    channels.clear();
     event_id = -1;
     timestamp = 0;
     hit_count = 0;
-    NChannel = 0;
 }
-RawEvent::~RawEvent(){
-    for(int i=0;i<NChannel;i++){
-        Channel* iter = (Channel*) channels->At(i);
-        delete iter;
-    }
-    channels->Delete();
-}
+RawEvent::~RawEvent(){}

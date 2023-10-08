@@ -1,7 +1,6 @@
 #ifndef __EventQA_h__
 #define __EventQA_h__
-#include "TGClient.h"
-#include "TObject.h"
+
 #include "TMultiGraph.h"
 #include "TGraph.h"
 #include "Event.h"
@@ -9,6 +8,8 @@
 #include <TFile.h>
 #include <TH2D.h>
 #include <TH3D.h>
+#include <TTree.h>
+#include <TFile.h>
 #include <TBufferJSON.h>
 #include "RawEvent.h"
 #include "TMessageSocket.h"
@@ -17,73 +18,74 @@
 #include <THttpServer.h>
 #include <filesystem>
 #include <TFileCollection.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 using namespace std;
-class EventQA :public TObject{
+
+class EventQA {
 public:
-  EventQA(int port=8008);
+  EventQA();
   virtual ~EventQA();
-  void setMessageHost(int port, const char* host="localhost");
-  string get(const char* name);
+  void start();
   void stop();
   void run();
+  void setTHttpServerPort(int port=8008);
+  string get(const char* name);
   void updateSettings(const char* msg);
-
   void setpad_numQA(long num);//num: 0~2047 num=row*64+column
   void setpad_numQA(long row, long column);//row: 0~31 column: 0~63
-
-  int state(){return status;}
   string getList();
-
   void setDir(const char* dir);
-  // float getRate();
   int getState(){return status;}
   uint64_t getTotalEvent(){return totalEvent;}
   uint64_t getCurrentEventID(){return currentEventID;}
 
 private:
-  uint64_t totalEvent;
-  uint64_t currentEventID;
-  RawEvent rawEvent;
-  Event event;
-  TTimeStamp start_time, now, elapsed;
-  // float rate=0;
-
+  thread * mQAThread = NULL;
+  thread * mTServThread = NULL;
+  atomic_int status;
+  atomic_int totalEvent;
+  atomic_int currentEventID;
+  atomic_int currentRawEventFileID;
+  atomic_int currentEventFileID;
+  int THttpServerPort;
   string dir;
-  THttpServer * TServ;
+  string rawEventFilePrefix;
+  string eventFilePrefix;
+
+ 
+  
   void fill(const RawEvent &revt, const Event &evt);
-  TH2D* track_2D = NULL;
+  TH2D* track_2D_ZX = NULL;
+  TH2D* track_2D_ZY = NULL;
+  TH2D* track_2D_XY = NULL;
   TH3D* track_3D = NULL;
   TH1D* Mesh_Energy_Spectrum = NULL;
   TH1D* Mesh_ADC_Spectrum = NULL;
   TH1D* Pad_ADC = NULL;
   TMultiGraph* mg = NULL;
+  TGraph* gr[2048];
   const int colorindex[12] = {
       kBlack, kRed-4, kGreen, kBlue-4, kYellow, kMagenta-3,
       kCyan, kOrange, kTeal-6, kAzure, kViolet, kPink+9
   };
 
   int pad_numQA = 0;
-
   EventConverter converter;
 
-  int THttpServerPort;
-
-  int socketPort;
-  string socketHost;
   void mQALoop();
   void mTServLoop();
+  string getRawEventFileName();
+  string getEventFileName();
 
   int status_not_started = 0;
   int status_starting = 1;
   int status_running = 2;
   int status_stopping = 3;
   int status_stopped = 4;
-  atomic_int status;
-  thread * mQAThread;
-  thread * mTServThread;
-
   mutex lock;
-  ClassDef(EventQA,1)
 };
 #endif

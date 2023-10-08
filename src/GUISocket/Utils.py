@@ -275,7 +275,7 @@ class logger(object):
         self._fileHandler = None
         self._streamHandler = None
         self.filePathName = None
-    
+
     def new(self):
         if self._fileHandler != None:
             self._logger.removeHandler(self._fileHandler)

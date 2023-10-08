@@ -1,7 +1,5 @@
 #ifndef __EventConverter_h__
 #define __EventConverter_h__
-#include "TGClient.h"
-#include "TObject.h"
 #include "RawEvent.h"
 #include "Event.h"
 #include "TTree.h"
@@ -11,7 +9,7 @@
 
 using namespace std;
 
-class EventConverter :public TObject{
+class EventConverter {
 public:
   EventConverter();
   EventConverter(const char* filename);
@@ -19,7 +17,7 @@ public:
   void updateSettings(const char* jsonString);
   double CFD(UInt_t* waveform, Int_t baseline, uint64_t timestampe, double attenuate_factor=0.5);
 
-  Event* convert(const RawEvent &evt);
+  Event* convert(RawEvent &evt);
   Event *event;
 
 private:
@@ -39,6 +37,5 @@ private:
   int XPos[2048];
   int ZPos[2048];
 
-  ClassDef(EventConverter,1)
 };
 #endif

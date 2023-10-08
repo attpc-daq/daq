@@ -1,5 +1,4 @@
 #include "TMessageBuffer.h"
-ClassImp(TMessageBuffer);
 
 TMessageBuffer::TMessageBuffer(int size){
     buffer = new TMessage*[size];

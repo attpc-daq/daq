@@ -1,7 +1,5 @@
 #ifndef __SiTCP_h__
 #define __SiTCP_h__
-#include "TGClient.h"
-#include "TObject.h"
 #include <iostream>
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -15,70 +13,95 @@
 #include <filesystem>
 #include <sstream>
 #include <string>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include "RawEvent.h"
 #include <TMessage.h>
 #include <TSocket.h>
-#include <deque>
-#include "TMessageBuffer.h"
+#include "TMessageBufferTP.h"
 #include "AutoSocket.h"
 
 using namespace std;
 
-class SiTCP:public TObject {
+class SiTCP{
 public:
-    SiTCP();
+    SiTCP(int id);
     virtual ~SiTCP();
+
+    void start();
+    void stop();
+    void run();
+
+    void startData();
+    void stopData();
+    void startDecoder();
+    void stopDecoder();
+
     void setDir(const char* dir="./output");
     void clearDir();
 
-    void run();
-    void stop();
-
     void setDataPort(int port);
-    void setSocketBufferSize(int n=1024*1024);
     void setFileMaxSize(int n=16*1024*1024);
-    int getState(){return status;}
-    int getConnectionState(){return connectionStatus;}
-    float getRate(){return rate;}
-    int getNTasks(){return nTasks;}
-    bool getDecoderState(){return writeBuffer;}
-    void enableDecoder();
-    void disableDecoder();
-    void setupServerAddress(const char* ip, int port);
-    string getIP(){return IP;}
-    int getPort(){return Port;}
+    int getState();
+    int getDataAcquisitionState(){return shmp->dataAcquisitionStatus;}
+    int getDecoderState(){return shmp->dataDecodStatus;}
+    float getRate();
+    int getNTasks();
+    void enableBuffer();
+    void disableBuffer();
+    void setServerAddress(const char* ip, int port);
+    void resetSHM();
+    void sendToSiTCP(const char* msg);
+    string getIP(){return shmp->FEEAddressStr;}
+    int getPort(){return shmp->FEEPort;}
 
 private:
+    static vector<SiTCP*> instances;
+    struct shmseg {
+        atomic_int status;
+        atomic_int nTasks;
+        float rate;
+        atomic_bool writeBuffer;
+        atomic_int FEEPort;
+        unsigned long FEEAddress;
+        char FEEAddressStr[24];
+        char dir[256];
+        atomic_int dataPort;
+        atomic_int fileMaxSize;
+        atomic_int dataAcquisitionStatus;
+        atomic_int dataDecodStatus;
+    };
+    struct shmseg *shmp;
+    pid_t DecoderPID,DAQPID;
+    int keyID, shmid;
+
     AutoSocket* autoSocket=NULL;
 
-    string IP;
-    int Port;
-    void connectDevice();
+    // string IP;
+    // int Port;
+    int connectDevice();
     void disconnectDevice();
 
     int dataPort;
 
-    bool firstFile;
+    bool firstFile = true;
 
-    float rate;
-    int fileMaxSize;
-    char* socketBuffer=NULL;
+    int fileMaxSize = 16*1024*1024;
+    // char* socketBuffer=NULL;
     void createFile();
     void closeFile();
     ofstream file;
-    string dir;
+    // string dir;
     uint64_t daqFileID;
     uint64_t decFileID;
-    uint64_t maxFileID;
-    int socketBufferSize;
-    void createSocket();
+    uint64_t maxFileID = std::numeric_limits<uint64_t>::max();
     
     struct sockaddr_in server_address;
     
-    int sock;
-    int max_fd;
-    int activity;
-    fd_set sockReadSet,sockWriteSet;
+    int sockfd = -1;
+    fd_set sockReadSet;
 
     int status_not_started = 0;
     int status_starting = 1;
@@ -86,24 +109,11 @@ private:
     int status_stopping = 3;
     int status_stopped = 4;
 
-    int connected = 1;
-    int disconnected = 0;
-    atomic_int status;
-    atomic_int connectionStatus;
-    atomic_int nTasks;
-
-    atomic_bool writeBuffer;
-
     mutex mtx;
     condition_variable cv;
 
     void DAQLoop();
     void DecodeLoop();
     void DecodeTask(int id);
-    thread * DAQThread;
-    thread * DecodeThread;
-
-    ClassDef(SiTCP,1)
 };
-
 #endif

@@ -1,17 +1,15 @@
 #ifndef __TMessageBuffer_h__
 #define __TMessageBuffer_h__
-#include "TGClient.h"
-#include "TObject.h"
+
 #include <iostream>
 #include <string.h>
 #include "stdio.h"
 #include "TMessage.h"
 #include <atomic>
-#include <mutex>
 
 using namespace std;
 
-class TMessageBuffer:public TObject {
+class TMessageBuffer {
 public:
     TMessageBuffer(int size=100);
     virtual ~TMessageBuffer();
@@ -28,7 +26,6 @@ private:
     atomic_int head;
     atomic_int tail;
 
-    ClassDef(TMessageBuffer,1)
 };
 
 #endif

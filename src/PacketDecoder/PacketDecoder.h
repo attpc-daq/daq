@@ -1,7 +1,5 @@
 #ifndef __PacketDecoder_h__
 #define __PacketDecoder_h__
-#include "TGClient.h"
-#include "TObject.h"
 #include "RawEvent.h"
 #include "Event.h"
 #include "TTree.h"
@@ -12,21 +10,22 @@
 
 using namespace std;
 
-class PacketDecoder :public TObject{
+class PacketDecoder {
 public:
   PacketDecoder();
 
   virtual ~PacketDecoder();
 
-  int Fill(const char* dataByte);
-  RawEvent rawEvent;
-
+  int Fill(char dataByte);
+  
+  RawEvent* getRawEvent(){return rawEvent;}
   
   uint64_t temp_event_id;
   
   uint64_t temp_timestamp;
 
 private:
+  RawEvent *rawEvent;
   uint64_t _event_id;
   uint64_t _timestamp;
   uint packetType;
@@ -45,6 +44,5 @@ private:
   int waveformFillStatusCode;
   Channel channel;
 
-  ClassDef(PacketDecoder,1)
 };
 #endif

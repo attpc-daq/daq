@@ -5,6 +5,7 @@
 #include "Pad.h"
 #include <TClonesArray.h>
 // #include <TList.h>
+#include <vector>
 
 using namespace std;
 
@@ -20,8 +21,7 @@ public:
   uint64_t timestamp;
   float WValue; //unit: eV
   float Vdrift; //unit: mm/ns
-  TClonesArray* pads;
-  int NPad;
+  vector<Pad> pads;
 private:
   ClassDef(Event,1)
 };

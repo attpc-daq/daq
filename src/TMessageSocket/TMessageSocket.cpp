@@ -3,8 +3,6 @@
 #include "TH1.h"
 #include "Channel.h"
 
-ClassImp(TMessageSocket);
-
 TMessageSocket::TMessageSocket(int _port, int bufferSize){
     setBufferSize(bufferSize);
     port = _port;

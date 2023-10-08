@@ -6,10 +6,11 @@ find_package(ROOT REQUIRED COMPONENTS RIO Net)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_library(SiTCP SHARED SiTCP.cpp)
-target_link_libraries(SiTCP PUBLIC ROOT::RIO ROOT::Net RawEvent PacketDecoder TMessageBuffer AutoSocket)
+add_executable(SiTCPExec main.cpp)
 
-ROOT_GENERATE_DICTIONARY(SiTCP_dict SiTCP.h LINKDEF Linkdef.h MODULE SiTCP)
+target_link_libraries(SiTCP PUBLIC ROOT::RIO ROOT::Net RawEvent PacketDecoder AutoSocket)
+target_link_libraries(SiTCPExec PUBLIC SiTCP)
 
 install(TARGETS SiTCP DESTINATION lib)
+install(TARGETS SiTCPExec DESTINATION bin)
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/SiTCP.h DESTINATION include)
-install(FILES ${PROJECT_BINARY_DIR}/libSiTCP.rootmap ${PROJECT_BINARY_DIR}/libSiTCP_rdict.pcm DESTINATION lib)

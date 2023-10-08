@@ -1,7 +1,6 @@
 #ifndef __ParameterGenerator_h__
 #define __ParameterGenerator_h__
-#include "TGClient.h"
-#include "TObject.h"
+
 #include <iostream>
 #include <fstream>
 #include <unistd.h>
@@ -19,14 +18,15 @@
 
 using namespace std;
 
-class ParameterGenerator:public TObject {
+class ParameterGenerator{
 public:
     ParameterGenerator();
     virtual ~ParameterGenerator();
     void reset();
     void fill(RawEvent* revt);
     // string getSettings(int WValue, int Vdrift);
-    string getSettings(int WValue, int Vdrift, std::vector<std::map<std::string, int>> FPC2, const char* ElectrnicFIle, const char* MicromegasFile);
+    // string getSettings(int WValue, int Vdrift, std::vector<std::map<std::string, int>> FPC2, const char* ElectrnicFIle, const char* MicromegasFile);
+    string getSettings(int WValue, int Vdrift, const char* FPC2, const char* ElectrnicFIle, const char* MicromegasFile);
     string getThreshold();
 
 private:
@@ -35,7 +35,6 @@ private:
     uint count[32][64];
 
     RawEvent rawEvent;
-    ClassDef(ParameterGenerator,1)
 };
 
 #endif

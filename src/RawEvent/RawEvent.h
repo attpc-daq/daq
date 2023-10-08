@@ -4,6 +4,7 @@
 #include <TObject.h>
 #include "Channel.h"
 #include <TClonesArray.h>
+#include <TObjArray.h>
 #include <vector>
 
 using namespace std;
@@ -19,8 +20,7 @@ public:
   void AddChannel(Channel* ch);
   void AddChannel(const Channel& ch);
   void reset();
-  TClonesArray * channels;
-  int NChannel;
+  vector<Channel> channels;
 private:
   ClassDef(RawEvent,1)
 };

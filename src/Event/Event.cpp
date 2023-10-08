@@ -9,16 +9,9 @@ Event::Event(){
     timestamp = 0;
     WValue = 30.0;
     Vdrift = 0;
-    NPad = 0;
-    pads = new TClonesArray(Pad::Class(),2048);//TODO:Pad最大数量是多少？
+    pads.reserve(2048);
 }
-Event::~Event(){
-    for(int i=0;i<NPad;i++){
-        Pad* iter = (Pad*) pads->At(i);
-        delete iter;
-    }
-    pads->Delete();
-}
+Event::~Event(){}
 
 Event& Event::operator=(const Event& other){
     if(this == &other)return *this;
@@ -26,21 +19,19 @@ Event& Event::operator=(const Event& other){
     event_id = other.event_id;
     WValue = other.WValue;
     Vdrift = other.Vdrift;
-    *pads = *(other.pads);
-    NPad = other.NPad;
+    pads = other.pads;
     return *this;
 }
 void Event::AddPad(Pad* pad){
-    *(Pad*)pads->ConstructedAt(NPad++) = *pad;
+    pads.push_back(*pad);
 }
 void Event::AddPad(const Pad& pad){
-    *(Pad*)pads->ConstructedAt(NPad++) = pad;
+    pads.push_back(pad);
 }
 void Event::reset(){
-    pads->Clear();
+    pads.clear();
     event_id = 0;
     timestamp = 0;
     WValue = 30.0;
     Vdrift = 0;
-    NPad = 0;
 }
