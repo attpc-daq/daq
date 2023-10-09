@@ -7,10 +7,12 @@
 #include <TMonitor.h>
 #include <TTimeStamp.h>
 #include <TMessageBufferTP.h>
+#include <TROOT.h>
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
 DataProcessor::DataProcessor(int id){
+    ROOT::EnableThreadSafety();
     keyID = id;
     key_t shmkey = ftok(".", keyID);
     shmid = shmget(shmkey, sizeof(struct shmseg)+256, 0644|IPC_CREAT);
@@ -31,7 +33,6 @@ DataProcessor::DataProcessor(int id){
 }
 DataProcessor::~DataProcessor(){
     shmctl(shmid, IPC_RMID, NULL);
-    // cout<<"DataProcessor destructed keyID "<<keyID<<endl;
 }
 void DataProcessor::resetSHM(){
     shmp->kRawEventSave = false;
@@ -45,7 +46,7 @@ void DataProcessor::resetSHM(){
 void DataProcessor::start(){
     if(shmp->status == status_not_started){
         shmp->status = status_starting;
-        int runPID = fork();
+        runPID = fork();
         if(runPID == 0){
             char *path = getenv("PATH");
             char  pathenv[strlen(path) + sizeof("PATH=")];
@@ -57,26 +58,27 @@ void DataProcessor::start(){
         while(shmp->status != status_running){
             sleep(1);
         }
-        // cout<<"DataProcessor started keyID "<<keyID<<endl;
     }
 }
 void DataProcessor::stop(){
     shmp->status = status_stopping;
-    while(shmp->status != status_stopped){
-        sleep(1);
+    if(runPID >0){
+        int status;
+        waitpid(runPID, &status, 0);
+        if(WIFEXITED(status)){
+            // cout<<" DataProcessor RUN process exited with status: "<< WEXITSTATUS(status) << std::endl;
+        }else{
+            std::cerr << "DataProcessor RUN process terminated abnormally." << std::endl;
+        }
     }
-    // cout<<"DataProcessor stopped keyID "<<keyID<<endl;
 }
 
 void DataProcessor::run(){
     shmp->status = status_running;
-    // cout<<"DataProcessor running keyID "<<keyID<<endl;
     thread* mBufferProcess = new thread(&DataProcessor::bufferProcess,this);
     thread* mMsgThread = new thread(&DataProcessor::msgReceiver, this);
     mMsgThread->join();
-    mMsgThread = NULL;
     mBufferProcess->join();
-    mBufferProcess = NULL;
     shmp->status = status_stopped;
 }
 
@@ -143,7 +145,6 @@ void DataProcessor::bufferProcess(){
     }
 }
 void DataProcessor::rawEventProcess(RawEvent** ptrArray, int fileID){
-
     RawEvent** rawEventPtrArray = new RawEvent*[shmp->nEvents];
     TFile* rawEventFile=NULL;
     TTree* rawEventTree=NULL;
@@ -156,29 +157,26 @@ void DataProcessor::rawEventProcess(RawEvent** ptrArray, int fileID){
     string rawEventFileName = dir+rawEventFilePrefix+to_string(fileID)+".root";
     string eventFileName = dir+eventFilePrefix+to_string(fileID)+".root";
     if(shmp->kRawEventSave){
-        std::unique_lock<std::mutex> lock(mtx);
+        // std::unique_lock<std::mutex> lock(mtx);
         rawEventFile = new TFile((rawEventFileName+".writing").c_str(), "RECREATE");
         rawEventFile->cd();
         rawEventTree = new TTree(rawEventTreeName.c_str(), rawEventTreeName.c_str());
         rawEventTree->Branch(rawEventBranchName.c_str(), &rawEvent);
-        cv.notify_one();
+        // cv.notify_one();
     }
     if(shmp->kEventSave){
-        // cout<<"saving event file "<<dir+eventFilePrefix+to_string(fileID)+".root"<<endl;
-        std::unique_lock<std::mutex> lock(mtx);
+        // std::unique_lock<std::mutex> lock(mtx);
         eventFile = new TFile((eventFileName+".writing").c_str(), "RECREATE");
         eventFile->cd();
         eventTree = new TTree(eventTreeName.c_str(), eventTreeName.c_str());
         eventTree->Branch(eventBranchName.c_str(), &event);
         converter = new EventConverter((dir+"eventParameters.json").c_str());
-        cv.notify_one();
+        // cv.notify_one();
     }
     for(int i =0 ;i<shmp->nEvents;i++){
         if(ptrArray[i*2]!=NULL && ptrArray[i*2+1]!=NULL){
             rawEventPtrArray[i]=ptrArray[i*2];
             rawEventPtrArray[i]->Add(ptrArray[i*2+1]);
-            // cout<<"DP1 "<<i<<" addr "<<ptrArray[i*2+1]<<" eventID "<<ptrArray[i*2+1]->event_id<<" channels "<<ptrArray[i*2+1]->NChannel<<endl;
-        
             delete ptrArray[i*2+1];
         }else if(ptrArray[i*2]==NULL && ptrArray[i*2+1]!=NULL){
             rawEventPtrArray[i]=ptrArray[i*2+1];
@@ -189,7 +187,6 @@ void DataProcessor::rawEventProcess(RawEvent** ptrArray, int fileID){
             cout<<"error, DataProcessor::rawEventProcess "<<endl;
         }  
     }
-    // TMessageBufferTP<RawEvent> *messBuffer = new TMessageBufferTP<RawEvent>(1000);
     for(int i=0;i<shmp->nEvents;i++){
         if(rawEventFile!=NULL){
             rawEvent = *(rawEventPtrArray[i]);
@@ -199,34 +196,33 @@ void DataProcessor::rawEventProcess(RawEvent** ptrArray, int fileID){
             event = *(converter->convert(*(rawEventPtrArray[i])));
             eventTree->Fill();
         }
-        // if(shmp->kQA){
-        //     messBuffer->put(rawEventPtrArray[i]);
-        // }
         delete rawEventPtrArray[i];
     }
-    std::unique_lock<std::mutex> lock(mtx);
+    // std::unique_lock<std::mutex> lock(mtx);
     if(rawEventFile!=NULL){
         rawEventFile->cd();
         rawEventFile->Write();
         rawEventFile->Close();
+        delete rawEventFile;
         rename((rawEventFileName+".writing").c_str(),rawEventFileName.c_str());
     }
     if(eventFile!=NULL){
         eventFile->cd();
         eventFile->Write();
         eventFile->Close();
+        delete eventFile;
         rename((eventFileName+".writing").c_str(),eventFileName.c_str());
         delete converter;
     }
-    delete rawEventPtrArray;
-    cv.notify_one();
+    delete[] rawEventPtrArray;
+    delete[] ptrArray;
+    // cv.notify_one();
 }
 void DataProcessor::msgReceiver(){
     string host1 = shmp->dataHost1;
     int port1 = shmp->dataPort1;
     string host2 = shmp->dataHost2;
     int port2 = shmp->dataPort2;
-    // cout<<"DP "<<host1<<" "<<port1<<" "<<host2<<" "<<port2<<endl;
     AutoSocket* autoSocket1= new AutoSocket(port1,host1.c_str());//用来接收从SiTCP发送来的数据
     AutoSocket* autoSocket2= new AutoSocket(port2,host2.c_str());//用来接收从SiTCP发送来的数据
     TMessage* msg1=NULL;
@@ -236,7 +232,7 @@ void DataProcessor::msgReceiver(){
     while(shmp->status == status_running){
         if(rawSubEventBufferDQ.size()>10){
             sleep(1);
-            cout<<"too many DP bufferes(>10)"<<endl;
+            std::cout<<"too many DP bufferes(>10)"<<endl;
             continue;
         }
         RawEvent** ptrArray=new RawEvent*[shmp->nEvents*2];//指针数组，用来缓存接收到的数据
@@ -256,7 +252,7 @@ void DataProcessor::msgReceiver(){
                     msg1 = autoSocket1->get();
                     if(msg1==NULL)continue;
                     if(msg1->What()!=kMESS_OBJECT){
-                        cout<<"unkown message type"<<endl;
+                        std::cout<<"unkown message type"<<endl;
                         delete msg1;
                         msg1=NULL;
                         continue;
@@ -266,7 +262,7 @@ void DataProcessor::msgReceiver(){
                     msg2 = autoSocket2->get();
                     if(msg2==NULL)continue;
                     if(msg2->What()!=kMESS_OBJECT){
-                        cout<<"unkown message type"<<endl;
+                        std::cout<<"unkown message type"<<endl;
                         delete msg2;
                         msg2=NULL;
                         continue;
@@ -327,7 +323,6 @@ void DataProcessor::msgReceiver(){
             }
         }
         rawSubEventBufferDQ.push_back(ptrArray);//把指针数组存放在一个容器中，供后续的处理。
-        // cout<<"buffer size "<<rawSubEventBufferDQ.size()<<endl;
     }
     delete autoSocket1,autoSocket2;
 }

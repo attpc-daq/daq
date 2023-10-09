@@ -76,7 +76,7 @@ private:
     struct shmseg *shmp;
     pid_t DecoderPID,DAQPID;
     int keyID, shmid;
-
+    pid_t runPID = -1;
     AutoSocket* autoSocket=NULL;
 
     // string IP;

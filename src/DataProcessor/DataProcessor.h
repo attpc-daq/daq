@@ -22,6 +22,7 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 
 #include <iostream>
 #include <vector>
@@ -81,12 +82,12 @@ private:
     float Vdrift;
     char ElectronicFile[256];
     char MicromegasFile[256];
-    char FPC2[1024];//TODO:把FPC2以json string的形式存储
+    char FPC2[1024];
   };
   int shmid;
   struct shmseg *shmp;
   int keyID;
-
+  pid_t runPID=-1;
   deque<RawEvent**> rawSubEventBufferDQ;
 
   void msgReceiver();

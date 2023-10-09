@@ -15,5 +15,5 @@
 int main(int argc, char* argv[]){
     DataProcessor *dp = new DataProcessor(std::atoi(argv[1]));
     dp->run();
-    return EXIT_SUCCESS;
+    exit(0);
 }

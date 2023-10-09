@@ -15,5 +15,5 @@
 int main(int argc, char* argv[]){
     SiTCP *daq = new SiTCP(std::atoi(argv[1]));
     daq->run();
-    return EXIT_SUCCESS;
+    exit(0);
 }

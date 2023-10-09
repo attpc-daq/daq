@@ -15,5 +15,5 @@
 int main(int argc, char* argv[]){
     EventQA *qa = new EventQA();
     qa->run();
-    return EXIT_SUCCESS;
+    exit(0);
 }

@@ -16,11 +16,9 @@ SiTCP::SiTCP(int id){
     if (shmp == (void *) -1) {
       perror("SiTP Shared memory attach error");
     }
-    // cout<<"SiTCP initialized with keyID "<<keyID<<endl;
 }
 SiTCP::~SiTCP(){
     shmctl(shmid, IPC_RMID, NULL);
-    // cout<<"SiTCP destructed with keyID "<<keyID<<endl;
 }
 void SiTCP::resetSHM(){
     shmp->status = 0;
@@ -33,7 +31,7 @@ void SiTCP::resetSHM(){
 void SiTCP::start(){
     if(shmp->status == status_not_started){
         shmp->status = status_starting;
-        int runPID = fork();
+        runPID = fork();
         if(runPID == 0){
             char *path = getenv("PATH");
             char  pathenv[strlen(path) + sizeof("PATH=")];
@@ -45,19 +43,22 @@ void SiTCP::start(){
         while(shmp->status != status_running){
             sleep(1);
         }
-        // cout<<"SiTCP started keyID "<<keyID<<endl;
     }
 }
 void SiTCP::stop(){
     shmp->status = status_stopping;
-    while(shmp->status != status_stopped){
-        sleep(1);
+    if(runPID >0){
+        int status;
+        waitpid(runPID, &status, 0);
+        if(WIFEXITED(status)){
+            // cout<<" SiTCP RUN process exited with status: "<< WEXITSTATUS(status) << std::endl;
+        }else{
+            std::cerr << "SiTCP RUN process terminated abnormally." << std::endl;
+        }
     }
-    // cout<<"SiTCP stopped keyID "<<keyID<<endl;
 }
 void SiTCP::run(){
     shmp->status = status_running;
-    // cout<<"SiTCP running keyID "<<keyID<<endl;
     thread * DAQThread=NULL;
     thread * DecodeThread=NULL;
     while(shmp->status == status_running){
@@ -198,7 +199,6 @@ void SiTCP::disableBuffer(){
     shmp->writeBuffer = false;
 }
 void SiTCP::DAQLoop(){
-    // std::cout<<"data acquisition loop start"<<endl;
     shmp->dataAcquisitionStatus = status_running;
     int fileSize = 0;
     uint64_t dataSize = 0;
@@ -266,7 +266,6 @@ void SiTCP::DAQLoop(){
     disconnectDevice();
     shmp->rate = 0;
     shmp->dataAcquisitionStatus = status_stopped;
-    // cout<<"data acquisition loop stop"<<endl;
 }
 
 void SiTCP::DecodeLoop(){
@@ -289,7 +288,6 @@ void SiTCP::DecodeLoop(){
     }
     delete autoSocket;
     shmp->dataDecodStatus = status_stopped;
-    // cout<<"data decoding loop stop"<<endl;
 }
 
 void SiTCP::DecodeTask(int id){
