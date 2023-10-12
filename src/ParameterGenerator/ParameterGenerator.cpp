@@ -1,5 +1,6 @@
 #include "ParameterGenerator.h"
 #include "TMath.h"
+#include<cmath>
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
@@ -19,9 +20,11 @@ void ParameterGenerator::reset(){
 void ParameterGenerator::fill(RawEvent* revt){
     for(auto ch = revt->channels.begin(); ch != revt->channels.end(); ++ch){
         int len = sizeof(ch->waveform)/sizeof(int);
-        int waveform_mean = TMath::Mean(len, ch->waveform);
-        int waveform_rms = TMath::RMS(len, ch->waveform);
-        int threshold = waveform_mean+ 20* waveform_rms;
+        float waveform_mean = TMath::Mean(len, ch->waveform);
+        float waveform_rms = TMath::RMS(len, ch->waveform);
+        int threshold = round(waveform_mean+ 15* waveform_rms); 
+        // int threshold = waveform_mean+ 15;
+
         if(ch->FEE_id > 31) continue;
         if(ch->channel_id>63)continue;
         sum_threshold[ch->FEE_id][ch->channel_id]+=threshold;
@@ -34,10 +37,10 @@ string ParameterGenerator::getThreshold(){
     for(int i = 0;i<32;i++){
         for(int j = 0; j<64;j++){
 
-            if(sum_threshold[i][j]==0)sum_threshold[i][j]=580;
+            if(sum_threshold[i][j]==0)sum_threshold[i][j]=590;
             if(count[i][j]==0)count[i][j]=1;
             threshold[i][j] = sum_threshold[i][j]/count[i][j];
-
+            // if(threshold[i][j]<590)threshold[i][j] = 590;
             json msg;
 
             stringstream cmd1;
@@ -119,17 +122,17 @@ string ParameterGenerator::getThreshold(){
         // Electronic_time_offset.push_back(offsetEntry);
     }
     // 打印读取的数据
-    for (const auto& gainEntry : Electronic_Gain) {
-        for (const auto& [key, value] : gainEntry) {
-            std::cout << "Gain: " << key << " -> " << value << std::endl;
-        }
-    }
+    // for (const auto& gainEntry : Electronic_Gain) {
+    //     for (const auto& [key, value] : gainEntry) {
+    //         std::cout << "Gain: " << key << " -> " << value << std::endl;
+    //     }
+    // }
 
-    for (const auto& offsetEntry : Electronic_time_offset) {
-        for (const auto& [key, value] : offsetEntry) {
-            std::cout << "Time Offset: " << key << " -> " << value << std::endl;
-        }
-    }
+    // for (const auto& offsetEntry : Electronic_time_offset) {
+    //     for (const auto& [key, value] : offsetEntry) {
+    //         std::cout << "Time Offset: " << key << " -> " << value << std::endl;
+    //     }
+    // }
     // 从buffer中读取FPC2
     json FPC2Json = json::parse(FPC2Buffer);
     std::vector<std::map<string,int>> FPC2;

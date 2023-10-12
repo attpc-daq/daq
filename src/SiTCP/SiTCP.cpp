@@ -2,10 +2,12 @@
 #include <sys/select.h>
 #include <netinet/in.h>
 #include <TTimeStamp.h>
+#include <TROOT.h>
 #include "PacketDecoder.h"
 using namespace std;
 
 SiTCP::SiTCP(int id){
+    ROOT::EnableThreadSafety();
     keyID = id;
     key_t shmkey = ftok(".", keyID);
     shmid = shmget(shmkey, sizeof(struct shmseg), 0644|IPC_CREAT);
@@ -58,6 +60,7 @@ void SiTCP::stop(){
     }
 }
 void SiTCP::run(){
+    ROOT::EnableThreadSafety();
     shmp->status = status_running;
     thread * DAQThread=NULL;
     thread * DecodeThread=NULL;
@@ -67,7 +70,7 @@ void SiTCP::run(){
                 DAQThread = new thread(&SiTCP::DAQLoop, this);
             }
         }else{
-            if(!shmp->dataAcquisitionStatus == status_stopping){
+            if(shmp->dataAcquisitionStatus >= status_stopping){
                 DAQThread->join();
                 delete DAQThread;
                 DAQThread = NULL;
@@ -76,34 +79,55 @@ void SiTCP::run(){
         if(DecodeThread==NULL){
             if(shmp->dataDecodStatus == status_starting){
                 DecodeThread = new thread(&SiTCP::DecodeLoop, this);
-                DecodeThread->join();
-                delete DecodeThread;
-                DecodeThread = NULL;
             }
         }else{
-            if(!shmp->dataDecodStatus == status_stopping){
+            if(shmp->dataDecodStatus >= status_stopping){
                 DecodeThread->join();
                 delete DecodeThread;
                 DecodeThread = NULL;
             }
         }
-        sleep(1);
+        sleep(0.1);
+    }
+    if(DAQThread!=NULL){
+        shmp->dataAcquisitionStatus = status_stopping;
+        DAQThread->join();
+        delete DAQThread;
+        DAQThread = NULL;
+    }
+    if(DecodeThread!=NULL){
+        shmp->dataDecodStatus = status_stopping;
+        DecodeThread->join();
+        delete DecodeThread;
+        DecodeThread = NULL;
     }
     shmp->status = status_stopped;
 }
 void SiTCP::startData(){
     shmp->dataAcquisitionStatus = status_starting;
+    while(shmp->dataAcquisitionStatus != status_running){
+        sleep(1);
+    }
 }
 void SiTCP::stopData(){
     shmp->dataAcquisitionStatus = status_stopping;
+    while(shmp->dataAcquisitionStatus != status_stopped){
+        sleep(1);
+    }
 }
 void SiTCP::startDecoder(){
     shmp->dataDecodStatus = status_starting;
     shmp->writeBuffer = true;
+    while(shmp->dataDecodStatus != status_running){
+        sleep(1);
+    }
 }
 void SiTCP::stopDecoder(){
     shmp->writeBuffer = false;
     shmp->dataDecodStatus = status_stopping;
+    while(shmp->dataDecodStatus != status_stopped){
+        sleep(1);
+    }
 }
 int SiTCP::getState(){
     return shmp->status;

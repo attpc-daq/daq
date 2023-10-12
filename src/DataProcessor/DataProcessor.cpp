@@ -74,6 +74,7 @@ void DataProcessor::stop(){
 }
 
 void DataProcessor::run(){
+    ROOT::EnableThreadSafety();
     shmp->status = status_running;
     thread* mBufferProcess = new thread(&DataProcessor::bufferProcess,this);
     thread* mMsgThread = new thread(&DataProcessor::msgReceiver, this);

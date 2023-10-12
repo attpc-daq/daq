@@ -43,14 +43,29 @@ public:
   uint64_t getTotalEvent(){return totalEvent;}
   uint64_t getCurrentEventID(){return currentEventID;}
 
+  void clear();
+  void doFirst();
+  void doPrevious();
+  void doFile(int fileID);
+  void doNext();
+  void doLast();
+  void setAuto();
+  int getCurrentFileID(){return currentRawEventFileID;}
+  bool getAutoMode(){return autoMode;}
+
 private:
+  int getLastID();
+  int getFirstID();
+  int getPreviousID();
+  int getNextID();
+  bool autoMode = false;
   thread * mQAThread = NULL;
   thread * mTServThread = NULL;
   atomic_int status;
   atomic_int totalEvent;
   atomic_int currentEventID;
   atomic_int currentRawEventFileID;
-  atomic_int currentEventFileID;
+  // atomic_int currentEventFileID;
   int THttpServerPort;
   string dir;
   string rawEventFilePrefix;
