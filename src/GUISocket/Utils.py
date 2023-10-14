@@ -8,6 +8,7 @@ import json
 import types
 import os
 import queue
+import asyncio
 from io import StringIO
 import multiprocessing
 import websockets
@@ -252,6 +253,14 @@ class WebsocketHander(CommandHandler):
 
     async def on_cmd_register(self, websocket, cmd_list, client_key):
         self._MonitorList[client_key] = websocket
+
+    async def on_cmd_shutdown(self, websocket, cmd_list, client_key):
+        await websocket.close()
+        MonitorList = self._MonitorList.copy()
+        for ws in MonitorList.values():
+            await ws.close()
+        
+        asyncio.get_event_loop().stop()
 
 
 def timeString():

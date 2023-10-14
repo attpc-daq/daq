@@ -10,6 +10,7 @@
 #include <TH3D.h>
 #include <TTree.h>
 #include <TFile.h>
+#include <TChain.h>
 #include <TBufferJSON.h>
 #include "RawEvent.h"
 #include "TMessageSocket.h"
@@ -43,29 +44,38 @@ public:
   uint64_t getTotalEvent(){return totalEvent;}
   uint64_t getCurrentEventID(){return currentEventID;}
 
-  void clear();
-  void doFirst();
-  void doPrevious();
+  void clearPlots();
+  void doFirstFile();
+  void doFirstEvent();
+  void doPreviousFile();
+  void doPreviousEvent();
   void doFile(int fileID);
-  void doNext();
-  void doLast();
-  void setAuto();
+  void doEvent(int entryID);
+  void doNextFile();
+  void doNextEvent();
+  void doLastFile();
+  void doLastEvent();
+  void setAutoFile();
   int getCurrentFileID(){return currentRawEventFileID;}
-  bool getAutoMode(){return autoMode;}
+  int getCurrentEventEntryID(){return currentEventEntryID;}
+  bool getAutoFileMode(){return autoFileMode;}
 
 private:
+  RawEvent *rawEvent;
+  Event *event;
+  TFile* file=NULL;
+  TTree* tree;
   int getLastID();
   int getFirstID();
-  int getPreviousID();
-  int getNextID();
-  bool autoMode = false;
+
+  bool autoFileMode = false;
   thread * mQAThread = NULL;
   thread * mTServThread = NULL;
   atomic_int status;
   atomic_int totalEvent;
   atomic_int currentEventID;
+  atomic_int currentEventEntryID;
   atomic_int currentRawEventFileID;
-  // atomic_int currentEventFileID;
   int THttpServerPort;
   string dir;
   string rawEventFilePrefix;
@@ -74,6 +84,7 @@ private:
   THttpServer* TServ = NULL;
 
   void fill(const RawEvent &revt, const Event &evt);
+  void fill();
   TH2D* track_2D_ZX = NULL;
   TH2D* track_2D_ZY = NULL;
   TH2D* track_2D_XY = NULL;

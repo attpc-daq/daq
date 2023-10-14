@@ -16,7 +16,6 @@ EventQA::EventQA(){
     totalEvent = 0;
     currentEventID = 0;
     currentRawEventFileID = 0;
-    // currentEventFileID = 0;
     rawEventFilePrefix = "rawEvent";
     eventFilePrefix = "event";
     Pad_ADC = new TH1D("Pad_ADC","Pad_ADC",4096,0,4095);//ADC码值
@@ -83,6 +82,7 @@ EventQA::~EventQA(){
     delete mg;
 }
 void EventQA::start(){
+    ROOT::EnableThreadSafety();
     status = status_starting;
     TServ = new THttpServer(Form("http:%d",THttpServerPort));
     TServ->SetReadOnly(kFALSE);
@@ -101,27 +101,76 @@ void EventQA::stop(){
 }
 void EventQA::run(){}
 
-void EventQA::clear(){
-    //清除累计的plots
+void EventQA::clearPlots(){
+    Pad_ADC->Reset(); //清除累计的plots
+    Mesh_ADC_Spectrum->Reset();
+    Mesh_Energy_Spectrum->Reset();
 }
-void EventQA::doFirst(){
+void EventQA::doFirstFile(){
     currentRawEventFileID = getFirstID();
 }
-void EventQA::doPrevious(){
+void EventQA::doFirstEvent(){
+    currentEventEntryID = 0;
+    tree->GetEntry(currentEventEntryID);
+    currentEventID = rawEvent->event_id;
+    event = converter.convert(*rawEvent);
+    fill();
+}
+void EventQA::doPreviousFile(){
     currentRawEventFileID--;
+}
+void EventQA::doPreviousEvent(){
+    currentEventEntryID--;
+    if(currentEventEntryID<0){
+        currentEventEntryID = 0;
+    }
+    tree->GetEntry(currentEventEntryID);
+    currentEventID = rawEvent->event_id;
+    event = converter.convert(*rawEvent);
+    fill();
 }
 void EventQA::doFile(int fileID){
     currentRawEventFileID = fileID;
 }
-void EventQA::doNext(){
+void EventQA::doEvent(int entryID){
+    currentEventEntryID = entryID;
+    if(currentEventEntryID<0){
+        currentEventEntryID = 0;
+    }
+    if(currentEventEntryID>=tree->GetEntries()){
+        currentEventEntryID = tree->GetEntries()-1;
+    }
+    tree->GetEntry(currentEventEntryID);
+    currentEventID = rawEvent->event_id;
+    event = converter.convert(*rawEvent);
+    fill();
+}
+void EventQA::doNextFile(){
     currentRawEventFileID++;
 }
-void EventQA::doLast(){
+void EventQA::doNextEvent(){
+    currentEventEntryID++;
+    if(currentEventEntryID>=tree->GetEntries()){
+        currentEventEntryID = tree->GetEntries()-1;
+    }
+    tree->GetEntry(currentEventEntryID);
+    currentEventID = rawEvent->event_id;
+    event = converter.convert(*rawEvent);
+    fill();
+}
+void EventQA::doLastFile(){
     currentRawEventFileID = getLastID();
 }
-void EventQA::setAuto(){
-    if(autoMode)autoMode = false;
-    else autoMode = true;
+void EventQA::doLastEvent(){
+    currentEventEntryID = tree->GetEntries()-1;
+    tree->GetEntry(currentEventEntryID);
+    currentEventID = rawEvent->event_id;
+    event = converter.convert(*rawEvent);
+    fill();
+}
+void EventQA::setAutoFile(){
+    if(autoFileMode)autoFileMode = false;
+    else autoFileMode = true;
 }
 int EventQA::getLastID(){
     int lastID=0;
@@ -165,8 +214,6 @@ string EventQA::getRawEventFileName(){
     fileName = dir + rawEventFilePrefix + to_string(currentRawEventFileID) + ".root";
     return fileName;
 }
-
-string EventQA::getEventFileName(){}
 
 void EventQA::setTHttpServerPort(int port){
     THttpServerPort = port;
@@ -251,29 +298,39 @@ string EventQA::getList(){
 
 void EventQA::mQALoop(){
     status = status_running;
+    // TServ = new THttpServer(Form("http:%d",THttpServerPort));
+    // TServ->SetReadOnly(kFALSE);
+    // TServ->Register("",mg);
     int finishedFileID = 0;
     totalEvent = 0;
-    RawEvent *rawEvent;
-    Event *event;
+    rawEvent = new RawEvent();
     while(status == status_running){
+        // for(int i=0;i<10;i++)TServ->ProcessRequests();
         string fileName = getRawEventFileName();
-        // cout<<currentRawEventFileID<<endl;
         if(fileName == ""){
             sleep(0.1);
-            if(autoMode) currentRawEventFileID++;
+            if(autoFileMode) currentRawEventFileID++;
             continue;
         }
         if(finishedFileID == currentRawEventFileID){
             sleep(0.1);
-            if(autoMode) currentRawEventFileID++;
+            if(autoFileMode) currentRawEventFileID++;
             continue;
         }
-        TFile file(fileName.c_str());
-        TTree* tree;
-        file.GetObject("rawEvent",tree);
-        tree->SetBranchAddress("rawEvent",&rawEvent);
+        if(file!=NULL){
+            file->Close();
+            delete file;
+        }
+        RawEvent *revt;
+        file = new TFile(fileName.c_str());
+        if(!file->IsOpen())continue;
+        file->GetObject("rawEvent",tree);
+        tree->SetBranchAddress("rawEvent",&revt);
+        rawEvent = revt;
         int nentries = tree->GetEntriesFast();
         for(int jentry=0;jentry<nentries;jentry++){
+            // TServ->ProcessRequests();
+            currentEventEntryID = jentry;
             tree->GetEntry(jentry);
             totalEvent++;
             currentEventID = rawEvent->event_id;
@@ -282,11 +339,11 @@ void EventQA::mQALoop(){
             // Do QA with the event here
             //---------------------------------
             lock.lock();
-            fill(*rawEvent, *event);
+            fill();
             lock.unlock();
         }
         finishedFileID = currentRawEventFileID;
-        if(autoMode) currentRawEventFileID++;
+        if(autoFileMode) currentRawEventFileID++;
     }
     status = status_stopped;
 }
@@ -294,9 +351,8 @@ void EventQA::updateSettings(const char* msg){
   converter.updateSettings(msg);
 }
 
-void EventQA::fill(const RawEvent &revt, const Event &evt){
-    // cout<<"QA Event ID "<<evt.event_id<<endl;
-    currentEventID = evt.event_id;
+void EventQA::fill(){
+    currentEventID = event->event_id;
 
     int time_x[1024]; //ns, 25ns per bin
     for(int i=0;i<1024;i++)time_x[i]=i*25;
@@ -316,7 +372,7 @@ void EventQA::fill(const RawEvent &revt, const Event &evt){
     track_3D->Reset();
     int i = 0;
 
-    for(auto pad = evt.pads.begin(); pad!= evt.pads.end(); pad++){
+    for(auto pad = event->pads.begin(); pad!= event->pads.end(); pad++){
             int padrow = pad->padRow;
             int padcol = pad->padColumn;
             int adc = pad->adc;
@@ -339,7 +395,7 @@ void EventQA::fill(const RawEvent &revt, const Event &evt){
             else if(23<=padrow&&padrow<27){point.SetX(-(6*5+5*4+4*3+3*2+2*4+3*2+4*3+(padrow-23)*5+5./2)+72);}
             else {point.SetX(-(6*5+5*4+4*3+3*2+2*4+3*2+4*3+5*4+(padrow-27)*6+6./2)+72);}
             point.SetZ(padcol*4.5+2.25-144);//mm
-            point.SetY((t0_ref-pad->DriftTime)*(evt.Vdrift)); //mm
+            point.SetY((t0_ref-pad->DriftTime)*(event->Vdrift)); //mm
 
             track_2D_ZX->Fill(point.z(),point.x(),charge);
             track_2D_ZY->Fill(point.z(),point.y(),charge);
@@ -347,7 +403,7 @@ void EventQA::fill(const RawEvent &revt, const Event &evt){
             track_3D->Fill(point.z(),point.x(),point.y(),charge);
     }
 
-    for(auto ch = revt.channels.begin(); ch != revt.channels.end(); ++ch){
+    for(auto ch = rawEvent->channels.begin(); ch != rawEvent->channels.end(); ++ch){
         if(gr[i]!=NULL){
             mg->RecursiveRemove(gr[i]);
             gr[i]->Delete();

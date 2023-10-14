@@ -71,11 +71,13 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
         try:
             sock.connect((self.sitcp[0].getIP(), self.sitcp[0].getPort()))
         except (socket.gaierror, socket.timeout, OSError) as exc:
-            print("Caught exception socket.error : %s" % exc)
+            print("send to SiTCP1 Caught exception socket.error : %s" % exc)
+            self.log("send to SiTCP1 Caught exception socket.error : %s" % exc)
             return
         msg = bytes.fromhex(str(msg_list[1]))
         sock.send(msg)
-        # message = str(msg_list[1]) + " done"
+        message = "send to SiTCP1 "+str(msg_list[1]) + " done"
+        self.log(message)
         # await websocket.send(message)
         sock.close()
     
@@ -85,10 +87,14 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
         try:
             sock.connect((self.sitcp[1].getIP(), self.sitcp[1].getPort()))
         except (socket.gaierror, socket.timeout, OSError) as exc:
+            print("send to SiTCP2 Caught exception socket.error : %s" % exc)
+            self.log("send to SiTCP1 Caught exception socket.error : %s" % exc)
+        
             return
         msg = bytes.fromhex(str(msg_list[1]))
         sock.send(msg)
-        # message = str(msg_list[1]) + " done"
+        message =  "send to SiTCP2 "+str(msg_list[1]) + " done"
+        self.log(message)
         # await websocket.send(message)
         sock.close()
         
@@ -231,6 +237,7 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
             self.sitcp[0].stopData()
         if self.sitcp[1] is not None:
             self.sitcp[1].stopData()
+        time.sleep(1)
         await self.on_cmd_send_to_SiTCP1(websocket,['send_to_SiTCP1', '0410203A4050607083'], client_key)
         time.sleep(1)
         await self.on_cmd_send_to_SiTCP1(websocket,['send_to_SiTCP1', '081020384150607083'], client_key)
@@ -318,11 +325,11 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
         self.log("SiTCP threshold setting:")
 
         sock1 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock1.settimeout(2.0)
+        sock1.settimeout(3.0)
         try:
             sock1.connect((self.sitcp[0].getIP(), self.sitcp[0].getPort()))
         except (socket.gaierror, socket.timeout, OSError) as exc:
-            print("Caught exception socket.error : %s" % exc)
+            print("Caught SiTCP1 exception socket.error : %s" % exc)
             return
 
         for i in range(msgJson['count']):
@@ -338,10 +345,19 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
                         print("SiTCP threshold setting error!")
             if i%100 == 0:
                 await websocket.send("thresholdsetting "+str(int(i/20.48/4))+"%")
+        sock1.close()
 
         time.sleep(0.1)
         await self.on_cmd_send_to_SiTCP1(websocket,['', self.convert('1812','0000')], client_key)
         time.sleep(0.1)
+
+        sock1 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock1.settimeout(3.0)
+        try:
+            sock1.connect((self.sitcp[0].getIP(), self.sitcp[0].getPort()))
+        except (socket.gaierror, socket.timeout, OSError) as exc:
+            print("Caught SiTCP1 exception socket.error : %s" % exc)
+            return
 
         for i in range(msgJson['count']):
             for key in msgJson[str(i)]:
@@ -356,7 +372,7 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
                         print("SiTCP threshold setting error!")
             if i%100 == 0:
                 await websocket.send("thresholdsetting "+str(int((i+2048)/20.48/4))+"%")
-
+        sock1.close()
         time.sleep(0.1)
         await self.on_cmd_send_to_SiTCP2(websocket,['', self.convert('1800','0001')], client_key)
         time.sleep(0.1)
@@ -364,11 +380,12 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
         time.sleep(0.1)
 
         sock2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock2.settimeout(2.0)
+        sock2.settimeout(3.0)
         try:
             sock2.connect((self.sitcp[1].getIP(), self.sitcp[1].getPort()))
         except (socket.gaierror, socket.timeout, OSError) as exc:
             message = "Can not connect to SiTCP2 port"
+            print("Caught SiTCP2 exception socket.error : %s" % exc)
             await websocket.send(message)
             return
 
@@ -385,10 +402,20 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
                         print("SiTCP threshold setting error!")
             if i%100 == 0:
                 await websocket.send("thresholdsetting "+str(int((i+2048*2)/20.48/4))+"%")
-
+        sock2.close()
         time.sleep(0.1)
         await self.on_cmd_send_to_SiTCP2(websocket,['', self.convert('1812','0000')], client_key)
         time.sleep(0.1)
+
+        sock2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock2.settimeout(3.0)
+        try:
+            sock2.connect((self.sitcp[1].getIP(), self.sitcp[1].getPort()))
+        except (socket.gaierror, socket.timeout, OSError) as exc:
+            message = "Can not connect to SiTCP2 port"
+            print("Caught SiTCP2 exception socket.error : %s" % exc)
+            await websocket.send(message)
+            return
 
         for i in range(msgJson['count']):
             for key in msgJson[str(i)]:
@@ -403,7 +430,7 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
                         print("SiTCP threshold setting error!")
             if i%100 == 0:
                 await websocket.send("thresholdsetting "+str(int((i+2048*3)/20.48/4))+"%")
-
+        sock2.close()
         await websocket.send("thresholdsetting done!")
 
     async def on_cmd_selftrigger(self, websocket, cmd_list, client_key):
@@ -700,8 +727,111 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
         str = self.eventQA.get(cmd_list[1])
         await websocket.send(str)
 
-    async def on_cmd_shutdown(self, websocket, cmd_list, client_key):
-        asyncio.get_event_loop().stop()
+    async def on_cmd_setQADir(self, websocket, cmd_list, client_key):
+        if self.eventQA is None:
+            return
+        self.eventQA.setDir(cmd_list[1])
+
+    async def on_cmd_QAClearPlots(self, websocket, cmd_list, client_key):
+        if self.eventQA is None:
+            return
+        self.eventQA.clearPlots()
+
+    async def on_cmd_QADoFirstFile(self, websocket, cmd_list, client_key):
+        if self.eventQA is None:
+            return
+        self.eventQA.doFirstFile()
+
+    async def on_cmd_QADoPreviousFile(self, websocket, cmd_list, client_key):
+        if self.eventQA is None:
+            return
+        self.eventQA.doPreviousFile()
+    
+    async def on_cmd_QADoFile(self, websocket, cmd_list, client_key):
+        if self.eventQA is None:
+            return
+        self.eventQA.doFile(int(cmd_list[1]))
+
+    async def on_cmd_QADoNextFile(self, websocket, cmd_list, client_key):
+        if self.eventQA is None:
+            return
+        self.eventQA.doNextFile()
+
+    async def on_cmd_QADoLastFile(self, websocket, cmd_list, client_key):
+        if self.eventQA is None:
+            return
+        self.eventQA.doLastFile()
+
+    async def on_cmd_QASetAutoFile(self, websocket, cmd_list, client_key):
+        if self.eventQA is None:
+            return
+        self.eventQA.setAutoFile()
+
+    async def on_cmd_QADoFirstEvent(self, websocket, cmd_list, client_key):
+        if self.eventQA is None:
+            return
+        self.eventQA.doFirstEvent()
+
+    async def on_cmd_QADoPreviousEvent(self, websocket, cmd_list, client_key):
+        if self.eventQA is None:
+            return
+        self.eventQA.doPreviousEvent()
+    
+    async def on_cmd_QADoEvent(self, websocket, cmd_list, client_key):
+        if self.eventQA is None:
+            return
+        self.eventQA.doEvent(int(cmd_list[1]))
+
+    async def on_cmd_QADoNextEvent(self, websocket, cmd_list, client_key):
+        if self.eventQA is None:
+            return
+        self.eventQA.doNextEvent()
+
+    async def on_cmd_QADoLastEvent(self, websocket, cmd_list, client_key):
+        if self.eventQA is None:
+            return
+        self.eventQA.doLastEvent()
+
+    # async def on_cmd_QASetAutoEvent(self, websocket, cmd_list, client_key):
+    #     if self.eventQA is None:
+    #         return
+    #     self.eventQA.setAutoEvent()
+
+    async def on_cmd_getQAAutoFileMode(self, websocket, cmd_list, client_key):
+        rsp = "QAAutoFileMode"
+        if self.eventQA is None:
+            rsp += " -1"
+        else:
+            rsp += " " + str(self.eventQA.getAutoFileMode())
+        await websocket.send(rsp)
+    
+    # async def on_cmd_getQAAutoEventMode(self, websocket, cmd_list, client_key):
+    #     rsp = "QAAutoEventMode"
+    #     if self.eventQA is None:
+    #         rsp += " -1"
+    #     else:
+    #         rsp += " " + str(self.eventQA.getAutoEventMode())
+    #     await websocket.send(rsp)
+
+    async def on_cmd_getQAFileID(self, websocket, cmd_list, client_key):
+        rsp = "QAFileID"
+        if self.eventQA is None:
+            rsp += " -1"
+        else:
+            rsp += " " + str(self.eventQA.getCurrentFileID())
+        await websocket.send(rsp)
+
+    async def on_cmd_getQAEventEntryID(self, websocket, cmd_list, client_key):
+        rsp = "QAEventEntryID"
+        if self.eventQA is None:
+            rsp += " -1"
+        else:
+            rsp += " " + str(self.eventQA.getCurrentEventEntryID())
+        await websocket.send(rsp)
+
+    # async def on_cmd_shutdown(self, websocket, cmd_list, client_key):
+    #     await websocket.close()
+    #     asyncio.get_event_loop().stop()
 
     async def on_cmd_newLog(self, websocket, cmd_list, client_key):
         dir = cmd_list[1]
