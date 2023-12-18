@@ -18,6 +18,8 @@ AutoSocket::~AutoSocket(){
 TMessage* AutoSocket::get(){
     if(receiver == NULL ){
         receiver = new TSocket(host.c_str(), port);
+        //TODO:kNoBlock 防止receiver->Recv(msg)无数据时阻塞
+        receiver->SetOption(kNoBlock, true);
     }
     if(receiver->IsValid() == kFALSE) {
         receiver->Close();
@@ -37,7 +39,6 @@ TMessage* AutoSocket::get(){
 
 bool AutoSocket::send(TMessage* msg){
     if(sender==NULL){
-        // cout<<"waiting for connection..."<<endl;
         sender = server->Accept();
         if(sender == (TSocket *)-1) {
             sleep(1);
