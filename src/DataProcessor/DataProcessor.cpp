@@ -66,7 +66,7 @@ void DataProcessor::stop(){
         int status;
         waitpid(runPID, &status, 0);
         if(WIFEXITED(status)){
-            // cout<<" DataProcessor RUN process exited with status: "<< WEXITSTATUS(status) << std::endl;
+            cout<<" DataProcessor RUN process exited with status: "<< WEXITSTATUS(status) << std::endl;
         }else{
             std::cerr << "DataProcessor RUN process terminated abnormally." << std::endl;
         }
@@ -96,25 +96,32 @@ int DataProcessor::getCurrentEventID(){
     return shmp->currentEventID;
 }
 void DataProcessor::setDir(const char* dir){
+    memset(shmp->dir, 0, sizeof(shmp->dir));//TODO:
     strncpy(shmp->dir,dir,strlen(dir));
     if(shmp->dir[strlen(dir)-1]!='/')shmp->dir[strlen(dir)]='/';
     std::filesystem::create_directory(shmp->dir);
 }
 void DataProcessor::setGainFile(const char* E_file,const char* M_file){
+    memset(shmp->ElectronicFile, 0, sizeof(shmp->ElectronicFile));//TODO:
     strncpy(shmp->ElectronicFile,E_file,strlen(E_file));
+    memset(shmp->MicromegasFile, 0, sizeof(shmp->MicromegasFile));//TODO:
     strncpy(shmp->MicromegasFile,M_file,strlen(M_file));
 }
 void DataProcessor::setElectronicFile(const char* E_file){
+    memset(shmp->ElectronicFile, 0, sizeof(shmp->ElectronicFile));//TODO:
     strncpy(shmp->ElectronicFile,E_file,strlen(E_file));
 }
 void DataProcessor::setMicromegasFile(const char* M_file){
+    memset(shmp->MicromegasFile, 0, sizeof(shmp->MicromegasFile));//TODO:
     strncpy(shmp->MicromegasFile,M_file,strlen(M_file));
 }
 
 void DataProcessor::setDataPort(int port1,const char* host1, int port2, const char* host2){
     shmp->dataPort1=port1;
+    memset(shmp->dataHost1, 0, sizeof(shmp->dataHost1));//TODO:
     strncpy(shmp->dataHost1, host1, strlen(host1));
     shmp->dataPort2=port2;
+    memset(shmp->dataHost2, 0, sizeof(shmp->dataHost2));//TODO:
     strncpy(shmp->dataHost2, host2, strlen(host2));
 }
 void DataProcessor::setFileEvents(int n){
