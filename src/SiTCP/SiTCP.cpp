@@ -181,6 +181,7 @@ void SiTCP::setServerAddress(const char* ip, int port){
     shmp->FEEAddress = inet_addr(ip);
 }
 int SiTCP::connectDevice(){
+    cout<<"connect to SiTCP"<<endl;
     memset(&server_address, 0, sizeof(server_address));
     server_address.sin_family = AF_INET;
     server_address.sin_addr.s_addr = shmp->FEEAddress;
@@ -191,10 +192,10 @@ int SiTCP::connectDevice(){
         return -1;
     }
     //设置socket的timeout
-    // struct timeval tv;
-    // tv.tv_sec = 3;
-    // tv.tv_usec = 0;
-    // setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
+    struct timeval tv;
+    tv.tv_sec = 3;
+    tv.tv_usec = 0;
+    setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
     if (connect(sockfd, (struct sockaddr*)&server_address, sizeof(server_address)) < 0) {
         perror("Connection to SiTCP failed");
         disconnectDevice();
@@ -203,6 +204,7 @@ int SiTCP::connectDevice(){
         return -1;
     }
     FD_SET(sockfd, &sockReadSet);
+    cout<<"connect to SiTCP success"<<endl;
     return sockfd;
 
 }
@@ -224,6 +226,7 @@ void SiTCP::disableBuffer(){
 }
 void SiTCP::DAQLoop(){
     shmp->dataAcquisitionStatus = status_running;
+    cout<<"DAQ loop start"<<endl;
     int fileSize = 0;
     uint64_t dataSize = 0;
     int nDaq4Count = 1;
@@ -243,22 +246,26 @@ void SiTCP::DAQLoop(){
             std::cout<<"Can Not Connect to SiTCP, Retrying in 1 second..."<<endl;
             continue;
         }
-        int ready = select(sockfd + 1, &sockReadSet, nullptr, nullptr, nullptr);
-        if (ready == -1) {
-            perror("Select failed");
-            disconnectDevice();
-            continue;
-        }
-        if (!FD_ISSET(sockfd, &sockReadSet)) {
-            continue;
-        }
+        // cout<<"test 1"<<endl;
+        // int ready = select(sockfd + 1, &sockReadSet, nullptr, nullptr, nullptr);
+        // if (ready == -1) {
+        //     perror("Select failed");
+        //     disconnectDevice();
+        //     continue;
+        // }
+        // cout<<"test 2"<<endl;
+        // if (!FD_ISSET(sockfd, &sockReadSet)) {
+        //     continue;
+        // }
+        // cout<<"test 3"<<endl;
         length = recv(sockfd, socketBuffer, socketBufferSize, 0);
         if(length <=0 ){
             std::cout<<"sitcp get data length "<<length<<endl;
-            disconnectDevice();
+            // disconnectDevice();
             shmp->rate = length;
             continue;
         }
+        // cout<<"test 4"<<endl;
         daqCount++;
         dataSize += length;
         if(daqCount >= nDaq4Count){
@@ -317,9 +324,12 @@ void SiTCP::DecodeLoop(){
 void SiTCP::DecodeTask(int id){
     TMessageBufferTP<RawEvent> *messBuffer = new TMessageBufferTP<RawEvent>(1000);
     PacketDecoder decoder;
+    if(id==0)decoder.setFirstEvent(true);
     ifstream file;
     string dir = shmp->dir;
     string filename = dir+to_string(id)+".b";
+    // cout<<"file id: "<<id<<" pid: "<<getpid()<<" thread id: "<<std::this_thread::get_id()<<endl;
+    // int event_id=0;
     rename((dir+to_string(id)+".a").c_str(), filename.c_str());
     file.open(filename.c_str(), std::ios::binary);
     char byte;
@@ -329,6 +339,8 @@ void SiTCP::DecodeTask(int id){
         endmark = false;
         if(state >0) {
             messBuffer->put(decoder.getRawEvent());
+            // cout<<getpid()<<" "<<decoder.getRawEvent()->event_id<<endl;
+            // event_id = decoder.getRawEvent()->event_id;
             decoder.getRawEvent()->reset();
             endmark = true;
         }
@@ -342,6 +354,7 @@ void SiTCP::DecodeTask(int id){
         rename(filename.c_str(),(dir+to_string(id)+".c").c_str());
     }
     uint64_t nextID = id+1;
+    // cout<<"nextID: "<<nextID<<" dir: "<<dir<<" event_id: "<<event_id<<endl;
     if(nextID == maxFileID) nextID = 0;
     filename =  dir+to_string(nextID)+".c";
     while(!std::filesystem::exists(filename)){
@@ -357,6 +370,7 @@ void SiTCP::DecodeTask(int id){
         int state = decoder.Fill(byte);
         if(state >0) {
             messBuffer->put(decoder.getRawEvent());
+            // cout<<getpid()<<" "<<decoder.getRawEvent()->event_id<<endl;
             break ;
         }
         if(state <0) break;

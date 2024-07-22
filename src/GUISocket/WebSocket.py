@@ -14,7 +14,7 @@ class Server(threading.Thread):
         self._handler = handler
         self._port = port
         self._host = host
-        self._state = Utils.State()
+        self._state = Utils.ThreadingState()
     
     @property
     def state(self):

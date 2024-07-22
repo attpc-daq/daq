@@ -66,7 +66,7 @@ void DataProcessor::stop(){
         int status;
         waitpid(runPID, &status, 0);
         if(WIFEXITED(status)){
-            cout<<" DataProcessor RUN process exited with status: "<< WEXITSTATUS(status) << std::endl;
+            // cout<<" DataProcessor RUN process exited with status: "<< WEXITSTATUS(status) << std::endl;
         }else{
             std::cerr << "DataProcessor RUN process terminated abnormally." << std::endl;
         }
@@ -124,6 +124,7 @@ void DataProcessor::setDataPort(int port1,const char* host1, int port2, const ch
     memset(shmp->dataHost2, 0, sizeof(shmp->dataHost2));//TODO:
     strncpy(shmp->dataHost2, host2, strlen(host2));
 }
+
 void DataProcessor::setFileEvents(int n){
     shmp->nEvents = n;
 }
@@ -260,7 +261,7 @@ void DataProcessor::msgReceiver(){
                     msg1 = autoSocket1->get();
                     if(msg1==NULL)continue;
                     if(msg1->What()!=kMESS_OBJECT){
-                        std::cout<<"unkown message type"<<endl;
+                        std::cout<<"unkown message type: msg1->What() = "<<msg1->What()<<endl;
                         delete msg1;
                         msg1=NULL;
                         continue;
@@ -270,7 +271,7 @@ void DataProcessor::msgReceiver(){
                     msg2 = autoSocket2->get();
                     if(msg2==NULL)continue;
                     if(msg2->What()!=kMESS_OBJECT){
-                        std::cout<<"unkown message type"<<endl;
+                        std::cout<<"unkown message type: msg2->What() = "<<msg2->What()<<endl;
                         delete msg2;
                         msg2=NULL;
                         continue;
@@ -278,11 +279,11 @@ void DataProcessor::msgReceiver(){
                 }
                 if(rawSubEvent1==NULL) {
                     rawSubEvent1 = (RawEvent*)msg1->ReadObject(msg1->GetClass());
-                    // cout<<"received rawEvent sub1 ID "<<rawSubEvent1->event_id<<" channels "<<rawSubEvent1->channels.size()<<endl;
+                    cout<<"received rawEvent sub1 ID "<<rawSubEvent1->event_id<<" channels "<<rawSubEvent1->channels.size()<<endl;
                 }
                 if(rawSubEvent2==NULL) {
                     rawSubEvent2 = (RawEvent*)msg2->ReadObject(msg2->GetClass());
-                    // cout<<"received rawEvent sub2 ID "<<rawSubEvent2->event_id<<" channels "<<rawSubEvent2->channels.size()<<endl;
+                    cout<<"received rawEvent sub2 ID "<<rawSubEvent2->event_id<<" channels "<<rawSubEvent2->channels.size()<<endl;
                 }
                 if(rawSubEvent1->event_id==rawSubEvent2->event_id){
                     ptrArray[i*2]=rawSubEvent1;

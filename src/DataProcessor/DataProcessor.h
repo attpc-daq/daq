@@ -71,7 +71,7 @@ private:
     atomic_int totalEvent;
     atomic_int currentEventID;
     atomic_int outputFileID;
-    char dir[512];
+    char dir[256];
     atomic_int dataPort1;
     char dataHost1[20];
     atomic_int dataPort2;
@@ -80,8 +80,8 @@ private:
     //TODO: 运行中需要更新的参数要写在共享内存中
     float WValue;
     float Vdrift;
-    char ElectronicFile[512];
-    char MicromegasFile[512];
+    char ElectronicFile[256];
+    char MicromegasFile[256];
     char FPC2[1024];
   };
   int shmid;

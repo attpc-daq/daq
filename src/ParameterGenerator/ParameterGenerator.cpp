@@ -12,7 +12,8 @@ ParameterGenerator::~ParameterGenerator(){
 void ParameterGenerator::reset(){
     for(int i = 0;i<32;i++){
             for(int j = 0; j<64;j++){
-                sum_threshold[i][j]=0;
+                sum_threshold_mean[i][j]=0;
+                sum_threshold_std[i][j]=0;
                 count[i][j]=0;
             }
         }
@@ -22,12 +23,14 @@ void ParameterGenerator::fill(RawEvent* revt){
         int len = sizeof(ch->waveform)/sizeof(int);
         float waveform_mean = TMath::Mean(len, ch->waveform);
         float waveform_rms = TMath::RMS(len, ch->waveform);
-        int threshold = round(waveform_mean+ 15* waveform_rms); 
+        // int threshold = round(waveform_mean+ 15* waveform_rms); 
+        // cout<<threshold<<"  "<<waveform_mean<<"  "<<waveform_rms<<endl;
         // int threshold = waveform_mean+ 15;
 
         if(ch->FEE_id > 31) continue;
         if(ch->channel_id>63)continue;
-        sum_threshold[ch->FEE_id][ch->channel_id]+=threshold;
+        sum_threshold_mean[ch->FEE_id][ch->channel_id]+=waveform_mean;
+        sum_threshold_std[ch->FEE_id][ch->channel_id]+=waveform_rms;
         count[ch->FEE_id][ch->channel_id]+=1;
     }
 }
@@ -36,12 +39,18 @@ string ParameterGenerator::getThreshold(){
     uint threshold[32][64];
     for(int i = 0;i<32;i++){
         for(int j = 0; j<64;j++){
+            if(count[i][j]==0){count[i][j]=1;sum_threshold_mean[i][j]=580;sum_threshold_std[i][j]=0.5;}
 
-            if(sum_threshold[i][j]==0)sum_threshold[i][j]=590;
-            if(count[i][j]==0)count[i][j]=1;
-            threshold[i][j] = sum_threshold[i][j]/count[i][j];
-            // if(threshold[i][j]<590)threshold[i][j] = 590;
+            sum_threshold_mean[i][j] = sum_threshold_mean[i][j]/count[i][j];
+            sum_threshold_std[i][j] = sum_threshold_std[i][j]/count[i][j];
+
+            threshold[i][j] = round(sum_threshold_mean[i][j]+6*sum_threshold_std[i][j])+1;
+            // if(threshold[i][j]<580)threshold[i][j] = 580;
+            // cout<<i<<"  "<<j<<"  "<<threshold[i][j]<<endl;
             json msg;
+
+            msg.push_back({{"waveform_mean",sum_threshold_mean[i][j]}});
+            msg.push_back({{"waveform_rms",sum_threshold_std[i][j]}});
 
             stringstream cmd1;
             cmd1    << "06102831" << "4"
@@ -77,11 +86,11 @@ string ParameterGenerator::getThreshold(){
 }
 
 // string ParameterGenerator::getSettings(int WValue, int Vdrift, std::vector<std::map<string,int>> FPC2, const char* ElectronicFIle, const char* MicromegasFile) {
-   string ParameterGenerator::getSettings(int WValue, int Vdrift, const char* FPC2Buffer, const char* ElectronicFIle, const char* MicromegasFile) {
+   string ParameterGenerator::getSettings(float WValue, float Vdrift, const char* FPC2Buffer, const char* ElectronicFIle, const char* MicromegasFile) {
     //TODO: 根据MicromegasFile读取解析并创建 Micromegas_Gain 数组
     std::vector<std::map<std::string, double>> Micromegas_Gain(2048);
     for (int i = 0; i < 2048; i++) {
-        Micromegas_Gain[i][std::to_string(i)] = 1000.0;
+        Micromegas_Gain[i][std::to_string(i)] = 1500.0;
     }
 
     //TODO: 根据ElectronicFIle读取解析并创建 Electronic_Gain 数组

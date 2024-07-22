@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <thread>
 using namespace std;
 
 PacketDecoder::PacketDecoder(){
@@ -11,7 +12,7 @@ PacketDecoder::PacketDecoder(){
   packetSize = 0;
   packetPose = 0;
   firstPacket = true;
-  firstEvent = true;
+  firstEvent = false;
   firstHead = true;
   waveformFillStatusCode = 0;
 
@@ -58,6 +59,11 @@ int PacketDecoder::Fill(char _dataByte){
         break;
       }else{
         packetType = 0;
+        if(static_cast<unsigned int>(dataByte[5]) == 0x5a ) {
+          packetPose = 1;
+          packetType = 1;
+          cout<<"head error: false head"<<endl;
+        }
         break;
       }
     case 2:
@@ -66,7 +72,7 @@ int PacketDecoder::Fill(char _dataByte){
         case 3:
           packetSize += static_cast<unsigned int>(dataByte[5]);
           if(packetSize != 20){
-            // cout<<"packet size error: head:"<<packetSize<<endl;
+            cout<<"packet size error: head:"<<packetSize<<endl;
             firstEvent = true;
             firstPacket = true;
             packetType = 0;
@@ -116,10 +122,12 @@ int PacketDecoder::Fill(char _dataByte){
             firstPacket = true;
             if(firstEvent){
               firstEvent = false;
+              // cout<<"First event error: "<<_event_id<<" "<<rawEvent->event_id<<endl;
               rawEvent->reset();
               return 0;
             }
             // if(rawEvent->event_id>100000)cout<<"event id "<<rawEvent->event_id<<" CH "<<rawEvent->NChannel<<endl;
+            // cout<<"event id "<<rawEvent->event_id<<"  PID: "<<getpid()<<" thread id: "<<std::this_thread::get_id()<<endl;
             return 1;//finish a event
           }
           break;
@@ -149,7 +157,7 @@ int PacketDecoder::Fill(char _dataByte){
         case 3:
           packetSize += static_cast<unsigned int>(dataByte[5]);
           if(packetSize != 2060){
-            // cout<<"packetSize error, Body:"<<packetSize<<endl;
+            cout<<"packetSize error, Body:"<<packetSize<<endl;
             firstEvent = true;
             firstPacket = true;
             packetType = 0;
@@ -174,7 +182,7 @@ int PacketDecoder::Fill(char _dataByte){
               firstPacket = true;
               packetType = 0;
               rawEvent->reset();
-              // cout<<"ADC data error"<<endl;
+              cout<<"ADC data error"<<endl;
               return -1;
             }
           }else{
@@ -210,7 +218,7 @@ int PacketDecoder::Fill(char _dataByte){
         case 3:
           packetSize += static_cast<unsigned int>(dataByte[5]);
           if(packetSize != 12){
-            // cout<<"packet size error, End:"<<packetSize<<endl;
+            cout<<"packet size error, End:"<<packetSize<<endl;
             firstEvent = true;
             firstPacket = true;
             packetType = 0;

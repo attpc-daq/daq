@@ -17,6 +17,8 @@ public:
   virtual ~PacketDecoder();
 
   int Fill(char dataByte);
+
+  void setFirstEvent(bool isFirstEvent){firstEvent = isFirstEvent;}
   
   RawEvent* getRawEvent(){return rawEvent;}
   

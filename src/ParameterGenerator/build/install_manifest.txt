@@ -1,0 +1,2 @@
+/usr/local/lib/libParameterGenerator.so
+/usr/local/include/ParameterGenerator.h

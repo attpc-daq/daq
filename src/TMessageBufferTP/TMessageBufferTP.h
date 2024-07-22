@@ -30,7 +30,7 @@ template <class objectClass>
 TMessageBufferTP<objectClass>::TMessageBufferTP(int size){
     buffer = new TMessage*[size];
     for(int i = 0; i < size; i++){
-        buffer[i] = new TMessage(kMESS_OBJECT);
+        buffer[i] = new TMessage(kMESS_OBJECT, 1024*1024*10);
     }
     bufferLength = size;
     dataLength = 0;
@@ -50,8 +50,9 @@ bool TMessageBufferTP<objectClass>::put(objectClass* obj){
     if(dataLength>=bufferLength){
         return false;
     }
-    // buffer[tail]->SetWhat(kMESS_OBJECT);
+    buffer[tail]->SetWhat(kMESS_OBJECT);
     buffer[tail]->WriteObject(obj);
+    // cout<<"buffer[tail]->What(): "<<buffer[tail]->What()<<endl;
     
     tail = (tail + 1) % bufferLength;
     dataLength++;
@@ -66,12 +67,13 @@ TMessage* TMessageBufferTP<objectClass>::get(){
     if(dataLength<=0){
         return msgNull;
     }
+    // cout<<"buffer[head]->What(): "<<buffer[head]->What()<<endl;
     return buffer[head];
 }
 template <class objectClass>
 void TMessageBufferTP<objectClass>::getDone(){
     buffer[head]->Reset();
-    // buffer[head]->SetWhat(kMESS_ANY);
+    buffer[head]->SetWhat(kMESS_ANY);
     head = (head + 1) % bufferLength;
     dataLength--;
 }

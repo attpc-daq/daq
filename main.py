@@ -335,6 +335,8 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
         for i in range(msgJson['count']):
             for key in msgJson[str(i)]:
                 for k, v in key.items():
+                    if k=='waveform_mean' or k=='waveform_rms':
+                        continue
                     cmd = bytes.fromhex(v)
                     try:
                         sock1.send(cmd)
@@ -345,6 +347,18 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
                         print("SiTCP threshold setting error!")
             if i%100 == 0:
                 await websocket.send("thresholdsetting "+str(int(i/20.48/4))+"%")
+        #设置束流空间触发阈值为0fff，束流空间不参与触发
+        # for i in range(msgJson['BeamSpace']):
+        #     for key in msgJson['Beam'+str(i)]:
+        #         for k, v in key.items():
+        #             cmd = bytes.fromhex(v)
+        #             try:
+        #                 sock1.send(cmd)
+        #                 time.sleep(0.001)
+        #                 # GUISocket.Utils.LOGGER.info(f"{k}: {v}")
+        #                 self.log(f"BeamSpace {k}: {v}")
+        #             except:
+        #                 print("SiTCP threshold setting error!")
         sock1.close()
 
         time.sleep(0.1)
@@ -362,6 +376,8 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
         for i in range(msgJson['count']):
             for key in msgJson[str(i)]:
                 for k, v in key.items():
+                    if k=='waveform_mean' or k=='waveform_rms':
+                        continue
                     cmd = bytes.fromhex(v)
                     try:
                         sock1.send(cmd)
@@ -392,6 +408,8 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
         for i in range(msgJson['count']):
             for key in msgJson[str(i)]:
                 for k, v in key.items():
+                    if k=='waveform_mean' or k=='waveform_rms':
+                        continue
                     cmd = bytes.fromhex(v)
                     try:
                         sock2.send(cmd)
@@ -402,6 +420,18 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
                         print("SiTCP threshold setting error!")
             if i%100 == 0:
                 await websocket.send("thresholdsetting "+str(int((i+2048*2)/20.48/4))+"%")
+        #设置束流空间触发阈值为0fff，束流空间不参与触发
+        # for i in range(msgJson['BeamSpace']):
+        #     for key in msgJson['Beam'+str(i)]:
+        #         for k, v in key.items():
+        #             cmd = bytes.fromhex(v)
+        #             try:
+        #                 sock2.send(cmd)
+        #                 time.sleep(0.001)
+        #                 # GUISocket.Utils.LOGGER.info(f"{k}: {v}")
+        #                 self.log(f"BeamSpace {k}: {v}")
+        #             except:
+        #                 print("SiTCP threshold setting error!")
         sock2.close()
         time.sleep(0.1)
         await self.on_cmd_send_to_SiTCP2(websocket,['', self.convert('1812','0000')], client_key)
@@ -420,6 +450,8 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
         for i in range(msgJson['count']):
             for key in msgJson[str(i)]:
                 for k, v in key.items():
+                    if k=='waveform_mean' or k=='waveform_rms':
+                        continue
                     cmd = bytes.fromhex(v)
                     try:
                         sock2.send(cmd)
@@ -655,6 +687,7 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
         self.dataProcessor.setVdrift(float(cmd_list[2]))
 
     async def on_cmd_setGainFile(self, websocket, cmd_list, client_key):
+        # print(cmd_list[1],cmd_list[2])
         self.dataProcessor.setElectronicFile(cmd_list[1])
         self.dataProcessor.setMicromegasFile(cmd_list[2])
 
@@ -689,6 +722,7 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
         self.eventQA = ROOT.EventQA()
         self.eventQA.setTHttpServerPort(int(cmd_list[1]))
         self.eventQA.setDir(cmd_list[2])
+        self.eventQA.setpad_numQA(int(cmd_list[3]),int(cmd_list[4]))
         self.eventQA.updateSettings(settingJson)
     
     async def on_cmd_shutdownQA(self, websocket, cmd_list, client_key):
@@ -731,6 +765,12 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
         if self.eventQA is None:
             return
         self.eventQA.setDir(cmd_list[1])
+        
+    async def on_cmd_setQAPad(self, websocket, cmd_list, client_key):
+        if self.eventQA is None:
+            return
+        print('setQAPad: ',cmd_list[1],cmd_list[2])
+        self.eventQA.setpad_numQA(int(cmd_list[1]),int(cmd_list[2]))
 
     async def on_cmd_QAClearPlots(self, websocket, cmd_list, client_key):
         if self.eventQA is None:

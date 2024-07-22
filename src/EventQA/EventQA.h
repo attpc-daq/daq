@@ -91,7 +91,9 @@ private:
   TH3D* track_3D = NULL;
   TH1D* Mesh_Energy_Spectrum = NULL;
   TH1D* Mesh_ADC_Spectrum = NULL;
+  TH1D* Mesh_charge_Spectrum = NULL;
   TH1D* Pad_ADC = NULL;
+  TH1I* event_time = NULL;
   TMultiGraph* mg = NULL;
   TGraph* gr[2048];
   const int colorindex[12] = {

@@ -4,6 +4,9 @@
 #include "Event.h"
 #include "TTree.h"
 #include "TFile.h"
+#include "TGraph.h"
+#include "TAxis.h"
+#include "TF1.h"
 #include "TString.h"
 #include "Pad.h"
 
@@ -15,7 +18,8 @@ public:
   EventConverter(const char* filename);
   virtual ~EventConverter();
   void updateSettings(const char* jsonString);
-  double CFD(UInt_t* waveform, Int_t baseline, uint64_t timestampe, double attenuate_factor=0.5);
+  // double CFD(UInt_t* waveform, Int_t baseline, uint64_t timestampe, double attenuate_factor=0.5);
+  // static Double_t CRRCn(Double_t *x, Double_t *par);
 
   Event* convert(RawEvent &evt);
   Event *event;

@@ -14,10 +14,10 @@ public:
     int padRow;
     int padColumn;
     int padNumber;
-    int adc;
-    float ChargeDeposited;
+    double adc;
+    double ChargeDeposited;
     float Energy;
-    float DriftTime;
+    double DriftTime;
     ClassDef(Pad,1)
 };
 #endif // PAD_H_

@@ -21,12 +21,19 @@ EventQA::EventQA(){
     Pad_ADC = new TH1D("Pad_ADC","Pad_ADC",4096,0,4095);//ADC码值
     Pad_ADC->GetXaxis()->SetTitle("channels");
     Pad_ADC->GetYaxis()->SetTitle("counts");
+    event_time = new TH1I("trigger rate","trigger rate",250,0,1000);//unit: us
+    event_time->GetXaxis()->SetTitle("timestamp (us)");
+    event_time->GetYaxis()->SetTitle("rawEvent counts");
     Mesh_Energy_Spectrum = new TH1D("Mesh_Energy_Spectrum","Mesh_Energy_Spectrum",1000,0,10);//unit: MeV
     Mesh_Energy_Spectrum->GetXaxis()->SetTitle("energy(MeV)");
     Mesh_Energy_Spectrum->GetYaxis()->SetTitle("counts");
     Mesh_ADC_Spectrum = new TH1D("Mesh_ADC_Spectrum","Mesh_ADC_Spectrum",4096,0,4095);
     Mesh_ADC_Spectrum->GetXaxis()->SetTitle("channels");
     Mesh_ADC_Spectrum->GetYaxis()->SetTitle("counts");
+    // Mesh_charge_Spectrum = new TH1D("Mesh_charge_Spectrum","Mesh_charge_Spectrum",250,0,100);//unit: pC
+    Mesh_charge_Spectrum = new TH1D("Mesh_charge_Spectrum","Mesh_charge_Spectrum",500,0,1);//unit: pC
+    Mesh_charge_Spectrum->GetXaxis()->SetTitle("charge (pc)");
+    Mesh_charge_Spectrum->GetYaxis()->SetTitle("counts");
     const Int_t XNbins=32;
     Double_t XEdge[XNbins+1]={0};
     for(int i=0;i<=XNbins;i++){
@@ -69,12 +76,14 @@ EventQA::EventQA(){
     for(int i=0;i<2048;i++){
         gr[i] = NULL;
     }
-    setpad_numQA(16,32);
+    setpad_numQA(0,1);
 }
 EventQA::~EventQA(){
     delete Pad_ADC;
+    delete event_time;
     delete Mesh_Energy_Spectrum;
     delete Mesh_ADC_Spectrum;
+    delete Mesh_charge_Spectrum;
     delete track_2D_XY;
     delete track_2D_ZX;
     delete track_2D_ZY;
@@ -103,7 +112,9 @@ void EventQA::run(){}
 
 void EventQA::clearPlots(){
     Pad_ADC->Reset(); //清除累计的plots
+    event_time->Reset();
     Mesh_ADC_Spectrum->Reset();
+    Mesh_charge_Spectrum->Reset();
     Mesh_Energy_Spectrum->Reset();
 }
 void EventQA::doFirstFile(){
@@ -254,6 +265,12 @@ string EventQA::get(const char* name){
         lock.unlock();
         return str;
     }
+    if (strcasecmp(name, "trigger_rate") == 0){
+        lock.lock();
+        string str =  TBufferJSON::ToJSON(event_time).Data();
+        lock.unlock();
+        return str;
+    }
     if (strcasecmp(name, "mesh_energy") == 0){
         lock.lock();
         string str =  TBufferJSON::ToJSON(Mesh_Energy_Spectrum).Data();
@@ -266,6 +283,12 @@ string EventQA::get(const char* name){
         lock.unlock();
         return str;
     }   
+    if (strcasecmp(name, "mesh_charge") == 0){
+        lock.lock();
+        string str =  TBufferJSON::ToJSON(Mesh_charge_Spectrum).Data();
+        lock.unlock();
+        return str;
+    }
     if (strcasecmp(name, "waveform") == 0){
         lock.lock();
         string str =  TBufferJSON::ToJSON(mg).Data();
@@ -290,6 +313,8 @@ string EventQA::getList(){
     list += "mesh_energy";
     list += "\t";
     list += "mesh_adc";
+    list += "\t";
+    list += "mesh_charge";
     list += "\t";
     list += "waveform";
     list += "\t";
@@ -353,15 +378,15 @@ void EventQA::updateSettings(const char* msg){
 
 void EventQA::fill(){
     currentEventID = event->event_id;
-
+    
     int time_x[1024]; //ns, 25ns per bin
     for(int i=0;i<1024;i++)time_x[i]=i*25;
     
     const int numberofrows = 64;
     const int numberofcols = 32;
 
-    float mesh_energy = 0;
-    float mesh_charge = 0;
+    double mesh_energy = 0;
+    double mesh_charge = 0;
 
     double t0_ref = 0;
     TVector3 point(0,0,0);
@@ -371,20 +396,26 @@ void EventQA::fill(){
     track_2D_XY->Reset();
     track_3D->Reset();
     int i = 0;
-
+    
+    //计算所有pad->DriftTime的平均值作为t0_ref
     for(auto pad = event->pads.begin(); pad!= event->pads.end(); pad++){
-            int padrow = pad->padRow;
+        t0_ref += pad->DriftTime;
+    }
+    t0_ref = t0_ref/event->pads.size();
+    
+    for(auto pad = event->pads.begin(); pad!= event->pads.end(); pad++){
+        // if(event->pads.size()>9||event->pads.size()<2)continue;
+	    int padrow = pad->padRow;
             int padcol = pad->padColumn;
             int adc = pad->adc;
             // int height =int(pad->DriftTime*(evt.Vdrift));
-            int charge = pad->ChargeDeposited;
+            double charge = pad->ChargeDeposited;
             mesh_energy += pad->Energy;
             mesh_charge += charge;
 
             if(pad->padNumber==pad_numQA)
                 Pad_ADC->Fill(adc);
             
-            if(i==0)t0_ref = pad->DriftTime; 
             if(padrow<5){point.SetX(-(6*padrow+6./2)+72);}
             else if(5<=padrow&&padrow<9){point.SetX(-(6*5+(padrow-5)*5+5./2)+72);}
             else if(9<=padrow&&padrow<12){point.SetX(-(6*5+5*4+(padrow-9)*4+4./2)+72);}
@@ -396,6 +427,7 @@ void EventQA::fill(){
             else {point.SetX(-(6*5+5*4+4*3+3*2+2*4+3*2+4*3+5*4+(padrow-27)*6+6./2)+72);}
             point.SetZ(padcol*4.5+2.25-144);//mm
             point.SetY((t0_ref-pad->DriftTime)*(event->Vdrift)); //mm
+            // cout<<"t0_ref: "<<t0_ref<<" pad->DriftTime: "<<pad->DriftTime<<" event->Vdrift: "<<event->Vdrift<<" height: "<<(t0_ref-pad->DriftTime)*(event->Vdrift)<<endl;
 
             track_2D_ZX->Fill(point.z(),point.x(),charge);
             track_2D_ZY->Fill(point.z(),point.y(),charge);
@@ -403,12 +435,19 @@ void EventQA::fill(){
             track_3D->Fill(point.z(),point.x(),point.y(),charge);
     }
 
-    for(auto ch = rawEvent->channels.begin(); ch != rawEvent->channels.end(); ++ch){
-        if(gr[i]!=NULL){
-            mg->RecursiveRemove(gr[i]);
-            gr[i]->Delete();
-            gr[i]=NULL;
+    for(int j=0;j<2048;j++){
+        if(gr[j]!=NULL){
+            mg->RecursiveRemove(gr[j]);
+            gr[j]->Delete();
+            gr[j]=NULL;
         }
+    }
+    for(auto ch = rawEvent->channels.begin(); ch != rawEvent->channels.end(); ++ch){
+        // if(gr[i]!=NULL){
+        //     mg->RecursiveRemove(gr[i]);
+        //     gr[i]->Delete();
+        //     gr[i]=NULL;
+        // }
         gr[i] = new TGraph(1024,time_x,ch->waveform);
         gr[i]->GetXaxis()->SetTitle("Time (ns)");
         gr[i]->GetYaxis()->SetTitle("ADC");
@@ -419,7 +458,10 @@ void EventQA::fill(){
         mg->Add(gr[i],"PL");
         i++;
     }
+
+    event_time->Fill(rawEvent->channels[0].timestamp*8.33/1000.);
     // cout<<"=================>>>mesh_energy: "<<mesh_energy<<endl;
+    Mesh_charge_Spectrum->Fill(mesh_charge*1E+15/6.24150975E+18/1E+3);//mesh_charge*1E+15/6.24150975E+18 unit:fc
     Mesh_ADC_Spectrum->Fill(mesh_charge*1E+15/6.24150975E+18*0.75/10*4096/4000);//mesh_charge*1E+15/6.24150975E+18 unit:fc  假设ADC量程为4V=4000mV，精度为12bit  主放增益为10，前放增益为0.75mv/fc
     Mesh_Energy_Spectrum->Fill(mesh_energy);//unit: MeV
 }
