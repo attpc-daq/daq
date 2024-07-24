@@ -25,6 +25,7 @@ ROOT.gInterpreter.Declare('#include "SiTCP.h"')
 ROOT.gInterpreter.Declare('#include "TMessageBuffer.h"')
 ROOT.gInterpreter.Declare('#include "TMessageBufferTP.h"')
 ROOT.gInterpreter.Declare('#include "TMessageSocket.h"')
+ROOT.gInterpreter.Declare('#include "BufferTP.h"')
 
 ROOT.gSystem.Load("libAutoSocket.so")
 ROOT.gSystem.Load("libDataProcessor.so")

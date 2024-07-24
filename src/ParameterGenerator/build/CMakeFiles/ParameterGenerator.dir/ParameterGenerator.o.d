@@ -1,7 +1,7 @@
 CMakeFiles/ParameterGenerator.dir/ParameterGenerator.o: \
- /home/ATTPC/DAQ/src/ParameterGenerator/ParameterGenerator.cpp \
+ /storage/ATTPC/DAQ/src/ParameterGenerator/ParameterGenerator.cpp \
  /usr/include/stdc-predef.h \
- /home/ATTPC/DAQ/src/ParameterGenerator/ParameterGenerator.h \
+ /storage/ATTPC/DAQ/src/ParameterGenerator/ParameterGenerator.h \
  /usr/include/c++/11/iostream \
  /usr/include/x86_64-linux-gnu/c++/11/bits/c++config.h \
  /usr/include/x86_64-linux-gnu/c++/11/bits/os_defines.h \

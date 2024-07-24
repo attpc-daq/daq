@@ -1,4 +1,4 @@
-# Install script for directory: /home/ATTPC/DAQ/src/ParameterGenerator
+# Install script for directory: /storage/ATTPC/DAQ/src/ParameterGenerator
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -49,7 +49,7 @@ if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_
          FILE "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/libParameterGenerator.so"
          RPATH "")
   endif()
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE SHARED_LIBRARY FILES "/home/ATTPC/DAQ/src/ParameterGenerator/build/libParameterGenerator.so")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE SHARED_LIBRARY FILES "/storage/ATTPC/DAQ/src/ParameterGenerator/build/libParameterGenerator.so")
   if(EXISTS "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/libParameterGenerator.so" AND
      NOT IS_SYMLINK "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/libParameterGenerator.so")
     file(RPATH_CHANGE
@@ -66,7 +66,7 @@ if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_
 endif()
 
 if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_COMPONENT)
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/include" TYPE FILE FILES "/home/ATTPC/DAQ/src/ParameterGenerator/ParameterGenerator.h")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/include" TYPE FILE FILES "/storage/ATTPC/DAQ/src/ParameterGenerator/ParameterGenerator.h")
 endif()
 
 if(CMAKE_INSTALL_COMPONENT)
@@ -77,5 +77,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/ATTPC/DAQ/src/ParameterGenerator/build/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/storage/ATTPC/DAQ/src/ParameterGenerator/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

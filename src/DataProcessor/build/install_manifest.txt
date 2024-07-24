@@ -1,0 +1,3 @@
+/usr/local/lib/libDataProcessor.so
+/usr/local/bin/DataProcessorExec
+/usr/local/include/DataProcessor.h

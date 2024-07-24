@@ -234,8 +234,8 @@ void DataProcessor::msgReceiver(){
     int port2 = shmp->dataPort2;
     AutoSocket* autoSocket1= new AutoSocket(port1,host1.c_str());//用来接收从SiTCP发送来的数据
     AutoSocket* autoSocket2= new AutoSocket(port2,host2.c_str());//用来接收从SiTCP发送来的数据
-    TMessage* msg1=NULL;
-    TMessage* msg2=NULL;
+    // TMessage* msg1=NULL;//TODO: update 20240724
+    // TMessage* msg2=NULL;//TODO: update 20240724
     RawEvent* rawSubEvent1=NULL;
     RawEvent* rawSubEvent2=NULL;
     while(shmp->status == status_running){
@@ -257,56 +257,67 @@ void DataProcessor::msgReceiver(){
                     delete autoSocket2;
                     return;
                 }
-                if(msg1==NULL) {
-                    msg1 = autoSocket1->get();
-                    if(msg1==NULL)continue;
-                    if(msg1->What()!=kMESS_OBJECT){
-                        std::cout<<"unkown message type: msg1->What() = "<<msg1->What()<<endl;
-                        delete msg1;
-                        msg1=NULL;
-                        continue;
-                    }
+                // if(msg1==NULL) {
+                //     msg1 = autoSocket1->get();
+                //     if(msg1==NULL)continue;
+                //     if(msg1->What()!=kMESS_OBJECT){
+                //         std::cout<<"unkown message type: msg1->What() = "<<msg1->What()<<endl;
+                //         delete msg1;
+                //         msg1=NULL;
+                //         continue;
+                //     }
+                // }
+                // if(msg2==NULL) {
+                //     msg2 = autoSocket2->get();
+                //     if(msg2==NULL)continue;
+                //     if(msg2->What()!=kMESS_OBJECT){
+                //         std::cout<<"unkown message type: msg2->What() = "<<msg2->What()<<endl;
+                //         delete msg2;
+                //         msg2=NULL;
+                //         continue;
+                //     }
+                // }
+                // if(rawSubEvent1==NULL) {
+                //     rawSubEvent1 = (RawEvent*)msg1->ReadObject(msg1->GetClass());
+                //     cout<<"received rawEvent sub1 ID "<<rawSubEvent1->event_id<<" channels "<<rawSubEvent1->channels.size()<<endl;
+                // }
+                // if(rawSubEvent2==NULL) {
+                //     rawSubEvent2 = (RawEvent*)msg2->ReadObject(msg2->GetClass());
+                //     cout<<"received rawEvent sub2 ID "<<rawSubEvent2->event_id<<" channels "<<rawSubEvent2->channels.size()<<endl;
+                // }
+                
+                if(rawSubEvent1==NULL){//TODO: update 20240724
+                     TObject * obj = autoSocket1->get(RawEvent::Class());
+                    if(obj == NULL)continue;
+                    rawSubEvent1 = (RawEvent*)obj;
                 }
-                if(msg2==NULL) {
-                    msg2 = autoSocket2->get();
-                    if(msg2==NULL)continue;
-                    if(msg2->What()!=kMESS_OBJECT){
-                        std::cout<<"unkown message type: msg2->What() = "<<msg2->What()<<endl;
-                        delete msg2;
-                        msg2=NULL;
-                        continue;
-                    }
-                }
-                if(rawSubEvent1==NULL) {
-                    rawSubEvent1 = (RawEvent*)msg1->ReadObject(msg1->GetClass());
-                    cout<<"received rawEvent sub1 ID "<<rawSubEvent1->event_id<<" channels "<<rawSubEvent1->channels.size()<<endl;
-                }
-                if(rawSubEvent2==NULL) {
-                    rawSubEvent2 = (RawEvent*)msg2->ReadObject(msg2->GetClass());
-                    cout<<"received rawEvent sub2 ID "<<rawSubEvent2->event_id<<" channels "<<rawSubEvent2->channels.size()<<endl;
+                if(rawSubEvent2==NULL){//TODO: update 20240724
+                    TObject * obj = autoSocket2->get(RawEvent::Class());
+                    if(obj == NULL)continue;
+                    rawSubEvent2 = (RawEvent*)obj;
                 }
                 if(rawSubEvent1->event_id==rawSubEvent2->event_id){
                     ptrArray[i*2]=rawSubEvent1;
                     ptrArray[i*2+1]=rawSubEvent2;
-                    delete msg1;
-                    msg1=NULL;
-                    delete msg2;
-                    msg2=NULL;
+                    // delete msg1;//TODO: update 20240724
+                    // msg1=NULL;//TODO: update 20240724
+                    // delete msg2;//TODO: update 20240724
+                    // msg2=NULL;//TODO: update 20240724
                     rawSubEvent1=NULL;
                     rawSubEvent2=NULL;
                     shmp->currentEventID=ptrArray[i*2]->event_id;
                 }else if(rawSubEvent1->event_id>rawSubEvent2->event_id){
                     ptrArray[i*2]=NULL;
                     ptrArray[i*2+1]=rawSubEvent2;
-                    delete msg2;
-                    msg2=NULL;
+                    // delete msg2;//TODO: update 20240724
+                    // msg2=NULL;//TODO: update 20240724
                     rawSubEvent2=NULL;
                     shmp->currentEventID=ptrArray[i*2+1]->event_id;
                 }else{
                     ptrArray[i*2]=rawSubEvent1;
                     ptrArray[i*2+1]=NULL;
-                    delete msg1;
-                    msg1=NULL;
+                    // delete msg1;//TODO: update 20240724
+                    // msg1=NULL;//TODO: update 20240724
                     rawSubEvent1=NULL;
                     shmp->currentEventID=ptrArray[i*2]->event_id;
                 }

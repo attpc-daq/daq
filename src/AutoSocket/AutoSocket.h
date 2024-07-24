@@ -6,6 +6,8 @@
 #include "TMessage.h"
 #include "TSocket.h"
 #include "TServerSocket.h"
+#include "TBufferFile.h"
+#include "TBuffer.h"
 
 using namespace std;
 
@@ -14,10 +16,15 @@ public:
     AutoSocket(int port);
     AutoSocket(int port, const char* host);
     virtual ~AutoSocket();
+    bool send(TObject* obj);
     bool send(TMessage* msg);
+    bool send(TBufferFile* bf);
     TMessage* get();
-   
+    TObject * get(const TClass *cl);
+    
 private:
+    TBufferFile *bufferFile;
+    char* buffer;
     int port;
     string host;
     TSocket *receiver=NULL;

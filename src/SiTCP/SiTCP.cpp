@@ -322,7 +322,8 @@ void SiTCP::DecodeLoop(){
 }
 
 void SiTCP::DecodeTask(int id){
-    TMessageBufferTP<RawEvent> *messBuffer = new TMessageBufferTP<RawEvent>(1000);
+    // TMessageBufferTP<RawEvent> *messBuffer = new TMessageBufferTP<RawEvent>(1000);
+    BufferTP<RawEvent> *buffer = new BufferTP<RawEvent>(1000);//TODO: update 20240724
     PacketDecoder decoder;
     if(id==0)decoder.setFirstEvent(true);
     ifstream file;
@@ -338,7 +339,8 @@ void SiTCP::DecodeTask(int id){
         int state = decoder.Fill(byte);
         endmark = false;
         if(state >0) {
-            messBuffer->put(decoder.getRawEvent());
+            buffer->put(decoder.getRawEvent());//TODO: update 20240724
+            // messBuffer->put(decoder.getRawEvent());
             // cout<<getpid()<<" "<<decoder.getRawEvent()->event_id<<endl;
             // event_id = decoder.getRawEvent()->event_id;
             decoder.getRawEvent()->reset();
@@ -369,7 +371,8 @@ void SiTCP::DecodeTask(int id){
         if(endmark)break;
         int state = decoder.Fill(byte);
         if(state >0) {
-            messBuffer->put(decoder.getRawEvent());
+            buffer->put(decoder.getRawEvent());//TODO: update 20240724
+            // messBuffer->put(decoder.getRawEvent());
             // cout<<getpid()<<" "<<decoder.getRawEvent()->event_id<<endl;
             break ;
         }
@@ -380,15 +383,19 @@ void SiTCP::DecodeTask(int id){
     std::filesystem::path filepath= filename.c_str();
     std::filesystem::remove(filepath);
     std::unique_lock<std::mutex> lock(mtx);
-    while (messBuffer->size()>0) {
-        bool state = autoSocket->send(messBuffer->get());
+    // while (messBuffer->size()>0) {
+    while (buffer->size()>0) { //TODO: update 20240724
+        // bool state = autoSocket->send(messBuffer->get());
+        bool state = autoSocket->send(buffer->get());//TODO: update 20240724
         if(state){
-            messBuffer->getDone();
+            // messBuffer->getDone();
+            buffer->getDone();//TODO: update 20240724
         }
         if(shmp->status != status_running||! shmp->writeBuffer)break;
     }
     cv.notify_one();
-    delete messBuffer;
+    // delete messBuffer;
+    delete buffer;//TODO: update 20240724
     shmp->nTasks--;
 }
 void SiTCP::sendToSiTCP(const char* msg){
