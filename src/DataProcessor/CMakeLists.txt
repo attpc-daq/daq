@@ -7,7 +7,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 #target_include_directories(Event PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_library(DataProcessor SHARED DataProcessor.cpp)
-target_link_libraries(DataProcessor PUBLIC ROOT::RIO ROOT::Net Event RawEvent EventConverter ROOT::Core ROOT::RHTTP ROOT::Tree AutoSocket ParameterGenerator TMessageSocket)
+target_link_libraries(DataProcessor PUBLIC ROOT::RIO ROOT::Net Event RawEvent EventConverter ROOT::Core ROOT::RHTTP ROOT::Tree AutoSocket ParameterGenerator)
 add_executable(DataProcessorExec main.cpp)
 target_link_libraries(DataProcessorExec PUBLIC DataProcessor)
 

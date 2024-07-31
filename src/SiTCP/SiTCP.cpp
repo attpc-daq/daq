@@ -17,7 +17,7 @@ SiTCP::SiTCP(int id){
     shmp = (struct shmseg*) (shmat(shmid, NULL, 0));
     if (shmp == (void *) -1) {
       perror("SiTP Shared memory attach error");
-    }
+    } 
 }
 SiTCP::~SiTCP(){
     shmctl(shmid, IPC_RMID, NULL);
@@ -29,6 +29,7 @@ void SiTCP::resetSHM(){
     shmp->writeBuffer = false;
     shmp->dataAcquisitionStatus = 0;
     shmp->dataDecodStatus = 0;
+    shmp->nQueues = 0;
 }
 void SiTCP::start(){
     if(shmp->status == status_not_started){
@@ -43,7 +44,7 @@ void SiTCP::start(){
             execvpe("SiTCPExec", args, envp);
         }
         while(shmp->status != status_running){
-            sleep(1);
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
     }
 }
@@ -64,6 +65,8 @@ void SiTCP::run(){
     shmp->status = status_running;
     thread * DAQThread=NULL;
     thread * DecodeThread=NULL;
+    thread * DataSenderThread=NULL;
+    LockFreeQueue<LockFreeQueue<TBufferFile*>*> *queue = new LockFreeQueue<LockFreeQueue<TBufferFile*>*>();
     while(shmp->status == status_running){
         if(DAQThread==NULL){
             if(shmp->dataAcquisitionStatus == status_starting){
@@ -78,7 +81,7 @@ void SiTCP::run(){
         }
         if(DecodeThread==NULL){
             if(shmp->dataDecodStatus == status_starting){
-                DecodeThread = new thread(&SiTCP::DecodeLoop, this);
+                DecodeThread = new thread(&SiTCP::DecodeLoop, this, queue);
             }
         }else{
             if(shmp->dataDecodStatus >= status_stopping){
@@ -87,7 +90,10 @@ void SiTCP::run(){
                 DecodeThread = NULL;
             }
         }
-        sleep(0.1);
+        if(DataSenderThread==NULL){
+            DataSenderThread = new thread(&SiTCP::DataSenderLoop, this, queue);
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     if(DAQThread!=NULL){
         shmp->dataAcquisitionStatus = status_stopping;
@@ -101,32 +107,38 @@ void SiTCP::run(){
         delete DecodeThread;
         DecodeThread = NULL;
     }
+    if(DataSenderThread!=NULL){
+        DataSenderThread->join();
+        delete DataSenderThread;
+        DataSenderThread = NULL;
+    }
+    delete queue;
     shmp->status = status_stopped;
 }
 void SiTCP::startData(){
     shmp->dataAcquisitionStatus = status_starting;
     while(shmp->dataAcquisitionStatus != status_running){
-        sleep(1);
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 }
 void SiTCP::stopData(){
     shmp->dataAcquisitionStatus = status_stopping;
     while(shmp->dataAcquisitionStatus != status_stopped){
-        sleep(1);
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 }
 void SiTCP::startDecoder(){
     shmp->dataDecodStatus = status_starting;
     shmp->writeBuffer = true;
     while(shmp->dataDecodStatus != status_running){
-        sleep(1);
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 }
 void SiTCP::stopDecoder(){
     shmp->writeBuffer = false;
     shmp->dataDecodStatus = status_stopping;
     while(shmp->dataDecodStatus != status_stopped){
-        sleep(1);
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 }
 int SiTCP::getState(){
@@ -138,6 +150,9 @@ float SiTCP::getRate(){
 int SiTCP::getNTasks(){
     return shmp->nTasks;
 }
+int SiTCP::getNQueues(){
+    return shmp->nQueues;
+}
 void SiTCP::setDataPort(int port){
     shmp->dataPort = port;
 }
@@ -145,7 +160,7 @@ void SiTCP::setDir(const char* dir){
     strncpy(shmp->dir,dir,strlen(dir));
     if(shmp->dir[strlen(dir)-1]!='/')shmp->dir[strlen(dir)]='/';
     std::filesystem::create_directory(shmp->dir);
-    clearDir();
+    // clearDir();
 }
 void SiTCP::createFile(){
     string dir=shmp->dir;
@@ -226,124 +241,113 @@ void SiTCP::disableBuffer(){
 }
 void SiTCP::DAQLoop(){
     shmp->dataAcquisitionStatus = status_running;
-    cout<<"DAQ loop start"<<endl;
+    // cout<<"DAQ loop start"<<endl;
     int fileSize = 0;
     uint64_t dataSize = 0;
     int nDaq4Count = 1;
     int daqCount = 0;
-    clearDir();
+    // clearDir();
     int length;
     TTimeStamp start_time, now, elapsed;
     start_time.Set();
     int socketBufferSize = 1024*1024;
     char socketBuffer[socketBufferSize];
     while(shmp->dataAcquisitionStatus == status_running){
-        if(sockfd<0){
-            sockfd = connectDevice();
-        }
-        if(sockfd<0){
-            sleep(1);
-            std::cout<<"Can Not Connect to SiTCP, Retrying in 1 second..."<<endl;
-            continue;
-        }
-        // cout<<"test 1"<<endl;
-        // int ready = select(sockfd + 1, &sockReadSet, nullptr, nullptr, nullptr);
-        // if (ready == -1) {
-        //     perror("Select failed");
-        //     disconnectDevice();
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        // sleep(1);
+        // if(sockfd<0){
+        //     sockfd = connectDevice();
+        // }
+        // if(sockfd<0){
+        //     sleep(1);
+        //     std::cout<<"Can Not Connect to SiTCP, Retrying in 1 second..."<<endl;
         //     continue;
         // }
-        // cout<<"test 2"<<endl;
-        // if (!FD_ISSET(sockfd, &sockReadSet)) {
+        // length = recv(sockfd, socketBuffer, socketBufferSize, 0);
+        // if(length <=0 ){
+        //     std::cout<<"sitcp get data length "<<length<<endl;
+        //     shmp->rate = length;
         //     continue;
         // }
-        // cout<<"test 3"<<endl;
-        length = recv(sockfd, socketBuffer, socketBufferSize, 0);
-        if(length <=0 ){
-            std::cout<<"sitcp get data length "<<length<<endl;
-            // disconnectDevice();
-            shmp->rate = length;
-            continue;
-        }
-        // cout<<"test 4"<<endl;
-        daqCount++;
-        dataSize += length;
-        if(daqCount >= nDaq4Count){
-            now.Set();
-            elapsed = now - start_time;
-            double t = static_cast<double>(elapsed.AsDouble());
-            if(t == 0){
-                nDaq4Count++;
-            }else{
-                shmp->rate = dataSize /(1024*1024 * t);//MB/s
-                start_time.Set();
-                dataSize = 0;
-                daqCount = 0;
-            }
-        }
-        if(!file.is_open()){
-            if(shmp->writeBuffer)createFile();
-        }
-        if(file.is_open()){
-            file.write(socketBuffer, length);
-            fileSize += length;
-            if(fileSize > shmp->fileMaxSize){
-                closeFile();
-                fileSize = 0;
-            }
-        }
+        // daqCount++;
+        // dataSize += length;
+        // if(daqCount >= nDaq4Count){
+        //     now.Set();
+        //     elapsed = now - start_time;
+        //     double t = static_cast<double>(elapsed.AsDouble());
+        //     if(t == 0){
+        //         nDaq4Count++;
+        //     }else{
+        //         shmp->rate = dataSize /(1024*1024 * t);//MB/s
+        //         start_time.Set();
+        //         dataSize = 0;
+        //         daqCount = 0;
+        //     }
+        // }
+        // if(!file.is_open()){
+        //     if(shmp->writeBuffer)createFile();
+        // }
+        // if(file.is_open()){
+        //     file.write(socketBuffer, length);
+        //     fileSize += length;
+        //     if(fileSize > shmp->fileMaxSize){
+        //         closeFile();
+        //         fileSize = 0;
+        //     }
+        // }
     }
-    if(file.is_open()) closeFile();
-    disconnectDevice();
+    // if(file.is_open()) closeFile();
+    // disconnectDevice();
     shmp->rate = 0;
     shmp->dataAcquisitionStatus = status_stopped;
 }
 
-void SiTCP::DecodeLoop(){
-    cout<<"data decoding loop start"<<endl;
+void SiTCP::DecodeLoop(LockFreeQueue<LockFreeQueue<TBufferFile*>*> *queue){
+    // cout<<"data decoding loop start"<<endl;
     shmp->dataDecodStatus = status_running;
-    autoSocket = new AutoSocket(shmp->dataPort);
     while(shmp->dataDecodStatus == status_running){
         string name = shmp->dir+to_string(decFileID)+".a";
         if (std::filesystem::exists(name)){
+            // cout<<"decoding file: "<<name<<endl;
             shmp->nTasks++;
-            new thread(&SiTCP::DecodeTask, this, decFileID);
+            new thread(&SiTCP::DecodeTask, this, decFileID, queue);
             decFileID++;
             if(decFileID == maxFileID) decFileID = 0;
         }else{
-            sleep(1);
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
     }
     while(shmp->nTasks>0){
-        sleep(1);
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
-    delete autoSocket;
     shmp->dataDecodStatus = status_stopped;
 }
 
-void SiTCP::DecodeTask(int id){
-    // TMessageBufferTP<RawEvent> *messBuffer = new TMessageBufferTP<RawEvent>(1000);
-    BufferTP<RawEvent> *buffer = new BufferTP<RawEvent>(1000);//TODO: update 20240724
+void SiTCP::DecodeTask(int id, LockFreeQueue<LockFreeQueue<TBufferFile*>*> *queue){
+    LockFreeQueue<TBufferFile*>* bufferQueue = new LockFreeQueue<TBufferFile*>();
+    while(true){
+        if(queue->push(bufferQueue, id))break;
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+    shmp->nQueues = queue->getSize();
     PacketDecoder decoder;
     if(id==0)decoder.setFirstEvent(true);
     ifstream file;
     string dir = shmp->dir;
     string filename = dir+to_string(id)+".b";
-    // cout<<"file id: "<<id<<" pid: "<<getpid()<<" thread id: "<<std::this_thread::get_id()<<endl;
-    // int event_id=0;
     rename((dir+to_string(id)+".a").c_str(), filename.c_str());
     file.open(filename.c_str(), std::ios::binary);
     char byte;
     bool endmark;
-    while(file.read(&byte,1) && (shmp->status == status_running)){
+    while(file.read(&byte,1) && (shmp->dataDecodStatus == status_running)){
         int state = decoder.Fill(byte);
         endmark = false;
         if(state >0) {
-            buffer->put(decoder.getRawEvent());//TODO: update 20240724
-            // messBuffer->put(decoder.getRawEvent());
-            // cout<<getpid()<<" "<<decoder.getRawEvent()->event_id<<endl;
-            // event_id = decoder.getRawEvent()->event_id;
-            decoder.getRawEvent()->reset();
+            RawEvent* ptr = decoder.getRawEvent();
+            TBufferFile* bufferFile = new TBufferFile(TBuffer::kWrite, 1024*1024*20);
+            bufferFile->WriteObject(ptr);
+            delete ptr;
+            bufferQueue->push(bufferFile);
             endmark = true;
         }
     }
@@ -355,49 +359,63 @@ void SiTCP::DecodeTask(int id){
     }else{
         rename(filename.c_str(),(dir+to_string(id)+".c").c_str());
     }
-    uint64_t nextID = id+1;
-    // cout<<"nextID: "<<nextID<<" dir: "<<dir<<" event_id: "<<event_id<<endl;
+    int64_t nextID = id+1;
     if(nextID == maxFileID) nextID = 0;
     filename =  dir+to_string(nextID)+".c";
     while(!std::filesystem::exists(filename)){
-        if(shmp->status != status_running || ! shmp->writeBuffer) {
+        if(shmp->dataDecodStatus != status_running || ! shmp->writeBuffer) {
+            bufferQueue->stop();
             shmp->nTasks--;
             return;
         }
-        sleep(1);
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     file.open(filename.c_str(), std::ios::binary);
-    while(file.read(&byte,1) && (shmp->status == status_running)){
+    while(file.read(&byte,1) && (shmp->dataDecodStatus == status_running)){
         if(endmark)break;
         int state = decoder.Fill(byte);
         if(state >0) {
-            buffer->put(decoder.getRawEvent());//TODO: update 20240724
-            // messBuffer->put(decoder.getRawEvent());
-            // cout<<getpid()<<" "<<decoder.getRawEvent()->event_id<<endl;
+            RawEvent* ptr = decoder.getRawEvent();
+            TBufferFile* bufferFile = new TBufferFile(TBuffer::kWrite, 1024*1024*20);
+            bufferFile->WriteObject(ptr);
+            delete ptr;
+            bufferQueue->push(bufferFile);
             break ;
         }
         if(state <0) break;
     }
-    decoder.getRawEvent()->reset();
+    bufferQueue->stop();
     file.close();
     std::filesystem::path filepath= filename.c_str();
     std::filesystem::remove(filepath);
-    std::unique_lock<std::mutex> lock(mtx);
-    // while (messBuffer->size()>0) {
-    while (buffer->size()>0) { //TODO: update 20240724
-        // bool state = autoSocket->send(messBuffer->get());
-        bool state = autoSocket->send(buffer->get());//TODO: update 20240724
-        if(state){
-            // messBuffer->getDone();
-            buffer->getDone();//TODO: update 20240724
-        }
-        if(shmp->status != status_running||! shmp->writeBuffer)break;
-    }
-    cv.notify_one();
-    // delete messBuffer;
-    delete buffer;//TODO: update 20240724
     shmp->nTasks--;
 }
 void SiTCP::sendToSiTCP(const char* msg){
     cout<<"send to SiTCP: "<<msg<<endl;
+}
+void SiTCP::DataSenderLoop(LockFreeQueue<LockFreeQueue<TBufferFile*>*> *queue){
+    autoSocket = new AutoSocket(shmp->dataPort);
+    LockFreeQueue<TBufferFile*>* bufferQueue;
+    TBufferFile * buffer;
+    while(shmp->status == status_running){
+        if(queue->pop(bufferQueue)){
+            while(shmp->status == status_running){
+                if(!(bufferQueue->pop(buffer))){
+                    if(bufferQueue->isStopped())break;
+                    continue;
+                }
+                while(!autoSocket->send(buffer)){
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                    if(shmp->status >= status_stopping)break;
+                }
+                delete buffer;
+                if(shmp->status >= status_stopping)break;
+            }
+            delete bufferQueue;
+        }else{
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+        shmp->nQueues = queue->getSize();
+    }
+    delete autoSocket;
 }

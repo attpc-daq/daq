@@ -9,7 +9,6 @@
 #include <TH3D.h>
 #include <TBufferJSON.h>
 #include "RawEvent.h"
-#include "TMessageSocket.h"
 #include "EventConverter.h"
 #include <mutex>
 #include <condition_variable>
@@ -29,6 +28,8 @@
 #include <string>
 #include <map>
 #include "AutoSocket.h"
+#include "LockFreeQueue.h"
+#include "BufferTP.h"
 #include <deque>
 
 using namespace std;
@@ -45,6 +46,7 @@ public:
   void setDir(const char* dir="./output");
   string getDir(){return shmp->dir;}
   void setDataPort(int port1=8010,const char* host1="localhost",int port2=8011, const char* host2="localhost");
+  void setDataPort4QA(int port=8012);
   void setFileEvents(int n=1000);
   void generateParameters(int n=10);
   void setRawEventSave(bool k=false);
@@ -53,6 +55,7 @@ public:
   int getTotalEvent();
   int getCurrentEventID();
   int getNMakePar();
+  int getNRawEventProcessor();
   //update: by whk
   void setWValue(float value){shmp->WValue = value;}
   void setVdrift(float value){shmp->Vdrift = value;}
@@ -64,6 +67,7 @@ public:
 
 private:
   struct shmseg {
+    atomic_int nRawEventProcessor;
     atomic_bool kRawEventSave;
     atomic_bool kEventSave;
     atomic_int nMakePar;
@@ -76,6 +80,7 @@ private:
     char dataHost1[20];
     atomic_int dataPort2;
     char dataHost2[20];
+    atomic_int dataPort4QA;
     atomic_int nEvents;
     //TODO: 运行中需要更新的参数要写在共享内存中
     float WValue;
@@ -90,10 +95,12 @@ private:
   pid_t runPID=-1;
   deque<RawEvent**> rawSubEventBufferDQ;
 
-  void msgReceiver();
-  void rawEventProcess(RawEvent** ptrArray, int fileID);
-  void bufferProcess();
-
+  void subRawEvent1Receiver(LockFreeQueue<RawEvent*> *queue);
+  void subRawEvent2Receiver(LockFreeQueue<RawEvent*> *queue);
+  void rawEventCombinator(LockFreeQueue<RawEvent*> *subRawEvent1Queue, LockFreeQueue<RawEvent*> *subRawEvent2Queue, LockFreeQueue<LockFreeQueue<RawEvent*> *> *rawEventQueues);
+  void rawEventProcessor(LockFreeQueue<RawEvent*> *rawEventQueue, int fileID, LockFreeQueue<RawEvent*> *rawEventQueue4QA);
+  void rawEventProcess(LockFreeQueue<LockFreeQueue<RawEvent*> *> *rawEventQueues, LockFreeQueue<LockFreeQueue<RawEvent*> *> *rawEventQueues4QA);
+  void DataSenderLoop(LockFreeQueue<LockFreeQueue<RawEvent*> *> *rawEventQueues4QA);
   //UPDATE: by whk
   // float WValue; //unit: eV
   // float Vdrift; //unit: mm/ns
@@ -125,12 +132,8 @@ private:
   int status_running = 2;
   int status_stopping = 3;
   int status_stopped = 4;
-  
-  thread* mMsgThread;
-  thread* mAssembleThread;
-  thread* mBufferProcess;
 
-  mutex mtx;
-  condition_variable cv;
+  // mutex mtx;
+  // condition_variable cv;
 };
 #endif

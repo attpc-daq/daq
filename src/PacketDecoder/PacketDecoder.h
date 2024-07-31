@@ -20,15 +20,15 @@ public:
 
   void setFirstEvent(bool isFirstEvent){firstEvent = isFirstEvent;}
   
-  RawEvent* getRawEvent(){return rawEvent;}
+  RawEvent* getRawEvent();
   
-  uint64_t temp_event_id;
+  // uint64_t temp_event_id;
   
   uint64_t temp_timestamp;
 
 private:
   RawEvent *rawEvent;
-  uint64_t _event_id;
+  uint64_t current_event_id;
   uint64_t _timestamp;
   uint packetType;
   uint packetSize;

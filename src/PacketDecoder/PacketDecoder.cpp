@@ -16,26 +16,30 @@ PacketDecoder::PacketDecoder(){
   firstHead = true;
   waveformFillStatusCode = 0;
 
-  rawEvent = new RawEvent();
-  rawEvent->event_id = 0;
+  rawEvent = NULL;
+  // rawEvent = new RawEvent();
+  // rawEvent->event_id = 0;
 
   fillStatusCode = 0;
   findpacket = 0;
   findwhat = 0b11111111;
   
-  _event_id = -1;
-  temp_event_id = -1;
+  current_event_id = -1;
+  // temp_event_id = -1;
   _timestamp = 0;
   temp_timestamp = 0;
   
-  rawEvent->reset();
+  // rawEvent->reset();
 }
 
 PacketDecoder::~PacketDecoder(){
-  delete rawEvent;
+  if(rawEvent != NULL) delete rawEvent;
 }
 
 int PacketDecoder::Fill(char _dataByte){
+  if(rawEvent == NULL){
+    rawEvent = new RawEvent();
+  }
   char dataByte[10];
   dataByte[5] = _dataByte;
   switch(packetType){
@@ -102,27 +106,27 @@ int PacketDecoder::Fill(char _dataByte){
           _timestamp = (_timestamp<<8) |(static_cast<uint64_t>(dataByte[5]) & 0xff);
           break;
         case 11://event id 31-24 bits
-          _event_id = 0;
-          _event_id = (_event_id<<8) |(static_cast<uint64_t>(dataByte[5]) & 0xff);
+          current_event_id = 0;
+          current_event_id = (current_event_id<<8) |(static_cast<uint64_t>(dataByte[5]) & 0xff);
           break;
         case 12://event id 23-16 bits
-          _event_id = (_event_id<<8) |(static_cast<uint64_t>(dataByte[5]) & 0xff);
+          current_event_id = (current_event_id<<8) |(static_cast<uint64_t>(dataByte[5]) & 0xff);
           break;
         case 13://event id 15-8 bits
-          _event_id = (_event_id<<8) |(static_cast<uint64_t>(dataByte[5]) & 0xff);
+          current_event_id = (current_event_id<<8) |(static_cast<uint64_t>(dataByte[5]) & 0xff);
           break;
         case 14://event id 7-0 bits
-          _event_id = (_event_id<<8) |(static_cast<uint64_t>(dataByte[5]) & 0xff);
+          current_event_id = (current_event_id<<8) |(static_cast<uint64_t>(dataByte[5]) & 0xff);
           if(firstPacket){
             firstPacket = false;
-            rawEvent->event_id = _event_id;
+            rawEvent->event_id = current_event_id;
             rawEvent->timestamp = _timestamp;
           }
-          if(_event_id != rawEvent->event_id){
+          if(current_event_id != rawEvent->event_id){
             firstPacket = true;
             if(firstEvent){
               firstEvent = false;
-              // cout<<"First event error: "<<_event_id<<" "<<rawEvent->event_id<<endl;
+              // cout<<"First event error: "<<current_event_id<<" "<<rawEvent->event_id<<endl;
               rawEvent->reset();
               return 0;
             }
@@ -134,7 +138,7 @@ int PacketDecoder::Fill(char _dataByte){
         case 15://hit count
           if(firstPacket){
             firstPacket = false;
-            rawEvent->event_id = _event_id;
+            rawEvent->event_id = current_event_id;
             rawEvent->timestamp = _timestamp;
           }
           break;
@@ -190,7 +194,7 @@ int PacketDecoder::Fill(char _dataByte){
           }
           waveformFillStatusCode++;
           if(waveformFillStatusCode == 2048){
-            channel.event_id = _event_id;
+            channel.event_id = current_event_id;
             channel.timestamp = _timestamp;
             rawEvent->AddChannel(channel);
             packetPose++;
@@ -249,4 +253,9 @@ int PacketDecoder::Fill(char _dataByte){
       break;
   }
   return 0;
+}
+RawEvent* PacketDecoder::getRawEvent(){
+  RawEvent* ptr = rawEvent;
+  rawEvent = NULL;
+  return ptr;
 }

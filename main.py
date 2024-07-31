@@ -18,13 +18,14 @@ ROOT.gInterpreter.Declare('#include "DataProcessor.h"')
 ROOT.gInterpreter.Declare('#include "Event.h"')
 ROOT.gInterpreter.Declare('#include "EventConverter.h"')
 ROOT.gInterpreter.Declare('#include "EventQA.h"')
+ROOT.gInterpreter.Declare('#include "OnlineQA.h"')
 ROOT.gInterpreter.Declare('#include "PacketDecoder.h"')
 ROOT.gInterpreter.Declare('#include "ParameterGenerator.h"')
 ROOT.gInterpreter.Declare('#include "RawEvent.h"')
 ROOT.gInterpreter.Declare('#include "SiTCP.h"')
-ROOT.gInterpreter.Declare('#include "TMessageBuffer.h"')
-ROOT.gInterpreter.Declare('#include "TMessageBufferTP.h"')
-ROOT.gInterpreter.Declare('#include "TMessageSocket.h"')
+#ROOT.gInterpreter.Declare('#include "TMessageBuffer.h"')
+#ROOT.gInterpreter.Declare('#include "TMessageBufferTP.h"')
+#ROOT.gInterpreter.Declare('#include "TMessageSocket.h"')
 ROOT.gInterpreter.Declare('#include "BufferTP.h"')
 
 ROOT.gSystem.Load("libAutoSocket.so")
@@ -32,12 +33,13 @@ ROOT.gSystem.Load("libDataProcessor.so")
 ROOT.gSystem.Load("libEvent.so")
 ROOT.gSystem.Load("libEventConverter.so")
 ROOT.gSystem.Load("libEventQA.so")
+ROOT.gSystem.Load("libOnlineQA.so")
 ROOT.gSystem.Load("libPacketDecoder.so")
 ROOT.gSystem.Load("libParameterGenerator.so")
 ROOT.gSystem.Load("libRawEvent.so")
 ROOT.gSystem.Load("libSiTCP.so")
-ROOT.gSystem.Load("libTMessageBuffer.so")
-ROOT.gSystem.Load("libTMessageSocket.so")
+#ROOT.gSystem.Load("libTMessageBuffer.so")
+#ROOT.gSystem.Load("libTMessageSocket.so")
 ROOT.gSystem.Load("libHist.so")
 
 
@@ -50,6 +52,7 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
         self.sitcp = [None,None]
         self.dataProcessor = None
         self.eventQA = None
+        self.onlineQA = None
         self.logger = None
         self.outputDir = './output/'
         #update: by whk
@@ -89,7 +92,7 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
             sock.connect((self.sitcp[1].getIP(), self.sitcp[1].getPort()))
         except (socket.gaierror, socket.timeout, OSError) as exc:
             print("send to SiTCP2 Caught exception socket.error : %s" % exc)
-            self.log("send to SiTCP1 Caught exception socket.error : %s" % exc)
+            self.log("send to SiTCP2 Caught exception socket.error : %s" % exc)
         
             return
         msg = bytes.fromhex(str(msg_list[1]))
@@ -281,6 +284,18 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
             await websocket.send("nTask2 "+str(self.sitcp[1].getNTasks()))
         else:
             await websocket.send("nTask2 -1")
+
+    async def on_cmd_getSiTCP1NQueue(self, websocket, cmd_list, client_key):
+        if self.sitcp[0] is not None:
+            await websocket.send("nQueue1 "+str(self.sitcp[0].getNQueues()))
+        else:
+            await websocket.send("nQueue1 -1")
+    
+    async def on_cmd_getSiTCP2NQueue(self, websocket, cmd_list, client_key):
+        if self.sitcp[1] is not None:
+            await websocket.send("nQueue2 "+str(self.sitcp[1].getNQueues()))
+        else:
+            await websocket.send("nQueue2 -1")
 
     async def on_cmd_setBufferFileSize(self, websocket, cmd_list, client_key):
         if self.sitcp[0] is not None:
@@ -609,6 +624,7 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
         self.dataProcessor.resetSHM()
         self.dataProcessor.setDir(cmd_list[1])
         self.dataProcessor.setDataPort(8010,"localhost",8011,"localhost")
+        self.dataProcessor.setDataPort4QA(8012)
         self.dataProcessor.setEventSave(False)
         self.dataProcessor.setRawEventSave(False)
         self.dataProcessor.setFileEvents(int(cmd_list[2]))
@@ -669,7 +685,15 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
         else:
             rsp += " " + str(self.dataProcessor.getNMakePar())
         await websocket.send(rsp)
-    
+
+    async def on_cmd_getDataProcessorNTask(self, websocket, cmd_list, client_key):
+        rsp = "DataProcessorNTask"
+        if self.dataProcessor is None:
+            rsp += " -1"
+        else:
+            rsp += " " + str(self.dataProcessor.getNRawEventProcessor())
+        await websocket.send(rsp)
+
     async def on_cmd_turnOnRawEventSave(self, websocket, cmd_list, client_key):
         self.dataProcessor.setRawEventSave(True)
 
@@ -711,7 +735,7 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
         else:
             rsp += " " + str(self.eventQA.getState())
         await websocket.send(rsp)
-    
+
     async def on_cmd_initQA(self, websocket, cmd_list, client_key):
         if self.eventQA is not None:
             return
@@ -725,7 +749,7 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
         self.eventQA.setDir(cmd_list[2])
         self.eventQA.setpad_numQA(int(cmd_list[3]),int(cmd_list[4]))
         self.eventQA.updateSettings(settingJson)
-    
+
     async def on_cmd_shutdownQA(self, websocket, cmd_list, client_key):
         if self.eventQA is not None:
             del self.eventQA
@@ -869,6 +893,61 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
         else:
             rsp += " " + str(self.eventQA.getCurrentEventEntryID())
         await websocket.send(rsp)
+
+
+    async def on_cmd_initOnlineQA(self, websocket, cmd_list, client_key):
+        if self.onlineQA is not None:
+            return
+        file = open(cmd_list[2], 'r')
+        settingJson = file.read()
+        if file is None:
+            print("Error: eventParameters.json for Online QA not found!")
+            return
+        self.onlineQA = ROOT.OnlineQA()
+        self.onlineQA.resetSHM()
+        self.onlineQA.setTHttpServerPort(int(cmd_list[1]))
+        self.onlineQA.setDataPort(8012,"0.0.0.0")
+        self.onlineQA.updateSettings(settingJson)
+    
+    async def on_cmd_getOnlineQAState(self, websocket, cmd_list, client_key):
+        rsp = "OnlineQAState"
+        if self.onlineQA is None:
+            rsp += " -1"
+        else:
+            rsp += " " + str(self.onlineQA.getState())
+        await websocket.send(rsp)
+
+    async def on_cmd_shutdownOnlineQA(self, websocket, cmd_list, client_key):
+        if self.onlineQA is not None:
+            del self.onlineQA
+            self.onlineQA = None
+
+    async def on_cmd_startOnlineQA(self, websocket, cmd_list, client_key):
+        self.onlineQA.start()
+    
+    async def on_cmd_stopOnlineQA(self, websocket, cmd_list, client_key):
+        self.onlineQA.stop()
+
+    async def on_cmd_getOnlineQATotalEvent(self, websocket, cmd_list, client_key):
+        rsp = "OnlineQATotalEvent"
+        if self.onlineQA is None:
+            rsp += " -1"
+        else:
+            rsp += " " + str(self.onlineQA.getTotalEvent())
+        await websocket.send(rsp)
+
+    async def on_cmd_getOnlineQACurrentEventID(self, websocket, cmd_list, client_key):
+        rsp = "OnlineQACurrentEventID"
+        if self.onlineQA is None:
+            rsp += " -1"
+        else:
+            rsp += " " + str(self.onlineQA.getCurrentEventID())
+        await websocket.send(rsp)
+
+    async def on_cmd_onlineQAClearPlots(self, websocket, cmd_list, client_key):
+        if self.onlineQA is None:
+            return
+        self.onlineQA.clearPlots()
 
     # async def on_cmd_shutdown(self, websocket, cmd_list, client_key):
     #     await websocket.close()

@@ -35,6 +35,7 @@ DataProcessor::~DataProcessor(){
     shmctl(shmid, IPC_RMID, NULL);
 }
 void DataProcessor::resetSHM(){
+    shmp->nRawEventProcessor = 0;
     shmp->kRawEventSave = false;
     shmp->kEventSave = false;
     shmp->nMakePar = 0;
@@ -56,7 +57,7 @@ void DataProcessor::start(){
             execvpe("DataProcessorExec", args, envp);
         }
         while(shmp->status != status_running){
-            sleep(1);
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
     }
 }
@@ -76,11 +77,24 @@ void DataProcessor::stop(){
 void DataProcessor::run(){
     ROOT::EnableThreadSafety();
     shmp->status = status_running;
-    thread* mBufferProcess = new thread(&DataProcessor::bufferProcess,this);
-    thread* mMsgThread = new thread(&DataProcessor::msgReceiver, this);
-    mMsgThread->join();
-    mBufferProcess->join();
+    LockFreeQueue<RawEvent*> *subRawEvent1Queue = new LockFreeQueue<RawEvent*>();
+    LockFreeQueue<RawEvent*> *subRawEvent2Queue = new LockFreeQueue<RawEvent*>();
+    LockFreeQueue<LockFreeQueue<RawEvent*> *> *rawEventQueues = new LockFreeQueue<LockFreeQueue<RawEvent*> *>();
+    LockFreeQueue<LockFreeQueue<RawEvent*> *> *rawEventQueues4QA = new LockFreeQueue<LockFreeQueue<RawEvent*> *>();
+    // LockFreeQueue<LockFreeQueue<Event*> *> *eventQueues4QA = new LockFreeQueue<LockFreeQueue<Event*> *>();
+
+    thread* mSubEvent1Receiver = new thread(&DataProcessor::subRawEvent1Receiver, this, subRawEvent1Queue);
+    thread* mSubEvent2Receiver = new thread(&DataProcessor::subRawEvent2Receiver, this, subRawEvent2Queue);
+    thread* mRawEventCombinator = new thread(&DataProcessor::rawEventCombinator, this, subRawEvent1Queue, subRawEvent2Queue, rawEventQueues);
+    thread* mRawEventProcess = new thread(&DataProcessor::rawEventProcess, this, rawEventQueues, rawEventQueues4QA);
+    thread* mDataSenderLoop = new thread(&DataProcessor::DataSenderLoop, this, rawEventQueues4QA);
+
+    mSubEvent1Receiver->join();
+    mSubEvent2Receiver->join();
+    mRawEventCombinator->join();
+    mRawEventProcess->join();
     shmp->status = status_stopped;
+    delete subRawEvent1Queue, subRawEvent2Queue, rawEventQueues;
 }
 
 int DataProcessor::getNMakePar(){
@@ -94,6 +108,9 @@ int DataProcessor::getTotalEvent(){
 }
 int DataProcessor::getCurrentEventID(){
     return shmp->currentEventID;
+}
+int DataProcessor::getNRawEventProcessor(){
+    return shmp->nRawEventProcessor;
 }
 void DataProcessor::setDir(const char* dir){
     memset(shmp->dir, 0, sizeof(shmp->dir));//TODO:
@@ -125,6 +142,10 @@ void DataProcessor::setDataPort(int port1,const char* host1, int port2, const ch
     strncpy(shmp->dataHost2, host2, strlen(host2));
 }
 
+void DataProcessor::setDataPort4QA(int port){
+    shmp->dataPort4QA=port;
+}
+
 void DataProcessor::setFileEvents(int n){
     shmp->nEvents = n;
 }
@@ -138,23 +159,119 @@ void DataProcessor::generateParameters(int n){
     parameter.reset();
     shmp->nMakePar = n;
 }
-void DataProcessor::bufferProcess(){
-    updateRawEventFileID();
-    updateEventFileID();
-    shmp->outputFileID = eventFileID > rawEventFileID ? eventFileID : rawEventFileID;
+void DataProcessor::subRawEvent1Receiver(LockFreeQueue<RawEvent*> *queue){
+    string host = shmp->dataHost1;
+    int port = shmp->dataPort1;
+    AutoSocket* autoSocket= new AutoSocket(port,host.c_str());
     while(shmp->status == status_running){
-        if(rawSubEventBufferDQ.size()>0){
-            shmp->outputFileID++;
-            int fileID = shmp->outputFileID;
-            new thread(&DataProcessor::rawEventProcess,this,rawSubEventBufferDQ.front(),fileID);
-            rawSubEventBufferDQ.pop_front();
+        TObject * obj = autoSocket->get(RawEvent::Class());
+        if(obj == NULL){
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            continue;
+        }
+        queue->push((RawEvent*)obj);
+    }
+}
+void DataProcessor::subRawEvent2Receiver(LockFreeQueue<RawEvent*> *queue){
+    string host = shmp->dataHost2;
+    int port = shmp->dataPort2;
+    AutoSocket* autoSocket= new AutoSocket(port,host.c_str());
+    while(shmp->status == status_running){
+        TObject * obj = autoSocket->get(RawEvent::Class());
+        if(obj == NULL){
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            continue;
+        }
+        queue->push((RawEvent*)obj);
+    }
+}
+void DataProcessor::rawEventCombinator(LockFreeQueue<RawEvent*> *subRawEvent1Queue, 
+                                       LockFreeQueue<RawEvent*> *subRawEvent2Queue,
+                                       LockFreeQueue<LockFreeQueue<RawEvent*> *> *rawEventQueues){
+    RawEvent* subRawEvent1=NULL;
+    RawEvent* subRawEvent2=NULL;
+    RawEvent* rawEvent=NULL;
+    size_t eventCount = 0;
+    size_t queueCount = 0;
+    LockFreeQueue<RawEvent*> * rawEventQueue;
+    while(shmp->status == status_running){
+        if(subRawEvent1 == NULL){
+            if(!(subRawEvent1Queue->pop(subRawEvent1))) subRawEvent1=NULL;
+        }
+        if(subRawEvent2 == NULL){
+            if(!(subRawEvent2Queue->pop(subRawEvent2))) subRawEvent2=NULL;
+        }
+        if(subRawEvent1 == NULL || subRawEvent2 == NULL ) continue;
+        if(subRawEvent1->event_id==subRawEvent2->event_id){
+            rawEvent = subRawEvent1;
+            rawEvent->Add(subRawEvent2);
+            delete subRawEvent2;
+            shmp->currentEventID = rawEvent->event_id;
+            subRawEvent1 = NULL;
+            subRawEvent2 = NULL;
+        }else if(subRawEvent1->event_id>subRawEvent2->event_id){
+            rawEvent = subRawEvent2;
+            shmp->currentEventID = rawEvent->event_id;
+            subRawEvent2 = NULL;
         }else{
-            sleep(1);
+            rawEvent = subRawEvent1;
+            shmp->currentEventID = rawEvent->event_id;
+            subRawEvent1 = NULL;
+        }
+        shmp->totalEvent++;
+        if(shmp->nMakePar>0){
+            makePar(rawEvent);
+            delete rawEvent;
+            continue;
+        }
+        if(eventCount == 0){
+            rawEventQueue = new  LockFreeQueue<RawEvent*>();
+            while(true){
+                if(rawEventQueues->push(rawEventQueue, queueCount))break;
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            }
+            queueCount++;
+        }
+        rawEventQueue->push(rawEvent);
+        eventCount++;
+        if(eventCount>=shmp->nEvents){
+            eventCount = 0;
+            rawEventQueue->stop();
         }
     }
 }
-void DataProcessor::rawEventProcess(RawEvent** ptrArray, int fileID){
-    RawEvent** rawEventPtrArray = new RawEvent*[shmp->nEvents];
+void DataProcessor::rawEventProcess(LockFreeQueue<LockFreeQueue<RawEvent*> *> *rawEventQueues, 
+                                    LockFreeQueue<LockFreeQueue<RawEvent*> *> *rawEventQueues4QA){
+    updateRawEventFileID();
+    updateEventFileID();
+    shmp->outputFileID = eventFileID > rawEventFileID ? eventFileID : rawEventFileID;
+    LockFreeQueue<RawEvent*> *rawEventQueue;
+    int rawEventQueue4QAID = 0;
+    while(shmp->status == status_running){
+        if(rawEventQueues->pop(rawEventQueue)){
+            shmp->outputFileID++;
+            int fileID = shmp->outputFileID;
+            LockFreeQueue<RawEvent*> *rawEventQueue4QA = new LockFreeQueue<RawEvent*>();
+            while(true){
+                if(rawEventQueues4QA->push(rawEventQueue4QA, rawEventQueue4QAID))break;
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                if(shmp->status >= status_running)break;
+            }
+            shmp->nRawEventProcessor++;
+            new thread(&DataProcessor::rawEventProcessor, this, rawEventQueue,fileID, rawEventQueue4QA);
+            rawEventQueue4QAID++;
+        }else{
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+    }
+    while(shmp->nRawEventProcessor>0){
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+}
+void DataProcessor::rawEventProcessor(LockFreeQueue<RawEvent*> *rawEventQueue,
+                                      int fileID,
+                                      LockFreeQueue<RawEvent*> *rawEventQueue4QA){
+    RawEvent * rawEventPtr;
     TFile* rawEventFile=NULL;
     TTree* rawEventTree=NULL;
     TFile* eventFile=NULL;
@@ -182,32 +299,24 @@ void DataProcessor::rawEventProcess(RawEvent** ptrArray, int fileID){
         converter = new EventConverter((dir+"eventParameters.json").c_str());
         // cv.notify_one();
     }
-    for(int i =0 ;i<shmp->nEvents;i++){
-        if(ptrArray[i*2]!=NULL && ptrArray[i*2+1]!=NULL){
-            rawEventPtrArray[i]=ptrArray[i*2];
-            rawEventPtrArray[i]->Add(ptrArray[i*2+1]);
-            delete ptrArray[i*2+1];
-        }else if(ptrArray[i*2]==NULL && ptrArray[i*2+1]!=NULL){
-            rawEventPtrArray[i]=ptrArray[i*2+1];
+    while(shmp->status == status_running){
+        if(!(rawEventQueue->pop(rawEventPtr))){
+            if(rawEventQueue->isStopped())break;
+            continue;
         }
-        else if(ptrArray[i*2]!=NULL && ptrArray[i*2+1]==NULL){
-            rawEventPtrArray[i]=ptrArray[i*2];
-        }else{
-            cout<<"error, DataProcessor::rawEventProcess "<<endl;
-        }  
-    }
-    for(int i=0;i<shmp->nEvents;i++){
         if(rawEventFile!=NULL){
-            rawEvent = *(rawEventPtrArray[i]);
+            rawEvent = *rawEventPtr;
             rawEventTree->Fill();
         }
         if(eventFile!=NULL){
-            event = *(converter->convert(*(rawEventPtrArray[i])));
+            event = *(converter->convert(*rawEventPtr));
             eventTree->Fill();
         }
-        delete rawEventPtrArray[i];
+        rawEventQueue4QA->push(rawEventPtr);
+        // delete rawEventPtr;
     }
-    // std::unique_lock<std::mutex> lock(mtx);
+    rawEventQueue4QA->stop();
+
     if(rawEventFile!=NULL){
         rawEventFile->cd();
         rawEventFile->Write();
@@ -223,128 +332,32 @@ void DataProcessor::rawEventProcess(RawEvent** ptrArray, int fileID){
         rename((eventFileName+".writing").c_str(),eventFileName.c_str());
         delete converter;
     }
-    delete[] rawEventPtrArray;
-    delete[] ptrArray;
-    // cv.notify_one();
+    shmp->nRawEventProcessor--;
 }
-void DataProcessor::msgReceiver(){
-    string host1 = shmp->dataHost1;
-    int port1 = shmp->dataPort1;
-    string host2 = shmp->dataHost2;
-    int port2 = shmp->dataPort2;
-    AutoSocket* autoSocket1= new AutoSocket(port1,host1.c_str());//用来接收从SiTCP发送来的数据
-    AutoSocket* autoSocket2= new AutoSocket(port2,host2.c_str());//用来接收从SiTCP发送来的数据
-    // TMessage* msg1=NULL;//TODO: update 20240724
-    // TMessage* msg2=NULL;//TODO: update 20240724
-    RawEvent* rawSubEvent1=NULL;
-    RawEvent* rawSubEvent2=NULL;
+void DataProcessor::DataSenderLoop(LockFreeQueue<LockFreeQueue<RawEvent*> *> *rawEventQueues4QA){
+    AutoSocket* autoSocket4QA = new AutoSocket(shmp->dataPort4QA);
+    LockFreeQueue<RawEvent*> *rawEventQueue4QA;
+    RawEvent* rawEvent;
     while(shmp->status == status_running){
-        if(rawSubEventBufferDQ.size()>10){
-            sleep(1);
-            std::cout<<"too many DP bufferes(>10)"<<endl;
-            continue;
-        }
-        RawEvent** ptrArray=new RawEvent*[shmp->nEvents*2];//指针数组，用来缓存接收到的数据
-        for(int i=0;i<shmp->nEvents;i++){
-            while(true){
-                if(shmp->status != status_running){
-                    // for(int j=0;j<i;j++){
-                    //     delete ptrArray[j];
-                    //     delete ptrArray[j+1]; 
-                    // }
-                    delete ptrArray;
-                    delete autoSocket1;
-                    delete autoSocket2;
-                    return;
-                }
-                // if(msg1==NULL) {
-                //     msg1 = autoSocket1->get();
-                //     if(msg1==NULL)continue;
-                //     if(msg1->What()!=kMESS_OBJECT){
-                //         std::cout<<"unkown message type: msg1->What() = "<<msg1->What()<<endl;
-                //         delete msg1;
-                //         msg1=NULL;
-                //         continue;
-                //     }
-                // }
-                // if(msg2==NULL) {
-                //     msg2 = autoSocket2->get();
-                //     if(msg2==NULL)continue;
-                //     if(msg2->What()!=kMESS_OBJECT){
-                //         std::cout<<"unkown message type: msg2->What() = "<<msg2->What()<<endl;
-                //         delete msg2;
-                //         msg2=NULL;
-                //         continue;
-                //     }
-                // }
-                // if(rawSubEvent1==NULL) {
-                //     rawSubEvent1 = (RawEvent*)msg1->ReadObject(msg1->GetClass());
-                //     cout<<"received rawEvent sub1 ID "<<rawSubEvent1->event_id<<" channels "<<rawSubEvent1->channels.size()<<endl;
-                // }
-                // if(rawSubEvent2==NULL) {
-                //     rawSubEvent2 = (RawEvent*)msg2->ReadObject(msg2->GetClass());
-                //     cout<<"received rawEvent sub2 ID "<<rawSubEvent2->event_id<<" channels "<<rawSubEvent2->channels.size()<<endl;
-                // }
-                
-                if(rawSubEvent1==NULL){//TODO: update 20240724
-                     TObject * obj = autoSocket1->get(RawEvent::Class());
-                    if(obj == NULL)continue;
-                    rawSubEvent1 = (RawEvent*)obj;
-                }
-                if(rawSubEvent2==NULL){//TODO: update 20240724
-                    TObject * obj = autoSocket2->get(RawEvent::Class());
-                    if(obj == NULL)continue;
-                    rawSubEvent2 = (RawEvent*)obj;
-                }
-                if(rawSubEvent1->event_id==rawSubEvent2->event_id){
-                    ptrArray[i*2]=rawSubEvent1;
-                    ptrArray[i*2+1]=rawSubEvent2;
-                    // delete msg1;//TODO: update 20240724
-                    // msg1=NULL;//TODO: update 20240724
-                    // delete msg2;//TODO: update 20240724
-                    // msg2=NULL;//TODO: update 20240724
-                    rawSubEvent1=NULL;
-                    rawSubEvent2=NULL;
-                    shmp->currentEventID=ptrArray[i*2]->event_id;
-                }else if(rawSubEvent1->event_id>rawSubEvent2->event_id){
-                    ptrArray[i*2]=NULL;
-                    ptrArray[i*2+1]=rawSubEvent2;
-                    // delete msg2;//TODO: update 20240724
-                    // msg2=NULL;//TODO: update 20240724
-                    rawSubEvent2=NULL;
-                    shmp->currentEventID=ptrArray[i*2+1]->event_id;
-                }else{
-                    ptrArray[i*2]=rawSubEvent1;
-                    ptrArray[i*2+1]=NULL;
-                    // delete msg1;//TODO: update 20240724
-                    // msg1=NULL;//TODO: update 20240724
-                    rawSubEvent1=NULL;
-                    shmp->currentEventID=ptrArray[i*2]->event_id;
-                }
-                if(shmp->nMakePar>0){
-                    RawEvent* revt;
-                    if(ptrArray[i*2]!=NULL && ptrArray[i*2+1]!=NULL){
-                        revt=ptrArray[i*2];
-                        revt->Add(ptrArray[i*2+1]);
-                        delete ptrArray[i*2+1];
-                    }else if(ptrArray[i*2]==NULL){
-                        revt = ptrArray[i*2+1];
-                    }else{
-                        revt = ptrArray[i*2];
-                    }
-                    makePar(revt);
-                    delete revt;
-                    ptrArray[i*2]=NULL;
-                    ptrArray[i*2+1]=NULL;
+        if(rawEventQueues4QA->pop(rawEventQueue4QA)){
+            while(shmp->status == status_running){
+                if(!(rawEventQueue4QA->pop(rawEvent))){
+                    if(rawEventQueue4QA->isStopped())break;
                     continue;
                 }
-                shmp->totalEvent++;
-                break;
+                //
+                autoSocket4QA->send(rawEvent);
+                delete rawEvent;
+                //
+                if(rawEventQueues4QA->getSize()>0){
+                    delete rawEventQueue4QA;
+                    break;
+                }
             }
+        }else{
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
-        rawSubEventBufferDQ.push_back(ptrArray);//把指针数组存放在一个容器中，供后续的处理。
     }
-    delete autoSocket1,autoSocket2;
 }
 void DataProcessor::makePar(RawEvent* revt){
     parameter.fill(revt);

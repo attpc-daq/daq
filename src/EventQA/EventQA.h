@@ -13,7 +13,6 @@
 #include <TChain.h>
 #include <TBufferJSON.h>
 #include "RawEvent.h"
-#include "TMessageSocket.h"
 #include "EventConverter.h"
 #include <mutex>
 #include <THttpServer.h>

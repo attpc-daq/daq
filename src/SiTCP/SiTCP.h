@@ -21,8 +21,9 @@
 #include <TMessage.h>
 #include <TSocket.h>
 #include "TMessageBufferTP.h"
-#include "BufferTP.h" //TODO: update 20240724
+#include "BufferTP.h"
 #include "AutoSocket.h"
+#include "LockFreeQueue.h"
 
 using namespace std;
 
@@ -57,6 +58,7 @@ public:
     void sendToSiTCP(const char* msg);
     string getIP(){return shmp->FEEAddressStr;}
     int getPort(){return shmp->FEEPort;}
+    int getNQueues();
 
 private:
     static vector<SiTCP*> instances;
@@ -73,6 +75,8 @@ private:
         atomic_int fileMaxSize;
         atomic_int dataAcquisitionStatus;
         atomic_int dataDecodStatus;
+
+        atomic_int nQueues;
     };
     struct shmseg *shmp;
     pid_t DecoderPID,DAQPID;
@@ -95,9 +99,9 @@ private:
     void closeFile();
     ofstream file;
     // string dir;
-    uint64_t daqFileID;
-    uint64_t decFileID;
-    uint64_t maxFileID = std::numeric_limits<uint64_t>::max();
+    int64_t daqFileID;
+    int64_t decFileID;
+    int64_t maxFileID = std::numeric_limits<int64_t>::max();
     
     struct sockaddr_in server_address;
     
@@ -114,7 +118,11 @@ private:
     condition_variable cv;
 
     void DAQLoop();
-    void DecodeLoop();
-    void DecodeTask(int id);
+    // void DecodeLoop(LockFreeQueue<BufferTP<RawEvent>*> *queue);
+    // void DecodeTask(int id, LockFreeQueue<BufferTP<RawEvent>*> *queue);
+    // void DataSenderLoop(LockFreeQueue<BufferTP<RawEvent>*> *queue);
+    void DecodeLoop(LockFreeQueue<LockFreeQueue<TBufferFile*>*> *queue);
+    void DecodeTask(int id, LockFreeQueue<LockFreeQueue<TBufferFile*>*> *queue);
+    void DataSenderLoop(LockFreeQueue<LockFreeQueue<TBufferFile*>*> *queue);
 };
 #endif

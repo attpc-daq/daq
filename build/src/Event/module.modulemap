@@ -1,8 +1,0 @@
-module "Event" {
-  requires cplusplus
-  module "Pad.h" { header "Pad.h" export * }
-  module "Event.h" { header "Event.h" export * }
-  link "libEvent.so"
-  export *
-}
-

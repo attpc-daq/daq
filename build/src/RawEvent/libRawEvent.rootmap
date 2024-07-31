@@ -1,6 +1,0 @@
-[ libRawEvent.so ]
-# List of selected classes
-class Channel
-class RawEvent
-header Channel.h
-header RawEvent.h

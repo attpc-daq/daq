@@ -29,7 +29,7 @@ template <class objectClass>
 BufferTP<objectClass>::BufferTP(int size){
     buffer = new TBufferFile*[size];
     for(int i = 0; i < size; i++){
-        buffer[i] = new TBufferFile(TBuffer::kWrite, 1024*1024*10);
+        buffer[i] = new TBufferFile(TBuffer::kWrite, 1024*1024*20);
     }
     bufferLength = size;
     dataLength = 0;
