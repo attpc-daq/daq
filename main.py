@@ -694,6 +694,22 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
             rsp += " " + str(self.dataProcessor.getNRawEventProcessor())
         await websocket.send(rsp)
 
+    async def on_cmd_getDataProcessorIsSaveRawEvent(self, websocket, cmd_list, client_key):
+        rsp = "DataProcessorIsSaveRawEvent"
+        if self.dataProcessor is None:
+            rsp += " -1"
+        else:
+            rsp += " " + str(self.dataProcessor.isSaveRawEvent())
+        await websocket.send(rsp)
+    
+    async def on_cmd_getDataProcessorIsSaveEvent(self, websocket, cmd_list, client_key):
+        rsp = "DataProcessorIsSaveEvent"
+        if self.dataProcessor is None:
+            rsp += " -1"
+        else:
+            rsp += " " + str(self.dataProcessor.isSaveEvent())
+        await websocket.send(rsp)
+
     async def on_cmd_turnOnRawEventSave(self, websocket, cmd_list, client_key):
         self.dataProcessor.setRawEventSave(True)
 

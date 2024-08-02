@@ -692,22 +692,30 @@ expandables.forEach((expandable) =>{
     function turnOnRawEventSave(){
         wsSend('turnOnRawEventSave');
         RawEventStartButton.disabled = true;
+        RawEventStartButton.style.backgroundColor = '#00FF00';
         RawEventStopButton.disabled = false;
+        RawEventStopButton.style.backgroundColor = '';
     }
     function turnOffRawEventSave(){
         wsSend('turnOffRawEventSave')
         RawEventStartButton.disabled = false;
+        RawEventStartButton.style.backgroundColor = '';
         RawEventStopButton.disabled = true;
+        RawEventStopButton.style.backgroundColor = 'red';
     }
     function turnOnEventSave(){
         wsSend('turnOnEventSave')
         EventStartButton.disabled = true;
+        EventStartButton.style.backgroundColor = '#00FF00';
         EventStopButton.disabled = false;
+        EventStopButton.style.backgroundColor = '';
     }
     function turnOffEventSave(){
         wsSend('turnOffEventSave')
         EventStartButton.disabled = false;
+        EventStartButton.style.backgroundColor = '';
         EventStopButton.disabled = true;
+        EventStopButton.style.backgroundColor = 'red';
     }
     function setRawEventFilePath(e){
         if(e.key==='Enter'){
@@ -873,8 +881,33 @@ expandables.forEach((expandable) =>{
             }
         }
         else if(rsp[0]=="DataProcessorNTask"){
-            //
             DPNTaskSpan.innerText = parseInt(rsp[1]);
+        }
+        else if(rsp[0]=="DataProcessorIsSaveRawEvent"){
+            if(parseInt(rsp[1]) == 0){
+                RawEventStartButton.disabled = false;
+                RawEventStartButton.style.backgroundColor = '';
+                RawEventStopButton.disabled = true;
+                RawEventStopButton.style.backgroundColor = 'red';
+            }else if(parseInt(rsp[1]) == 1){
+                RawEventStartButton.disabled = true;
+                RawEventStartButton.style.backgroundColor = '#00FF00';
+                RawEventStopButton.disabled = false;
+                RawEventStopButton.style.backgroundColor = '';
+            }
+        }
+        else if(rsp[0]=="DataProcessorIsSaveEvent"){
+            if(parseInt(rsp[1]) == 0){
+                EventStartButton.disabled = false;
+                EventStartButton.style.backgroundColor = '';
+                EventStopButton.disabled = true;
+                EventStopButton.style.backgroundColor = 'red';
+            }else if(parseInt(rsp[1]) == 1){
+                EventStartButton.disabled = true;
+                EventStartButton.style.backgroundColor = '#00FF00';
+                EventStopButton.disabled = false;
+                EventStopButton.style.backgroundColor = '';
+            }
         }
         else if(rsp[0]=="DataProcessorCurrentFileID"){
             outputFileIDSpan.innerText = parseInt(rsp[1]);
@@ -929,7 +962,9 @@ expandables.forEach((expandable) =>{
         wsSend('getDataProcessorCurrentEventID');
         wsSend('getDataProcessorCurrentFileID');
         wsSend('getDataProcessorParameterEvents');
-        wsSend('getDataProcessorNTask')
+        wsSend('getDataProcessorNTask');
+        wsSend('getDataProcessorIsSaveRawEvent');
+        wsSend('getDataProcessorIsSaveEvent');
     }
     // connect();
     setInterval(dump, 1000);
@@ -970,7 +1005,7 @@ expandables.forEach((expandable) =>{
     HttpServerPort.value = '8008';
     const ClearPlotsButton = doc.querySelector('#QA_ClearPlots');
     const QAEventParametersInput = doc.querySelector('#QA_EventParameter');
-    QAEventParametersInput.value = './eventParameters.json'
+    QAEventParametersInput.value = './output/eventParameters.json'
     const QARateIntervalInput = doc.querySelector('#QA_RateIntervalInput');
     QARateIntervalInput.value = '60000';
     const QARateIntervalButton = doc.querySelector('#QA_RateInterval');
@@ -1004,7 +1039,7 @@ expandables.forEach((expandable) =>{
         QARateIntervalID = setInterval(estimateEventRate, parseInt(QARateIntervalInput.value));
     }
     function ClearPlots(e){
-        wsSend('OnlineQAClearPlots');
+        wsSend('onlineQAClearPlots');
     }
 
     function QAProcessorShutdown(e){

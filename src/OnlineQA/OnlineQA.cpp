@@ -92,6 +92,7 @@ void OnlineQA::resetSHM(){
     shmp->status = 0;
     shmp->totalEvent = 0;
     shmp->currentEventID = 0;
+    shmp->clearPlots = 0;
 }
 void OnlineQA::start(){
     if(shmp->status == status_not_started){
@@ -138,6 +139,13 @@ void OnlineQA::TServLoop(){
     TServ->SetReadOnly(kFALSE);
      while(shmp->status == status_running){
         TServ->ProcessRequests();
+        if(shmp->clearPlots == 1){
+            //Pad_ADC->Reset(); //清除累计的plots
+            event_time->Reset();
+            event_id->Reset();
+            //
+            shmp->clearPlots = 0;
+        }
         usleep(100000);
     }
     delete TServ;
@@ -156,12 +164,9 @@ void OnlineQA::dataReceiver(){
             RawEvent* rawEvent = (RawEvent*)obj;
             shmp->currentEventID = rawEvent->event_id;
             shmp->totalEvent++;
-            event_time->Fill(rawEvent->channels[0].timestamp*8.33/1000.);
-            event_id->Fill(rawEvent->event_id);
             fill(rawEvent);
             delete obj;
         }
-        // queue->push((RawEvent*)obj);
     }
 }
 void OnlineQA::setDataPort(int port,const char* host){
@@ -173,9 +178,7 @@ void OnlineQA::setTHttpServerPort(int port){
     shmp->THttpServerPort = port;
 }
 void OnlineQA::clearPlots(){
-//     Pad_ADC->Reset(); //清除累计的plots
-    event_time->Reset();
-    event_id->Reset();
+    shmp->clearPlots = 1;
 }
 
 string OnlineQA::get(const char* name){
@@ -265,10 +268,13 @@ string OnlineQA::getList(){
 }
 
 void OnlineQA::updateSettings(const char* msg){
-//   converter.updateSettings(msg);
+  converter.updateSettings(msg);
 }
 
 void OnlineQA::fill(RawEvent *revt, Event* evt){
+    Event * event = converter.convert(*revt);
+    event_time->Fill(revt->channels[0].timestamp*8.33/1000.);
+    event_id->Fill(revt->event_id);
 //     currentEventID = event->event_id;
     
 //     int time_x[1024]; //ns, 25ns per bin

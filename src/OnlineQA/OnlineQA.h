@@ -49,6 +49,7 @@ public:
 
 private:
 struct shmseg {
+    atomic_int clearPlots;
     atomic_int status;
     atomic_int totalEvent;
     atomic_int currentEventID;
