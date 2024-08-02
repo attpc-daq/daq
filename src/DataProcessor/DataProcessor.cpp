@@ -338,6 +338,7 @@ void DataProcessor::DataSenderLoop(LockFreeQueue<LockFreeQueue<RawEvent*> *> *ra
     AutoSocket* autoSocket4QA = new AutoSocket(shmp->dataPort4QA);
     LockFreeQueue<RawEvent*> *rawEventQueue4QA;
     RawEvent* rawEvent;
+    RawEvent* previousRawEvent = NULL;
     while(shmp->status == status_running){
         if(rawEventQueues4QA->pop(rawEventQueue4QA)){
             while(shmp->status == status_running){
@@ -347,7 +348,8 @@ void DataProcessor::DataSenderLoop(LockFreeQueue<LockFreeQueue<RawEvent*> *> *ra
                 }
                 //
                 autoSocket4QA->send(rawEvent);
-                delete rawEvent;
+                if(previousRawEvent!=NULL)delete previousRawEvent;
+                previousRawEvent = rawEvent;
                 //
                 if(rawEventQueues4QA->getSize()>0){
                     delete rawEventQueue4QA;
@@ -358,6 +360,7 @@ void DataProcessor::DataSenderLoop(LockFreeQueue<LockFreeQueue<RawEvent*> *> *ra
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
     }
+    if(previousRawEvent!=NULL)delete previousRawEvent;
 }
 void DataProcessor::makePar(RawEvent* revt){
     parameter.fill(revt);
