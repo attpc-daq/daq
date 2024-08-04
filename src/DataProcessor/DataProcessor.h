@@ -56,6 +56,8 @@ public:
   int getCurrentEventID();
   int getNMakePar();
   int getNRawEventProcessor();
+  int isSaveRawEvent(){return shmp->kRawEventSave;}
+  int isSaveEvent(){return shmp->kEventSave;}
   //update: by whk
   void setWValue(float value){shmp->WValue = value;}
   void setVdrift(float value){shmp->Vdrift = value;}
@@ -64,6 +66,7 @@ public:
   void setElectronicFile(const char* E_file);
   void setMicromegasFile(const char* M_file);
   void resetSHM();
+  
 
 private:
   struct shmseg {
