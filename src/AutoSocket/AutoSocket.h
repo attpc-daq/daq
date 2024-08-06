@@ -23,12 +23,12 @@ public:
     AutoSocket(int port);
     AutoSocket(int port, const char* host);
     virtual ~AutoSocket();
-    bool send(TBufferFile* bf, bool debug=false);
-    bool send(RawEvent* rawEvent, bool debug=false);
-    TObject * get(const TClass *cl, bool debug=false);
+    bool send(TBufferFile* bf);
+    bool send(RawEvent* rawEvent);
+    TObject * get(const TClass *cl);
     
 private:
-    bool checkConnection(bool debug = false);
+    bool checkConnection();
     void disconnect();
     bool isSender;
     bool isReceiver;

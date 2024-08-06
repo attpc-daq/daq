@@ -248,6 +248,9 @@
             <span> Rate : </span>
             <span id="QAEventRate" class="number" style="color:blue"></span>
             <span> Hz </span>
+            <span> Memory Usage:</span>
+            <span id="MemoryUsage" class="number" style="color:blue"></span>
+            <span> % </span>
             <div class="toggle">
                 <span class="toggle-icon"><i class="fas fa-angle-down"></i></span>
             </div>
@@ -260,7 +263,7 @@
                 <span>事件参数文件: </span>
                 <input id="QA_EventParameter" type="text" placeholder="" style="margin-bottom: 5px;width: 500px;">
                 <button id="QA_RateInterval">设置Rate估算时间</button>
-                <input id="QA_RateIntervalInput" type="text" placeholder="单位毫秒" style="margin-bottom: 5px;width: 80px;">
+                <input id="QA_RateIntervalInput" type="text" placeholder="单位秒" style="margin-bottom: 5px;width: 80px;">
                 
             </div>
             <iframe class="frame" id="QAFrame" src="http://10.155.101.208:8008/"></iframe>

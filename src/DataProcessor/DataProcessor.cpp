@@ -93,6 +93,7 @@ void DataProcessor::run(){
     mSubEvent2Receiver->join();
     mRawEventCombinator->join();
     mRawEventProcess->join();
+    mDataSenderLoop->join();
     shmp->status = status_stopped;
     delete subRawEvent1Queue, subRawEvent2Queue, rawEventQueues;
 }
@@ -164,6 +165,10 @@ void DataProcessor::subRawEvent1Receiver(LockFreeQueue<RawEvent*> *queue){
     int port = shmp->dataPort1;
     AutoSocket* autoSocket= new AutoSocket(port,host.c_str());
     while(shmp->status == status_running){
+        if(queue->getSize()>20){
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            continue;
+        }
         TObject * obj = autoSocket->get(RawEvent::Class());
         if(obj == NULL){
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -177,6 +182,10 @@ void DataProcessor::subRawEvent2Receiver(LockFreeQueue<RawEvent*> *queue){
     int port = shmp->dataPort2;
     AutoSocket* autoSocket= new AutoSocket(port,host.c_str());
     while(shmp->status == status_running){
+        if(queue->getSize()>20){
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            continue;
+        }
         TObject * obj = autoSocket->get(RawEvent::Class());
         if(obj == NULL){
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -219,15 +228,19 @@ void DataProcessor::rawEventCombinator(LockFreeQueue<RawEvent*> *subRawEvent1Que
             subRawEvent1 = NULL;
         }
         shmp->totalEvent++;
+        //
         if(shmp->nMakePar>0){
             makePar(rawEvent);
             delete rawEvent;
             continue;
         }
+        //
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));//TODO: debug
         if(eventCount == 0){
             rawEventQueue = new  LockFreeQueue<RawEvent*>();
             while(true){
                 if(rawEventQueues->push(rawEventQueue, queueCount))break;
+                if(shmp->status > status_running) break;
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
             }
             queueCount++;
@@ -251,21 +264,26 @@ void DataProcessor::rawEventProcess(LockFreeQueue<LockFreeQueue<RawEvent*> *> *r
         if(rawEventQueues->pop(rawEventQueue)){
             shmp->outputFileID++;
             int fileID = shmp->outputFileID;
-            LockFreeQueue<RawEvent*> *rawEventQueue4QA = new LockFreeQueue<RawEvent*>();
-            while(true){
-                if(rawEventQueues4QA->push(rawEventQueue4QA, rawEventQueue4QAID))break;
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
-                if(shmp->status >= status_running)break;
+            bool isQA = true;
+            if(rawEventQueues4QA->getSize()>0) isQA = false;
+            LockFreeQueue<RawEvent*> *rawEventQueue4QA = NULL;
+            if(isQA){
+                rawEventQueue4QA = new LockFreeQueue<RawEvent*>();
+                while(true){
+                    if(rawEventQueues4QA->push(rawEventQueue4QA, rawEventQueue4QAID))break;
+                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                    if(shmp->status >= status_running)break;
+                }
+                rawEventQueue4QAID++;
             }
             shmp->nRawEventProcessor++;
             new thread(&DataProcessor::rawEventProcessor, this, rawEventQueue,fileID, rawEventQueue4QA);
-            rawEventQueue4QAID++;
         }else{
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
     }
     while(shmp->nRawEventProcessor>0){
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 }
 void DataProcessor::rawEventProcessor(LockFreeQueue<RawEvent*> *rawEventQueue,
@@ -283,21 +301,17 @@ void DataProcessor::rawEventProcessor(LockFreeQueue<RawEvent*> *rawEventQueue,
     string rawEventFileName = dir+rawEventFilePrefix+to_string(fileID)+".root";
     string eventFileName = dir+eventFilePrefix+to_string(fileID)+".root";
     if(shmp->kRawEventSave){
-        // std::unique_lock<std::mutex> lock(mtx);
         rawEventFile = new TFile((rawEventFileName+".writing").c_str(), "RECREATE");
         rawEventFile->cd();
         rawEventTree = new TTree(rawEventTreeName.c_str(), rawEventTreeName.c_str());
         rawEventTree->Branch(rawEventBranchName.c_str(), &rawEvent);
-        // cv.notify_one();
     }
     if(shmp->kEventSave){
-        // std::unique_lock<std::mutex> lock(mtx);
         eventFile = new TFile((eventFileName+".writing").c_str(), "RECREATE");
         eventFile->cd();
         eventTree = new TTree(eventTreeName.c_str(), eventTreeName.c_str());
         eventTree->Branch(eventBranchName.c_str(), &event);
         converter = new EventConverter((dir+"eventParameters.json").c_str());
-        // cv.notify_one();
     }
     while(shmp->status == status_running){
         if(!(rawEventQueue->pop(rawEventPtr))){
@@ -312,11 +326,13 @@ void DataProcessor::rawEventProcessor(LockFreeQueue<RawEvent*> *rawEventQueue,
             event = *(converter->convert(*rawEventPtr));
             eventTree->Fill();
         }
-        rawEventQueue4QA->push(rawEventPtr);
-        // delete rawEventPtr;
+        if(rawEventQueue4QA != NULL){
+            rawEventQueue4QA->push(rawEventPtr);
+        }else{
+            delete rawEventPtr;
+        }
     }
-    rawEventQueue4QA->stop();
-
+    if(rawEventQueue4QA != NULL) rawEventQueue4QA->stop();
     if(rawEventFile!=NULL){
         rawEventFile->cd();
         rawEventFile->Write();
@@ -338,7 +354,6 @@ void DataProcessor::DataSenderLoop(LockFreeQueue<LockFreeQueue<RawEvent*> *> *ra
     AutoSocket* autoSocket4QA = new AutoSocket(shmp->dataPort4QA);
     LockFreeQueue<RawEvent*> *rawEventQueue4QA;
     RawEvent* rawEvent;
-    RawEvent* previousRawEvent = NULL;
     while(shmp->status == status_running){
         if(rawEventQueues4QA->pop(rawEventQueue4QA)){
             while(shmp->status == status_running){
@@ -346,21 +361,13 @@ void DataProcessor::DataSenderLoop(LockFreeQueue<LockFreeQueue<RawEvent*> *> *ra
                     if(rawEventQueue4QA->isStopped())break;
                     continue;
                 }
-                //
                 autoSocket4QA->send(rawEvent);
-                if(previousRawEvent!=NULL)delete previousRawEvent;
-                previousRawEvent = rawEvent;
-                //
-                if(rawEventQueues4QA->getSize()>0){
-                    delete rawEventQueue4QA;
-                    break;
-                }
+                delete rawEvent;
             }
         }else{
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
     }
-    if(previousRawEvent!=NULL)delete previousRawEvent;
 }
 void DataProcessor::makePar(RawEvent* revt){
     parameter.fill(revt);

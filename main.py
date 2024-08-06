@@ -69,6 +69,14 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
     def convert(self, addr, value):
         return '0'+str(addr[3])+'1'+str(addr[2])+'2'+str(addr[1])+'3'+str(addr[0])+'4'+str(value[3])+'5'+str(value[2])+'6'+str(value[1])+'7'+str(value[0])+'83'
     
+    async def on_cmd_getResourceInfo(self, websocket, msg_list, client_key):
+        rsp = "ResourceInfo"
+        memory_info = psutil.virtual_memory()
+        rsp += " " + str(memory_info.total)
+        rsp += " " + str(memory_info.used)
+        rsp += " " + str(memory_info.percent)
+        await websocket.send(rsp)
+
     async def on_cmd_send_to_SiTCP1(self, websocket, msg_list, client_key):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(2.0)

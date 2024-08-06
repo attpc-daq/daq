@@ -308,6 +308,10 @@ void SiTCP::DecodeLoop(LockFreeQueue<LockFreeQueue<TBufferFile*>*> *queue){
     while(shmp->dataDecodStatus == status_running){
         string name = shmp->dir+to_string(decFileID)+".a";
         if (std::filesystem::exists(name)){
+            if(shmp->nQueues>=10){
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                continue;
+            }
             // cout<<"decoding file: "<<name<<endl;
             shmp->nTasks++;
             new thread(&SiTCP::DecodeTask, this, decFileID, queue);
@@ -318,7 +322,7 @@ void SiTCP::DecodeLoop(LockFreeQueue<LockFreeQueue<TBufferFile*>*> *queue){
         }
     }
     while(shmp->nTasks>0){
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
     shmp->dataDecodStatus = status_stopped;
 }
@@ -387,7 +391,8 @@ void SiTCP::DecodeTask(int id, LockFreeQueue<LockFreeQueue<TBufferFile*>*> *queu
     bufferQueue->stop();
     file.close();
     std::filesystem::path filepath= filename.c_str();
-    std::filesystem::remove(filepath);
+    // std::filesystem::remove(filepath);
+    rename(filename.c_str(),(dir+to_string(id+10)+".a").c_str());//TODO: for debug
     shmp->nTasks--;
 }
 void SiTCP::sendToSiTCP(const char* msg){
@@ -401,19 +406,22 @@ void SiTCP::DataSenderLoop(LockFreeQueue<LockFreeQueue<TBufferFile*>*> *queue){
         if(queue->pop(bufferQueue)){
             while(shmp->status == status_running){
                 if(!(bufferQueue->pop(buffer))){
-                    if(bufferQueue->isStopped())break;
+                    if(bufferQueue->isStopped()){
+                        break;
+                    }
+                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
                     continue;
                 }
                 while(!autoSocket->send(buffer)){
-                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
                     if(shmp->status >= status_stopping)break;
+                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
                 }
                 delete buffer;
                 if(shmp->status >= status_stopping)break;
             }
             delete bufferQueue;
         }else{
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
         shmp->nQueues = queue->getSize();
     }

@@ -72,13 +72,13 @@ AutoSocket::~AutoSocket() {
     if (bufferFile != NULL) delete bufferFile;
 }
 
-TObject* AutoSocket::get(const TClass* cl, bool debug) {
+TObject* AutoSocket::get(const TClass* cl) {
     // Return a TObject object when receiving data
     // Return NULL if no data is received
     if(!checkConnection()) return NULL;
-    if(debug)cout<<"AutoSocket::get, debug 1"<<endl;
+    // if(debug)cout<<"AutoSocket::get, debug 1"<<endl;
     int n = read(receiver_fd, &size1, sizeof(size1));
-    if(debug)cout<<"AutoSocket::get, debug 1.5, n:"<<n<<endl;
+    // if(debug)cout<<"AutoSocket::get, debug 1.5, n:"<<n<<endl;
     if(n == 0){ //disconnected
         disconnect();
         return NULL;
@@ -86,7 +86,7 @@ TObject* AutoSocket::get(const TClass* cl, bool debug) {
     if(n < 0 ){ //timeout
         return NULL;
     }
-    if(debug)cout<<"AutoSocket::get, debug 2, size "<<size1<<endl;
+    // if(debug)cout<<"AutoSocket::get, debug 2, size "<<size1<<endl;
     n = ::send(receiver_fd, &size1, sizeof(size1), 0);
     if(n < 0 ){
         disconnect();
@@ -101,7 +101,7 @@ TObject* AutoSocket::get(const TClass* cl, bool debug) {
         }
         total += n;
     }
-    if(debug)cout<<"AutoSocket::get, debug 3"<<endl;
+    // if(debug)cout<<"AutoSocket::get, debug 3"<<endl;
     n = ::send(receiver_fd, &total, sizeof(total), 0);
     if(n < 0 ){
         disconnect();
@@ -111,28 +111,31 @@ TObject* AutoSocket::get(const TClass* cl, bool debug) {
         disconnect();
         return NULL;
     }
-    if(debug)cout<<"AutoSocket::get, debug 4"<<endl;
+    // if(debug)cout<<"AutoSocket::get, debug 4"<<endl;
     bufferFile->Reset();
     bufferFile->SetBuffer(buffer, size1, kFALSE);
     return bufferFile->ReadObject(cl);
 }
-bool AutoSocket::send(RawEvent* rawEvent, bool debug){
+bool AutoSocket::send(RawEvent* rawEvent){
     TBufferFile* bufferFile = new TBufferFile(TBuffer::kWrite, 1024*1024*20);
     bufferFile->WriteObject(rawEvent);
-    return send(bufferFile, debug);
+    bool sendState = send(bufferFile);
+    delete bufferFile;
+    return sendState;
 }
-bool AutoSocket::send(TBufferFile* bf, bool debug) {
-    if(debug)cout<<"AutoSocket::send debug 1"<<endl;
-    if(!checkConnection()) return false;
-    
+bool AutoSocket::send(TBufferFile* bf) {
+    // if(debug)cout<<"PID:"<<getpid()<<"AutoSocket::send debug 1"<<endl;
+    if(!checkConnection()) {
+        return false;
+    }
     int size1 = bf->Length();
-    if(debug)cout<<"AutoSocket::send debug 2, size:"<<size1<<endl;
+    // if(debug)cout<<"PID:"<<getpid()<<"AutoSocket::send debug 2, size:"<<size1<<endl;
     int n = ::send(sender_fd, &size1, sizeof(size1), 0);
     if(n < 0 ){
         disconnect();
         return false;
     }
-    if(debug)cout<<"AutoSocket::send debug 3"<<endl;
+    // if(debug)cout<<"PID:"<<getpid()<<"AutoSocket::send debug 3"<<endl;
     n = read(sender_fd, &size2, sizeof(size2));
     if(n == 0 ){
         disconnect();
@@ -145,13 +148,13 @@ bool AutoSocket::send(TBufferFile* bf, bool debug) {
         disconnect();
         return false;
     }
-    if(debug)cout<<"AutoSocket::send debug 4"<<endl;
+    // if(debug)cout<<"PID:"<<getpid()<<"AutoSocket::send debug 4"<<endl;
     n = ::send(sender_fd, bf->Buffer(), size1, 0);
     if(n < 0 ){
         disconnect();
         return false;
     }
-    if(debug)cout<<"AutoSocket::send debug 5"<<endl;
+    // if(debug)cout<<"PID:"<<getpid()<<"AutoSocket::send debug 5"<<endl;
     n = read(sender_fd, &size3, sizeof(size3));
     if(n == 0 ){
         disconnect();
@@ -164,10 +167,10 @@ bool AutoSocket::send(TBufferFile* bf, bool debug) {
         disconnect();
         return false;
     }
-    if(debug)cout<<"AutoSocket::send debug 6"<<endl;
+    // if(debug)cout<<"PID:"<<getpid()<<"AutoSocket::send debug 6"<<endl;
     return true;
 }
-bool AutoSocket::checkConnection(bool debug){
+bool AutoSocket::checkConnection(){
     if(connection) return true;
     if(isSender){
         struct sockaddr_in client_addr;

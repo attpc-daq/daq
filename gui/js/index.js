@@ -574,7 +574,7 @@ expandables.forEach((expandable) =>{
     const DPShutdownButton = doc.querySelector('#DP_shutdown');
 
     const DPRateIntervalInput = doc.querySelector('#DP_RateIntervalInput');
-    DPRateIntervalInput.value = '60000';
+    DPRateIntervalInput.value = '10';
     const DPRateIntervalButton = doc.querySelector('#DP_RateInterval');
 
     const eventsPerFile = doc.querySelector('#eventsPerFile');
@@ -683,7 +683,7 @@ expandables.forEach((expandable) =>{
     }
     function SetDPRateInterval(e){
         clearInterval(DPRateIntervalID);
-        DPRateIntervalID = setInterval(estimateEventRate, parseInt(DPRateIntervalInput.value));
+        DPRateIntervalID = setInterval(estimateEventRate, parseInt(DPRateIntervalInput.value)*1000);
     }
     function parameterGenerate(){
         wsSend('setDataProcessorParameterEvents ' + ParameterEventsInput.value);
@@ -971,13 +971,14 @@ expandables.forEach((expandable) =>{
     var DPEventNumber = 0;
     function estimateEventRate(){
         DPCurrentEventNumber=parseInt(DPTotalEventSpan.innerText);
+        Interval = parseInt(DPRateIntervalInput.value);
         if(DPEventNumber>0){
-            rate = (DPCurrentEventNumber-DPEventNumber)/60;
+            rate = (DPCurrentEventNumber-DPEventNumber)/Interval;
             DPEventRateSpan.innerText = parseFloat(rate).toFixed(2);
         }
         DPEventNumber= DPCurrentEventNumber;
     }
-    QARateIntervalID = setInterval(estimateEventRate, 60000);
+    DPRateIntervalID = setInterval(estimateEventRate, 10000);
     init()
 })(document);
 
@@ -1007,8 +1008,10 @@ expandables.forEach((expandable) =>{
     const QAEventParametersInput = doc.querySelector('#QA_EventParameter');
     QAEventParametersInput.value = './output/eventParameters.json'
     const QARateIntervalInput = doc.querySelector('#QA_RateIntervalInput');
-    QARateIntervalInput.value = '60000';
+    QARateIntervalInput.value = '10';
     const QARateIntervalButton = doc.querySelector('#QA_RateInterval');
+    const QAMemoryUsageSpan = doc.querySelector('#MemoryUsage');
+    QAMemoryUsageSpan.innerText='-';
 
     var ws = null
     let userName = 'Client'
@@ -1036,7 +1039,7 @@ expandables.forEach((expandable) =>{
     }
     function SetQARateInterval(e){
         clearInterval(QARateIntervalID);
-        QARateIntervalID = setInterval(estimateEventRate, parseInt(QARateIntervalInput.value));
+        QARateIntervalID = setInterval(estimateEventRate, parseInt(QARateIntervalInput.value)*1000);
     }
     function ClearPlots(e){
         wsSend('onlineQAClearPlots');
@@ -1116,6 +1119,9 @@ expandables.forEach((expandable) =>{
         else if(rsp[0]=="OnlineQACurrentEventID"){
             QACurrentEventIDSpan.innerText = parseInt(rsp[1]);
         }
+        else if(rsp[0]=="ResourceInfo"){
+            QAMemoryUsageSpan.innerText = parseInt(rsp[3]);
+        }
         else if(rsp[0] == "OnlineQAState"){
             if(parseInt(rsp[1]) == -1){
                 InitButton.style.backgroundColor = 'yellow';
@@ -1166,19 +1172,21 @@ expandables.forEach((expandable) =>{
         wsSend('getOnlineQAState');
         wsSend('getOnlineQATotalEvent');
         wsSend('getOnlineQACurrentEventID')
+        wsSend('getResourceInfo')
     }
     setInterval(dump, 1000);
 
     var QAEventNumber = 0;
     function estimateEventRate(){
         QACurrentEventNumber=parseInt(QATotalEventSpan.innerText);
+        Interval = parseInt(QARateIntervalInput.value);
         if(QAEventNumber>0){
-            rate = (QACurrentEventNumber-QAEventNumber)/60;
+            rate = (QACurrentEventNumber-QAEventNumber)/Interval;
             QAEventRateSpan.innerText = parseFloat(rate).toFixed(2);
         }
         QAEventNumber= QACurrentEventNumber;
     }
-    QARateIntervalID = setInterval(estimateEventRate, 60000);
+    QARateIntervalID = setInterval(estimateEventRate, 10000);
 
     init()
 
