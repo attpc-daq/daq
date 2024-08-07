@@ -110,38 +110,6 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
         # await websocket.send(message)
         sock.close()
         
-    # async def on_cmd_send_cmd(self, websocket, cmd_list, client_key):
-    #     if(cmd_list[1] == 'SiTCP1'):
-    #         await self.on_cmd_send_to_SiTCP1(websocket,['send_to_SiTCP1', self.convert(cmd_list[2],cmd_list[3])], client_key)
-    #         time.sleep(1)
-    #     if(cmd_list[1] == 'SiTCP2'):
-    #         await self.on_cmd_send_to_SiTCP2(websocket,['send_to_SiTCP2', self.convert(cmd_list[2],cmd_list[3])], client_key)
-    #         time.sleep(1)
-
-    # async def on_cmd_dumpSitcp(self, websocket, cmd_list, client_key):
-    #     if self.sitcp[0] is not None:
-    #         await websocket.send("dataRate1 "+str(self.sitcp[0].getRate()))
-    #         await websocket.send("nTask1 "+str(self.sitcp[0].getNTasks()))
-    #         await websocket.send("decoderState1 "+str(self.sitcp[0].getDecoderState()))
-    #         await websocket.send("daqState1 "+str(self.sitcp[0].getState()))
-    #     else:
-    #         await websocket.send("nositcp1")
-
-    #     if self.sitcp[1] is not None:
-    #         await websocket.send("dataRate2 "+str(self.sitcp[1].getRate()))
-    #         await websocket.send("nTask2 "+str(self.sitcp[1].getNTasks()))
-    #         await websocket.send("decoderState2 "+str(self.sitcp[1].getDecoderState()))
-    #         await websocket.send("daqState2 "+str(self.sitcp[1].getState()))
-    #     else:
-    #         await websocket.send("nositcp2")
-
-    #     process = psutil.Process()
-    #     python_cpu_percent = process.cpu_percent(interval=1.0)
-    #     python_memory_info = process.memory_info()
-
-    #     print("Python Process CPU Usage: {}%".format(python_cpu_percent))
-    #     print("Python Process Memory Usage: {} Mbytes".format((python_memory_info.rss)/1000000))
-
     async def on_cmd_initSitcp(self, websocket, cmd_list, client_key):
         '''
         初始化SiTCP

@@ -48,7 +48,7 @@ expandables.forEach((expandable) =>{
         shutdownButton.addEventListener('click',shutdown,false);
     }
     function shutdown(e){
-        shutdownButton.style.backgroundColor = '';
+        shutdownButton.style.backgroundColor = 'red';
         connect();
     }
     connection = false;
@@ -78,7 +78,7 @@ expandables.forEach((expandable) =>{
         if(connection){
             connection = false;
             shutdownButton.disabled = false;
-            shutdownButton.style.backgroundColor = 'red';
+            shutdownButton.style.backgroundColor = '';
         }
         delete ws;
         ws = null;
@@ -106,7 +106,7 @@ expandables.forEach((expandable) =>{
     });
     // 获取电子学部分的按钮
     const feeConnectionButton = doc.querySelector('#FEE_connect');
-    feeConnectionButton.disabled = false;
+    // feeConnectionButton.disabled = false;
     const feeInitButton = doc.querySelector('#FEE_init');
     const feeShutdownButton = doc.querySelector('#FEE_shutdown');
 
@@ -181,6 +181,10 @@ expandables.forEach((expandable) =>{
     stopTime.value = '10000000';
     const T0_Button = document.getElementById("T0_button");
     
+    SiTCPState = -2;
+    SiTCPDataAcquisitionState = -2;
+    SiTCPDecoderState = -2;
+
     var ws = null
     let userName = 'Client'
     let passWord = ''
@@ -279,14 +283,14 @@ expandables.forEach((expandable) =>{
     function feesetupthreshold(e) {
         const value = feeThresholdFilePathInput.value;
         wsSend('setupthreshold '+ `${value}`);
-        feesetupthresholdButton.disabled = true;
-        feesetupthresholdButton.style.backgroundColor = '';
+        // feesetupthresholdButton.disabled = true;
+        feesetupthresholdButton.style.backgroundColor = 'gray';
     }
     
     function feeselfhit(e) {
         wsSend('selftrigger');
-        feeselfhitButton.disabled = true;
-        feeselfhitButton.style.backgroundColor = "";
+        // feeselfhitButton.disabled = true;
+        feeselfhitButton.style.backgroundColor = "gray";
     }
     function feeSetup(e) {
         feesetupthreshold(e);
@@ -297,35 +301,47 @@ expandables.forEach((expandable) =>{
     function feeStop(e) {
         wsSend('stopSiTCP');
         feeStopButton.disabled = true;
-        feeStartButton.disabled = false;
+        feeStopButton.backgroundColor = "gray";
+        // feeStartButton.disabled = false;
     }
     function feeStart(e) {
         wsSend('startSiTCP');
         feeStartButton.disabled = true;
-        feeStopButton.disabled = false;
+        feeStartButton.backgroundColor = "gray";
+        // feeStopButton.disabled = false;
     }
     function feeDataStop(e) {
         wsSend('stopSiTCPData');
         feeDataStopButton.disabled = true;
-        feeDataStartButton.disabled = false;
+        feeDataStopButton.backgroundColor = "gray";
+        // feeDataStartButton.disabled = false;
     }
     function feeDataStart(e) {
         wsSend('startSiTCPData');
         feeDataStartButton.disabled = true;
-        feeDataStopButton.disabled = false;
+        feeDataStartButton.backgroundColor = "gray";
+        // feeDataStopButton.disabled = false;
     }
     function decoderStart(){
         wsSend('startSiTCPDecoder');
+        decoderStartButton.disabled = true;
+        decoderStartButton.backgroundColor = "gray";
     }
     function decoderStop(){
         wsSend('stopSiTCPDecoder');
+        decoderStopButton.disabled = true;
+        decoderStopButton.backgroundColor = "gray";
     }
     function feeInit(e){
         const command = `initSitcp ${siTcpAddress_1_Input.value} ${siTcpport_1_Input.value} ${bufferFilePathInput1.value} ${siTcpAddress_2_Input.value} ${siTcpport_2_Input.value} ${bufferFilePathInput2.value} ${bufferFileSizeInput.value}`;
         wsSend(command)
+        feeInitButton.disabled = true;
+        feeInitButton.style.backgroundColor = 'gray';
     }
     function feeShutdown(e){
         wsSend('shutdownSiTCP');
+        feeShutdownButton.disabled = true;
+        feeShutdownButton.style.backgroundColor='gray';
     }
     connection = false;
     function connect(e) {
@@ -336,6 +352,7 @@ expandables.forEach((expandable) =>{
             ws.addEventListener('error', handleError, false);
             ws.addEventListener('message', handleMessage, false);
         }
+        feeConnectionButton.backgroundColor = "gray";
     }
     function wsSend (msg) {
         if(!connection) return;
@@ -345,124 +362,69 @@ expandables.forEach((expandable) =>{
     }
     function handleOpen (e) {
         connection = true;
-        feeButtons.forEach((button) => {
-            button.disabled = false;
-        });
-	feeConnectionButton.style.backgroundColor = '#00FF00';
-        feeConnectionButton.disabled = true;
-        feeInitButton.style.backgroundColor = 'yellow';
+        SiTCPState = -1;
+        updateGUI();
         wsSend('register')
     }
     function handleClose (e) {
         connection = false;
-        feeButtons.forEach((button) => {
-            button.disabled = true;
-            button.style.backgroundColor='';
-        });
-        feeConnectionButton.disabled = false;
+        SiTCPState = -2;
         delete ws;
         ws = null;
-        dataRateSpan1.innerText = '-';
-        dataRateSpan2.innerText = '-';
-        nTaskSpan1.innerText = '-';
-        nTaskSpan2.innerText = '-';
-        nQueueSpan1.innerText = '-';
-        nQueueSpan2.innerText = '-';
+        updateGUI();
     }
     function handleError (e) {
-        // setTimeout(connect,1000)
         connection = false;
-        feeButtons.forEach((button) => {
-            button.disabled = true;
-            button.style.backgroundColor='';
-        });
-        feeConnectionButton.disabled = false;
+        SiTCPState = -2;
         delete ws;
         ws = null;
-        dataRateSpan1.innerText = '-';
-        dataRateSpan2.innerText = '-';
-        nTaskSpan1.innerText = '-';
-        nTaskSpan2.innerText = '-';
-        nQueueSpan1.innerText = '-';
-        nQueueSpan2.innerText = '-';
+        updateGUI();
     }
     function handleMessage (e) {
         var rsp = e.data.split(" ");
-        if(rsp[0]=="dataRate1"){
-            dataRateSpan1.innerText = parseFloat(rsp[1]).toFixed(2);
-        }
-        //else if(rsp[0]=="initSitcp"){
-        //    if(rsp[1]=='Done'){
-        //        console.log("initSitcp Done");
-        //    }
-        //}
-        //else if(rsp[0]=="shutdownSiTCP"){
-        //    if(rsp[1]=='Done'){
-        //        console.log("shutdownSiTCP Done");
-        //    }
-        //}
-        else if(rsp[0]=="SiTCPState"){
+        if(rsp[0]=="SiTCPState"){
             if(parseInt(rsp[1])==-1 && parseInt(rsp[2])==-1){
-                feeInitButton.style.backgroundColor = 'yellow';
-		feeShutdownButton.style.backgroundColor='';
-                feeStartButton.style.backgroundColor = '';
-                feeStopButton.style.backgroundColor = '';	
-                feeInitButton.disabled=false;
-		feeShutdownButton.disabled=true;
-                feeStartButton.disabled = true;
-		feeStopButton.disabled=true;
+                SiTCPState = -1;
+                updateGUI();
             }else if(parseInt(rsp[1])==0 && parseInt(rsp[2])==0){
-                feeInitButton.style.backgroundColor = '#00FF00';
-		feeShutdownButton.style.backgroundColor='';
-                feeStartButton.style.backgroundColor = 'yellow';
-                feeStopButton.style.backgroundColor = '';	
-                feeInitButton.disabled=true;
-		feeShutdownButton.disabled=false;
-                feeStartButton.disabled = false;
-		feeStopButton.disabled=true;
+                SiTCPState = 0;
+                updateGUI();
             }else if(parseInt(rsp[1])==2 && parseInt(rsp[2])==2){
-                feeInitButton.style.backgroundColor = '#00FF00';
-		feeShutdownButton.style.backgroundColor='';
-                feeStartButton.style.backgroundColor = '#00FF00';
-                feeStopButton.style.backgroundColor = '';	
-                feeInitButton.disabled=true;
-		feeShutdownButton.disabled=true;
-                feeStartButton.disabled = true;
-		feeStopButton.disabled=false;
+                SiTCPState = 2;
+                updateGUI();
             }
             else if(parseInt(rsp[1])==4 && parseInt(rsp[2])==4){
-                feeInitButton.style.backgroundColor = '#00FF00';
-		feeShutdownButton.style.backgroundColor='yellow';
-                feeStartButton.style.backgroundColor = '';
-                feeStopButton.style.backgroundColor = 'red';	
-                feeInitButton.disabled=true;
-		feeShutdownButton.disabled=false;
-                feeStartButton.disabled = true;
-		feeStopButton.disabled=true;
+                SiTCPState = 4;
+                updateGUI();
             }
             // console.log(rsp);
         }
         else if(rsp[0]=="SiTCPDataAcquisitionState"){
-            if(parseInt(rsp[1])==2 && parseInt(rsp[2])==2){
-                feeDataStartButton.style.backgroundColor = '#00FF00';
-                feeDataStartButton.disabled = true;
-            }else{
-                feeDataStartButton.style.backgroundColor = '';
-                feeDataStartButton.disabled = false;
+            if(parseInt(rsp[1])==0 && parseInt(rsp[2])==0){
+                SiTCPDataAcquisitionState = 0;
+                updateGUI();
+            }else if(parseInt(rsp[1])==2 && parseInt(rsp[2])==2){
+                SiTCPDataAcquisitionState = 2;
+                updateGUI();
+            }else if(parseInt(rsp[1])==4 && parseInt(rsp[2])==4){
+                SiTCPDataAcquisitionState = 4;
+                updateGUI();
             }
         }
         else if(rsp[0]=="SiTCPDecoderState"){
-            if(parseInt(rsp[1])==2 && parseInt(rsp[2])==2){
-                decoderStartButton.style.backgroundColor = '#00FF00';
-                decoderStartButton.disabled = true;
-            }else{
-                decoderStartButton.style.backgroundColor = '';
-                decoderStartButton.disabled = false;
-                decoderStopButton.style.backgroundColor = '';
+            if(parseInt(rsp[1])==0 && parseInt(rsp[2])==0){
+                SiTCPDecoderState = 0;
+                updateGUI();
+            }else if(parseInt(rsp[1])==2 && parseInt(rsp[2])==2){
+                SiTCPDecoderState = 2;
+                updateGUI();
+            }else if(parseInt(rsp[1])==4 && parseInt(rsp[2])==4){
+                SiTCPDecoderState = 4;
+                updateGUI();
             }
-        }
-
-        else if(rsp[0]=="dataRate2"){
+        }else if(rsp[0]=="dataRate1"){
+            dataRateSpan1.innerText = parseFloat(rsp[1]).toFixed(2);
+        }else if(rsp[0]=="dataRate2"){
             dataRateSpan2.innerText = parseFloat(rsp[1]).toFixed(2);
         }
         else if(rsp[0]=="nTask1"){
@@ -477,54 +439,13 @@ expandables.forEach((expandable) =>{
         else if(rsp[0]=="nQueue2"){
             nQueueSpan2.innerText = parseInt(rsp[1]);
         }
-        else if(rsp[0]=="nositcp1"){
-            feeInitButton.disabled=false;
-            dataRateSpan1.innerText = '-';
-        }
-        else if(rsp[0]=="nositcp2"){
-            feeInitButton.disabled=false;
-            dataRateSpan2.innerText = '-';
-        }
-        else if(rsp[0]=="decoderState1"){
-            if(rsp[1]=='False'){
-                decoderStartButton.style.backgroundColor='';
-            }else{
-                decoderStartButton.style.backgroundColor='#00FF00';
-            }
-        }
-        else if(rsp[0]=="daqState1"){
-            feeInitButton.style.backgroundColor = '#00FF00';
-            feeInitButton.disabled=true;
-            if(parseInt(rsp[1])==2){
-                feeStartButton.style.backgroundColor='#00FF00';
-            }else{
-                feeStartButton.style.backgroundColor='';
-            }
-        }
-        else if(rsp[0]=="decoderState2"){
-            if(rsp[1]=='False'){
-                decoderStartButton.style.backgroundColor='';
-            }else{
-                decoderStartButton.style.backgroundColor='#00FF00';
-            }
-        }
-        else if(rsp[0]=="daqState2"){
-            feeInitButton.style.backgroundColor = '#00FF00';
-            feeInitButton.disabled=true;
-            if(parseInt(rsp[1])==2){
-                feeStartButton.style.backgroundColor='#00FF00';
-            }else{
-                feeStartButton.style.backgroundColor='';
-            }
-        }
         if(rsp[0]=="selftrigger"){
-            feeselfhitButton.disabled = false;
-            feeselfhitButton.style.backgroundColor = "yellow";
+            // feeselfhitButton.disabled = false;
+            feeselfhitButton.style.backgroundColor = "#00FF00";
             alert("噪声测试配置完成");
         }
         else if(rsp[0]=="thresholdsetting"){
             feeSpanThresholdProcess.innerText = rsp[1];
-            feesetupthresholdButton.disabled = false;
             feesetupthresholdButton.style.backgroundColor = '#00FF00';
         }
         else if(rsp[0]=="T0"){
@@ -544,6 +465,131 @@ expandables.forEach((expandable) =>{
             bufferFileSizeInput.disabled = false;
         }
     }
+    function updateGUI(){
+        //feeConnectionButton
+        if(SiTCPState == -2){
+            feeConnectionButton.style.backgroundColor = "yellow";
+            feeConnectionButton.disabled = false;
+        }else if(SiTCPState > -2){
+            feeConnectionButton.style.backgroundColor = "#00FF00";
+            feeConnectionButton.disabled = true;
+        }
+        //feeInitButton
+        if(SiTCPState == -2){
+            feeInitButton.style.backgroundColor = "";
+            feeInitButton.disabled = true;
+        }else if(SiTCPState == -1){
+            feeInitButton.style.backgroundColor = "yellow";
+            feeInitButton.disabled = false;
+        }else if(SiTCPState > -1){
+            feeInitButton.style.backgroundColor = "#00FF00";
+            feeInitButton.disabled = true;
+        }
+        //feeShutdownButton
+        if(SiTCPState < 0){
+            feeShutdownButton.style.backgroundColor = "";
+            feeShutdownButton.disabled = true;
+        }else if(SiTCPState == 0 ){
+            feeShutdownButton.style.backgroundColor = "";
+            feeShutdownButton.disabled = false;
+        }else if(SiTCPState == 2){
+            feeShutdownButton.style.backgroundColor = "";
+            feeShutdownButton.disabled = true;
+        }else if(SiTCPState == 4){
+            feeShutdownButton.style.backgroundColor = "yellow";
+            feeShutdownButton.disabled = false;
+        }
+        //feeStartButton
+        if(SiTCPState < 0){
+            feeStartButton.style.backgroundColor = "";
+            feeStartButton.disabled = true;
+        }else if(SiTCPState == 0){
+            feeStartButton.style.backgroundColor = "yellow";
+            feeStartButton.disabled = false;
+        }else if(SiTCPState == 2){
+            feeStartButton.style.backgroundColor = "#00FF00";
+            feeStartButton.disabled = true;
+        }else if(SiTCPState > 2){
+            feeStartButton.style.backgroundColor = "";
+            feeStartButton.disabled = true;
+        }
+        //feeStopButton
+        if(SiTCPState <= 0){
+            feeStopButton.style.backgroundColor = "";
+            feeStopButton.disabled = true;
+        }else if(SiTCPState == 2){
+            feeStopButton.style.backgroundColor = "";
+            feeStopButton.disabled = false;
+        }else if(SiTCPState == 4){
+            feeStopButton.style.backgroundColor = "red";
+            feeStopButton.disabled = true;
+        }
+        //feeDataStartButton
+        if(SiTCPState == 2){
+            if(SiTCPDataAcquisitionState == 2){
+                feeDataStartButton.style.backgroundColor = "#00FF00";
+                feeDataStartButton.disabled = true;
+            }else{
+                feeDataStartButton.style.backgroundColor = "";
+                feeDataStartButton.disabled = false;
+            }
+        }else{
+            feeDataStartButton.style.backgroundColor = "";
+            feeDataStartButton.disabled = true;
+        }
+        //feeDataStopButton
+        if(SiTCPState == 2){
+            if(SiTCPDataAcquisitionState == 2){
+                feeDataStopButton.style.backgroundColor = "";
+                feeDataStopButton.disabled = false;
+            }else{
+                feeDataStopButton.style.backgroundColor = "";
+                feeDataStopButton.disabled = true;
+            }
+        }else{
+            feeDataStopButton.style.backgroundColor = "";
+            feeDataStopButton.disabled = true;
+        }
+        //decoderStartButton
+        if(SiTCPState == 2){
+            if(SiTCPDecoderState == 2){
+                decoderStartButton.style.backgroundColor = "#00FF00";
+                decoderStartButton.disabled = true;
+            }else{
+                decoderStartButton.style.backgroundColor = "";
+                decoderStartButton.disabled = false;
+            }
+        }else{
+            decoderStartButton.style.backgroundColor = "";
+            decoderStartButton.disabled = true;
+        }
+        //decoderStopButton
+        if(SiTCPState == 2){
+            if(SiTCPDecoderState == 2){
+                decoderStopButton.style.backgroundColor = "";
+                decoderStopButton.disabled = false;
+            }else{
+                decoderStopButton.style.backgroundColor = "";
+                decoderStopButton.disabled = true;
+            }
+        }else{
+            decoderStopButton.style.backgroundColor = "";
+            decoderStopButton.disabled = true;
+        }
+        //other buttons
+        if(SiTCPState == 0){
+            feesetupthresholdButton.disabled = false;
+            feeSetupButton.disabled = false;
+            feeselfhitButton.disabled = false;
+        }else{
+            feesetupthresholdButton.disabled = true;
+            feesetupthresholdButton.style.backgroundColor = '';
+            feeSetupButton.disabled = true;
+            feeSetupButton.style.backgroundColor = '';
+            feeselfhitButton.disabled = true;
+            feeselfhitButton.style.backgroundColor = '';
+        }
+    }
     function dump(){
         // wsSend('dumpSitcp');
         wsSend('getSiTCPState');
@@ -558,7 +604,8 @@ expandables.forEach((expandable) =>{
     }
     // connect();
     setInterval(dump, 1000);
-    init() 
+    init();
+    updateGUI();
 })(document);
 
 ((doc) => {
@@ -569,7 +616,7 @@ expandables.forEach((expandable) =>{
         button.disabled = true;
     });
     const DPConnectionButton = doc.querySelector('#DP_connect');
-    DPConnectionButton.disabled=false;
+    // DPConnectionButton.disabled=false;
     const DPInitButton = doc.querySelector('#DP_init');
     const DPShutdownButton = doc.querySelector('#DP_shutdown');
 
@@ -594,8 +641,8 @@ expandables.forEach((expandable) =>{
     // 设置端口的默认值
     const hostPortInput = doc.querySelector('#Host_Port');
 
-    const RawEventProcessorStartButton = doc.querySelector('#DP_start');
-    const RawEventProcessorStopButton = doc.querySelector('#DP_stop');
+    const DPStartButton = doc.querySelector('#DP_start');
+    const DPStopButton = doc.querySelector('#DP_stop');
 
     const RawEventStartButton = doc.querySelector('#DP_start_rawevent');
     const RawEventStopButton = doc.querySelector('#DP_stop_rawevent');
@@ -651,6 +698,8 @@ expandables.forEach((expandable) =>{
     const MicromegasGasFilePathInput = doc.querySelector('#RawEventProcessor input[type="text"][placeholder="阳极板增益配置文件"]');
     MicromegasGasFilePathInput.value = 'MicromegasFilePath';
 
+    DPState = -2;
+
     var ws = null
     let userName = 'Client'
     let passWord = ''
@@ -669,8 +718,8 @@ expandables.forEach((expandable) =>{
         DPConnectionButton.addEventListener('click',connect,false);
         DPInitButton.addEventListener('click',DPInit,false);
         DPShutdownButton.addEventListener('click', DPShutdown, false);
-        RawEventProcessorStartButton.addEventListener('click',RawEventProcessorStart,false);
-        RawEventProcessorStopButton.addEventListener('click',RawEventProcessorStop,false);
+        DPStartButton.addEventListener('click',DPStart,false);
+        DPStopButton.addEventListener('click',DPStop,false);
         eventsPerFile.addEventListener('keydown', setNRawEventsPerFile, false);
         storageDir.addEventListener('keydown', setRawEventFilePath, false);
 
@@ -684,38 +733,41 @@ expandables.forEach((expandable) =>{
     function SetDPRateInterval(e){
         clearInterval(DPRateIntervalID);
         DPRateIntervalID = setInterval(estimateEventRate, parseInt(DPRateIntervalInput.value)*1000);
+        DPRateIntervalButton.disabled = true;
+        DPRateIntervalButton.style.backgroundColor = "gray";
     }
     function parameterGenerate(){
         wsSend('setDataProcessorParameterEvents ' + ParameterEventsInput.value);
-        ParameterButton.disabled = true;
+        // ParameterButton.disabled = true;
+        ParameterButton.style.backgroundColor = "gray";
     }
     function turnOnRawEventSave(){
         wsSend('turnOnRawEventSave');
-        RawEventStartButton.disabled = true;
-        RawEventStartButton.style.backgroundColor = '#00FF00';
-        RawEventStopButton.disabled = false;
-        RawEventStopButton.style.backgroundColor = '';
+        // RawEventStartButton.disabled = true;
+        RawEventStartButton.style.backgroundColor = 'gray';
+        // RawEventStopButton.disabled = false;
+        // RawEventStopButton.style.backgroundColor = '';
     }
     function turnOffRawEventSave(){
         wsSend('turnOffRawEventSave')
-        RawEventStartButton.disabled = false;
-        RawEventStartButton.style.backgroundColor = '';
-        RawEventStopButton.disabled = true;
-        RawEventStopButton.style.backgroundColor = 'red';
+        // RawEventStartButton.disabled = false;
+        // RawEventStartButton.style.backgroundColor = '';
+        // RawEventStopButton.disabled = true;
+        RawEventStopButton.style.backgroundColor = 'gray';
     }
     function turnOnEventSave(){
         wsSend('turnOnEventSave')
-        EventStartButton.disabled = true;
-        EventStartButton.style.backgroundColor = '#00FF00';
-        EventStopButton.disabled = false;
-        EventStopButton.style.backgroundColor = '';
+        // EventStartButton.disabled = true;
+        EventStartButton.style.backgroundColor = 'gray';
+        // EventStopButton.disabled = false;
+        // EventStopButton.style.backgroundColor = '';
     }
     function turnOffEventSave(){
         wsSend('turnOffEventSave')
-        EventStartButton.disabled = false;
-        EventStartButton.style.backgroundColor = '';
-        EventStopButton.disabled = true;
-        EventStopButton.style.backgroundColor = 'red';
+        // EventStartButton.disabled = false;
+        // EventStartButton.style.backgroundColor = '';
+        // EventStopButton.disabled = true;
+        EventStopButton.style.backgroundColor = 'gray';
     }
     function setRawEventFilePath(e){
         if(e.key==='Enter'){
@@ -731,39 +783,21 @@ expandables.forEach((expandable) =>{
             wsSend(command);
         }
     }
-    function RawEventProcessorStop(){
+    function DPStop(){
         wsSend('stopDataProcessor');
-        RawEventProcessorStartButton.disabled = false;
-        RawEventProcessorStopButton.disabled = true;
-        ParameterButton.disabled = true;
+        DPStopButton.disabled = true;
+        DPStopButton.backgroundColor = "gray";
     }
-    function RawEventProcessorStart(){
+    function DPStart(){
         wsSend('startDataProcessor');
-        RawEventProcessorStartButton.disabled = true;
-        RawEventProcessorStopButton.disabled = false;
-        ParameterButton.disabled = false;
+        DPStartButton.disabled = true;
+        DPStartButton.backgroundColor = "gray";
     }
-    function RawEventProcessorInit(){
-        
+    function DPInit(e){
         const command = `initDataProcessor ${storageDir.value} ${eventsPerFile.value} `;
         wsSend(command)
-
-        RawEventProcessorStartButton.disabled = false;
-        RawEventProcessorStopButton.disabled = false;
-
-        RawEventStartButton.disabled = false;
-        EventStartButton.disabled = false;
-
-        // if (RawEventFilePathInput.value !== ''){
-        //     const path = RawEventFilePathInput.value;
-        //     const command = `setDataProcessDir ${path}`;
-        //     wsSend(command);
-        // }
-        // if (NRawEventsPerFileInput.value !== ''){
-        //     const NEvents = NRawEventsPerFileInput.value;
-        //     const command = `setEventsPerFile ${NEvents}`;
-        //     wsSend(command);
-        // }
+        DPInitButton.disabled = true;
+        DPInitButton.style.backgroundColor = 'gray';
 
         const command1 = `setWvalueAndVdrift ${WvaluelInput.value} ${VdriftlInput.value}`;
         wsSend(command1);
@@ -814,10 +848,10 @@ expandables.forEach((expandable) =>{
     }
     function DPShutdown(e){
         wsSend('shutdownDataProcessor')
+        DPShutdownButton.disabled = true;
+        DPShutdownButton.style.backgroundColor='gray';
     }
-    function DPInit(e){
-        RawEventProcessorInit();
-    }
+
     connection = false;
     function connect(e) {
         if (!ws){
@@ -827,6 +861,7 @@ expandables.forEach((expandable) =>{
                 ws.addEventListener('error', handleError, false);
                 ws.addEventListener('message', handleMessage, false);
         }
+        DPConnectionButton.backgroundColor = "gray";
     }
     function wsSend (msg) {
         if(!connection) return;
@@ -836,34 +871,40 @@ expandables.forEach((expandable) =>{
     }
     function handleOpen (e) {
         connection = true;
-        RawEventProcessorButtons.forEach((button) => {
-            button.disabled = false;
-        });
-        DPConnectionButton.style.backgroundColor = '#00FF00';
-        DPConnectionButton.disabled=true;
-        DPInitButton.style.backgroundColor = 'yellow';
+        DPState = -1;
+        updateGUI();
+        // RawEventProcessorButtons.forEach((button) => {
+        //     button.disabled = false;
+        // });
+        // DPConnectionButton.style.backgroundColor = '#00FF00';
+        // DPConnectionButton.disabled=true;
+        // DPInitButton.style.backgroundColor = 'yellow';
         wsSend('register')
     }
     function handleClose (e) {
         connection = false;
-        RawEventProcessorButtons.forEach((button) => {
-            button.disabled = true;
-            button.style.backgroundColor='';
-        });
-        DPConnectionButton.disabled=false;
+        DPState = -2;
+        // RawEventProcessorButtons.forEach((button) => {
+        //     button.disabled = true;
+        //     button.style.backgroundColor='';
+        // });
+        // DPConnectionButton.disabled=false;
         delete ws;
         ws = null;
+        updateGUI();
     }
     function handleError (e) {
         // setTimeout(connect,3000)
         connection = false;
-        RawEventProcessorButtons.forEach((button) => {
-            button.disabled = true;
-            button.style.backgroundColor='';
-        });
-        DPConnectionButton.disabled=false;
+        DPState = -2;
+        // RawEventProcessorButtons.forEach((button) => {
+        //     button.disabled = true;
+        //     button.style.backgroundColor='';
+        // });
+        // DPConnectionButton.disabled=false;
         delete ws;
         ws = null;
+        updateGUI();
     }
     function handleMessage (e) {
         var rsp = e.data.split(" ");
@@ -877,7 +918,8 @@ expandables.forEach((expandable) =>{
             ParaterEventsSpan.innerText = parseInt(rsp[1]);
             if(parseInt(rsp[1]) == 0) {
                 // alert("参数文件已产生");
-                ParameterButton.disabled = false;
+                // ParameterButton.disabled = false;
+                ParameterButton.style.backgroundColor = "";
             }
         }
         else if(rsp[0]=="DataProcessorNTask"){
@@ -885,27 +927,19 @@ expandables.forEach((expandable) =>{
         }
         else if(rsp[0]=="DataProcessorIsSaveRawEvent"){
             if(parseInt(rsp[1]) == 0){
-                RawEventStartButton.disabled = false;
                 RawEventStartButton.style.backgroundColor = '';
-                RawEventStopButton.disabled = true;
-                RawEventStopButton.style.backgroundColor = 'red';
+                RawEventStopButton.style.backgroundColor = '';
             }else if(parseInt(rsp[1]) == 1){
-                RawEventStartButton.disabled = true;
                 RawEventStartButton.style.backgroundColor = '#00FF00';
-                RawEventStopButton.disabled = false;
                 RawEventStopButton.style.backgroundColor = '';
             }
         }
         else if(rsp[0]=="DataProcessorIsSaveEvent"){
             if(parseInt(rsp[1]) == 0){
-                EventStartButton.disabled = false;
                 EventStartButton.style.backgroundColor = '';
-                EventStopButton.disabled = true;
-                EventStopButton.style.backgroundColor = 'red';
+                EventStopButton.style.backgroundColor = '';
             }else if(parseInt(rsp[1]) == 1){
-                EventStartButton.disabled = true;
                 EventStartButton.style.backgroundColor = '#00FF00';
-                EventStopButton.disabled = false;
                 EventStopButton.style.backgroundColor = '';
             }
         }
@@ -913,48 +947,89 @@ expandables.forEach((expandable) =>{
             outputFileIDSpan.innerText = parseInt(rsp[1]);
         }
         else if(rsp[0]=="DataProcessorState"){
-            if(parseInt(rsp[1]) == -1){
-                DPInitButton.style.backgroundColor='yellow'
-		DPShutdownButton.style.backgroundColor=''
-		RawEventProcessorStartButton.style.backgroundColor=''
-                RawEventProcessorStopButton.style.backgroundColor=''
-                DPInitButton.disabled = false;
-		DPShutdownButton.disabled = true;
-		RawEventProcessorStartButton.disabled = true;
-                RawEventProcessorStopButton.disabled = true;		
-            }else if(parseInt(rsp[1]) == 0){
-                DPInitButton.style.backgroundColor='#00FF00'
-		DPShutdownButton.style.backgroundColor=''
-		RawEventProcessorStartButton.style.backgroundColor='yellow'
-                RawEventProcessorStopButton.style.backgroundColor=''
-                DPInitButton.disabled = true;
-		DPShutdownButton.disabled = false;
-		RawEventProcessorStartButton.disabled = false;
-                RawEventProcessorStopButton.disabled = true;		
-            }
-            if(parseInt(rsp[1]) == 2){
-                DPInitButton.style.backgroundColor='#00FF00'
-		DPShutdownButton.style.backgroundColor=''
-		RawEventProcessorStartButton.style.backgroundColor='#00FF00'
-                RawEventProcessorStopButton.style.backgroundColor=''
-                DPInitButton.disabled = true;
-		DPShutdownButton.disabled = true;
-		RawEventProcessorStartButton.disabled = true;
-                RawEventProcessorStopButton.disabled = false;		
-            }
-            if(parseInt(rsp[1]) == 4){
-                DPInitButton.style.backgroundColor='#00FF00'
-		DPShutdownButton.style.backgroundColor='yellow'
-		RawEventProcessorStartButton.style.backgroundColor=''
-                RawEventProcessorStopButton.style.backgroundColor='red'
-                DPInitButton.disabled = true;
-		DPShutdownButton.disabled = false;
-		RawEventProcessorStartButton.disabled = true;
-                RawEventProcessorStopButton.disabled = true;		
-            }
+            DPState = parseInt(rsp[1]);
+            updateGUI();
         }
     }
-
+    function updateGUI(){
+        //DPConnectionButton
+        if(DPState == -2){
+            DPConnectionButton.style.backgroundColor = "yellow";
+            DPConnectionButton.disabled = false;
+        }else if(DPState > -2){
+            DPConnectionButton.style.backgroundColor = "#00FF00";
+            DPConnectionButton.disabled = true;
+        }
+        //DPInitButton
+        if(DPState == -2){
+            DPInitButton.style.backgroundColor = "";
+            DPInitButton.disabled = true;
+        }else if(DPState == -1){
+            DPInitButton.style.backgroundColor = "yellow";
+            DPInitButton.disabled = false;
+        }else if(DPState > -1){
+            DPInitButton.style.backgroundColor = "#00FF00";
+            DPInitButton.disabled = true;
+        }
+        //DPShutdownButton
+        if(DPState < 0){
+            DPShutdownButton.style.backgroundColor = "";
+            DPShutdownButton.disabled = true;
+        }else if(DPState == 0 ){
+            DPShutdownButton.style.backgroundColor = "";
+            DPShutdownButton.disabled = false;
+        }else if(DPState == 2){
+            DPShutdownButton.style.backgroundColor = "";
+            DPShutdownButton.disabled = true;
+        }else if(DPState == 4){
+            DPShutdownButton.style.backgroundColor = "yellow";
+            DPShutdownButton.disabled = false;
+        }
+        //DPStartButton
+        if(DPState < 0){
+            DPStartButton.style.backgroundColor = "";
+            DPStartButton.disabled = true;
+        }else if(DPState == 0){
+            DPStartButton.style.backgroundColor = "yellow";
+            DPStartButton.disabled = false;
+        }else if(DPState == 2){
+            DPStartButton.style.backgroundColor = "#00FF00";
+            DPStartButton.disabled = true;
+        }else if(DPState > 2){
+            DPStartButton.style.backgroundColor = "";
+            DPStartButton.disabled = true;
+        }
+        //DPStopButton
+        if(DPState <= 0){
+            DPStopButton.style.backgroundColor = "";
+            DPStopButton.disabled = true;
+        }else if(DPState == 2){
+            DPStopButton.style.backgroundColor = "";
+            DPStopButton.disabled = false;
+        }else if(DPState == 4){
+            DPStopButton.style.backgroundColor = "red";
+            DPStopButton.disabled = true;
+        }
+        //other buttons
+        if(DPState == 0 || DPState == 2){
+            ParameterButton.disabled = false;
+            RawEventStartButton.disabled = false;
+            RawEventStopButton.disabled = false;
+            EventStartButton.disabled = false;
+            EventStopButton.disabled = false;
+        }else{
+            ParameterButton.disabled = true;
+            ParameterButton.style.backgroundColor = "";
+            RawEventStartButton.disabled = true;
+            RawEventStartButton.style.backgroundColor = "";
+            RawEventStopButton.disabled = true;
+            RawEventStopButton.style.backgroundColor = "";
+            EventStartButton.disabled = true;
+            EventStartButton.style.backgroundColor = "";
+            EventStopButton.disabled = true;
+            EventStopButton.style.backgroundColor = "";
+        }
+    }
     function dump(){
         // wsSend('dumpDP');
         wsSend('getDataProcessorState');
@@ -977,9 +1052,12 @@ expandables.forEach((expandable) =>{
             DPEventRateSpan.innerText = parseFloat(rate).toFixed(2);
         }
         DPEventNumber= DPCurrentEventNumber;
+        DPRateIntervalButton.disabled = false;
+        DPRateIntervalButton.style.backgroundColor = "";
     }
     DPRateIntervalID = setInterval(estimateEventRate, 10000);
     init()
+    updateGUI();
 })(document);
 
 
@@ -991,7 +1069,6 @@ expandables.forEach((expandable) =>{
         button.disabled = true;
     });
     const ConnectionButton = doc.querySelector('#QA_connect');
-    ConnectionButton.disabled = false;
     const InitButton = doc.querySelector('#QA_init');
     const ShutdownButton = doc.querySelector('#QA_shutdown')
     const StartButton = doc.querySelector('#QA_start');
@@ -1012,6 +1089,8 @@ expandables.forEach((expandable) =>{
     const QARateIntervalButton = doc.querySelector('#QA_RateInterval');
     const QAMemoryUsageSpan = doc.querySelector('#MemoryUsage');
     QAMemoryUsageSpan.innerText='-';
+
+    QAState = -2;
 
     var ws = null
     let userName = 'Client'
@@ -1040,6 +1119,8 @@ expandables.forEach((expandable) =>{
     function SetQARateInterval(e){
         clearInterval(QARateIntervalID);
         QARateIntervalID = setInterval(estimateEventRate, parseInt(QARateIntervalInput.value)*1000);
+        QARateIntervalButton.disabled = true;
+        QARateIntervalButton.style.backgroundColor = "gray";
     }
     function ClearPlots(e){
         wsSend('onlineQAClearPlots');
@@ -1047,13 +1128,19 @@ expandables.forEach((expandable) =>{
 
     function QAProcessorShutdown(e){
         wsSend('shutdownOnlineQA');
+        ShutdownButton.disabled = true;
+        ShutdownButton.style.backgroundColor='gray';
     }
     function QAProcessorStop(){
         wsSend('stopOnlineQA');
+        StopButton.disabled = true;
+        StopButton.backgroundColor = "gray";
     }
     function QAProcessorStart(){
         wsSend('startOnlineQA');
-        setTimeout(reloadQAFram, 2000);
+        setTimeout(reloadQAFram, 1000);
+        StartButton.disabled = true;
+        StartButton.backgroundColor = "gray";
     }
     function reloadQAFram(){
         var iframe = doc.querySelector('#QAFrame');
@@ -1062,6 +1149,8 @@ expandables.forEach((expandable) =>{
     function QAProcessorInit(e){
         const command = `initOnlineQA ${HttpServerPort.value} ${QAEventParametersInput.value}`;
         wsSend(command)
+        InitButton.disabled = true;
+        InitButton.style.backgroundColor = 'gray';
     }
     connection = false;
     function connect(e) {
@@ -1081,34 +1170,29 @@ expandables.forEach((expandable) =>{
     }
     function handleOpen (e) {
         connection = true;
-        Buttons.forEach((button) => {
-            button.disabled = false;
-        });
-	    ConnectionButton.style.backgroundColor = '#00FF00';
-        ConnectionButton.disabled = true;
-        InitButton.style.backgroundColor = 'yellow';
+        QAState = -1;
+        updateGUI();
+        // Buttons.forEach((button) => {
+        //     button.disabled = false;
+        // });
+	    // ConnectionButton.style.backgroundColor = '#00FF00';
+        // ConnectionButton.disabled = true;
+        // InitButton.style.backgroundColor = 'yellow';
         wsSend('register')
     }
     function handleClose (e) {
         connection = false;
-        Buttons.forEach((button) => {
-            button.disabled = true;
-            button.style.backgroundColor='';
-        });
-        ConnectionButton.disabled = false;
+        QAState = -2;
         delete ws;
         ws = null;
+        updateGUI();
     }
     function handleError (e) {
-        // setTimeout(connect,3000)
         connection = false;
-        Buttons.forEach((button) => {
-            button.disabled = true;
-            button.style.backgroundColor='';
-        });
-        ConnectionButton.disabled = false;
+        QAState = -2;
         delete ws;
         ws = null;
+        updateGUI();
     }
     function handleMessage (e) {
 	    // console.log('message', e);
@@ -1123,49 +1207,75 @@ expandables.forEach((expandable) =>{
             QAMemoryUsageSpan.innerText = parseInt(rsp[3]);
         }
         else if(rsp[0] == "OnlineQAState"){
-            if(parseInt(rsp[1]) == -1){
-                InitButton.style.backgroundColor = 'yellow';
-		        ShutdownButton.style.backgroundColor = '';
-                StartButton.style.backgroundColor = '';
-                StopButton.style.backgroundColor = '';
-
-                InitButton.disabled = false;
-		        ShutdownButton.disabled = true;
-                StartButton.disabled = true;
-                StopButton.disabled = true;
-            }else if(parseInt(rsp[1]) == 0){
-                InitButton.style.backgroundColor = '#00FF00';
-		        ShutdownButton.style.backgroundColor = '';
-                StartButton.style.backgroundColor = 'yellow';
-                StopButton.style.backgroundColor = '';
-                
-                InitButton.disabled = true;
-		        ShutdownButton.disabled = false;
-                StartButton.disabled = false;
-                StopButton.disabled = true;
-            }else if(parseInt(rsp[1]) == 2){
-                InitButton.style.backgroundColor = '#00FF00';
-		        ShutdownButton.style.backgroundColor = '';
-                StartButton.style.backgroundColor = '#00FF00';
-                StopButton.style.backgroundColor = '';
-
-                InitButton.disabled = true;
-		        ShutdownButton.disabled = true;
-                StartButton.disabled = true;
-                StopButton.disabled = false;
-
-                //setTimeout(reloadQAFram, 2000);
-            }else if(parseInt(rsp[1]) == 4){
-                InitButton.style.backgroundColor = '#00FF00';
-		        ShutdownButton.style.backgroundColor = 'yellow';
-                StartButton.style.backgroundColor = '';
-                StopButton.style.backgroundColor = 'red';
-
-                InitButton.disabled = true;
-		        ShutdownButton.disabled = false;
-                StartButton.disabled = true;
-                StopButton.disabled = true;
-            }
+            QAState = parseInt(rsp[1]);
+            updateGUI();
+        }
+    }
+    function updateGUI(){
+        //QAConnectionButton
+        if(QAState == -2){
+            ConnectionButton.style.backgroundColor = "yellow";
+            ConnectionButton.disabled = false;
+        }else if(QAState > -2){
+            ConnectionButton.style.backgroundColor = "#00FF00";
+            ConnectionButton.disabled = true;
+        }
+        //QAInitButton
+        if(QAState == -2){
+            InitButton.style.backgroundColor = "";
+            InitButton.disabled = true;
+        }else if(QAState == -1){
+            InitButton.style.backgroundColor = "yellow";
+            InitButton.disabled = false;
+        }else if(QAState > -1){
+            InitButton.style.backgroundColor = "#00FF00";
+            InitButton.disabled = true;
+        }
+        //QAShutdownButton
+        if(QAState < 0){
+            ShutdownButton.style.backgroundColor = "";
+            ShutdownButton.disabled = true;
+        }else if(QAState == 0 ){
+            ShutdownButton.style.backgroundColor = "";
+            ShutdownButton.disabled = false;
+        }else if(QAState == 2){
+            ShutdownButton.style.backgroundColor = "";
+            ShutdownButton.disabled = true;
+        }else if(QAState == 4){
+            ShutdownButton.style.backgroundColor = "yellow";
+            ShutdownButton.disabled = false;
+        }
+        //QAStartButton
+        if(QAState < 0){
+            StartButton.style.backgroundColor = "";
+            StartButton.disabled = true;
+        }else if(QAState == 0){
+            StartButton.style.backgroundColor = "yellow";
+            StartButton.disabled = false;
+        }else if(QAState == 2){
+            StartButton.style.backgroundColor = "#00FF00";
+            StartButton.disabled = true;
+        }else if(QAState > 2){
+            StartButton.style.backgroundColor = "";
+            StartButton.disabled = true;
+        }
+        //QAStopButton
+        if(QAState <= 0){
+            StopButton.style.backgroundColor = "";
+            StopButton.disabled = true;
+        }else if(QAState == 2){
+            StopButton.style.backgroundColor = "";
+            StopButton.disabled = false;
+        }else if(QAState == 4){
+            StopButton.style.backgroundColor = "red";
+            StopButton.disabled = true;
+        }
+        //other buttons
+        if(QAState == 0 || QAState == 2){
+            ClearPlotsButton.disabled = false;
+        }else{
+            ClearPlotsButton.disabled = true;
+            ClearPlotsButton.style.backgroundColor = "";
         }
     }
     function dump(){
@@ -1185,16 +1295,18 @@ expandables.forEach((expandable) =>{
             QAEventRateSpan.innerText = parseFloat(rate).toFixed(2);
         }
         QAEventNumber= QACurrentEventNumber;
+        QARateIntervalButton.disabled = false;
+        QARateIntervalButton.style.backgroundColor = "";
     }
     QARateIntervalID = setInterval(estimateEventRate, 10000);
-
     init()
-
+    updateGUI();
 })(document);
 
 ((doc) => {
     //===========================Log部分===========================
     const connectionButton = doc.querySelector('#log_connect');
+    connectionButton.style.backgroundColor = "yellow";
     const createLogButton = doc.querySelector('#createLog');
     createLogButton.disabled = true;
     const hostAddressInput = doc.querySelector('#Host_IP');
@@ -1260,7 +1372,7 @@ expandables.forEach((expandable) =>{
     }
     function handleClose (e) {
         connection = false;
-        connectionButton.style.backgroundColor = '';
+        connectionButton.style.backgroundColor = 'yellow';
         connectionButton.disabled = false;
         createLogButton.style.backgroundColor = '';
         createLogButton.disabled = true;
@@ -1269,7 +1381,7 @@ expandables.forEach((expandable) =>{
     }
     function handleError (e) {
         connection = false;
-        connectionButton.style.backgroundColor = '';
+        connectionButton.style.backgroundColor = 'yellow';
         connectionButton.disabled = false;
         createLogButton.style.backgroundColor = '';
         createLogButton.disabled = true;
