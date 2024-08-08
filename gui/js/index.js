@@ -14,8 +14,9 @@ expandables.forEach((expandable) =>{
             if(frame){
                 content.style.height = "800px";
                 content.style.width = "100%";
-                frame.style.height = "670px";
+                frame.style.height = "760px";
                 frame.style.width = "99%";
+                
             }
             isExpanded = true;
         } else {
@@ -156,12 +157,17 @@ expandables.forEach((expandable) =>{
     bufferFileSizeInput.value = '100000000';
 
     const nTaskSpan1 = doc.querySelector('#DAQ1_nTask');
+    nTaskSpan1.value = '';
     const dataRateSpan1 = doc.querySelector('#DAQ1_dataRate');
+    dataRateSpan1.value = '';
     const nTaskSpan2 = doc.querySelector('#DAQ2_nTask');
+    nTaskSpan2.value = '';
     const dataRateSpan2 = doc.querySelector('#DAQ2_dataRate');
-
+    dataRateSpan2.value = '';
     const nQueueSpan1 = doc.querySelector('#DAQ1_nQueue');
+    nQueueSpan1.value = '';
     const nQueueSpan2 = doc.querySelector('#DAQ2_nQueue');
+    nQueueSpan2.value = '';
 
     // 设置触发斜率的默认值
     const slopthresholdInput = doc.querySelector('#slope');
@@ -423,21 +429,63 @@ expandables.forEach((expandable) =>{
                 updateGUI();
             }
         }else if(rsp[0]=="dataRate1"){
-            dataRateSpan1.innerText = parseFloat(rsp[1]).toFixed(2);
+            dataRateSpan1.value = parseFloat(rsp[1]).toFixed(2);
+            if(dataRateSpan1.value == 0){
+                dataRateSpan1.style.backgroundColor = "red";
+            }else if(dataRateSpan1.value > 0){
+                dataRateSpan1.style.backgroundColor = "blue";
+            }else{
+                dataRateSpan1.style.backgroundColor = "gray";
+            }
         }else if(rsp[0]=="dataRate2"){
-            dataRateSpan2.innerText = parseFloat(rsp[1]).toFixed(2);
+            dataRateSpan2.value = parseFloat(rsp[1]).toFixed(2);
+            if(dataRateSpan2.value == 0){
+                dataRateSpan2.style.backgroundColor = "red";
+            }else if(dataRateSpan2.value > 0){
+                dataRateSpan2.style.backgroundColor = "blue";
+            }else{
+                dataRateSpan2.style.backgroundColor = "gray";
+            }
         }
         else if(rsp[0]=="nTask1"){
-            nTaskSpan1.innerText = parseInt(rsp[1]);
+            nTaskSpan1.value = parseInt(rsp[1]);
+            if(nTaskSpan1.value == 0){
+                nTaskSpan1.style.backgroundColor = "red";
+            }else if(nTaskSpan1.value > 0){
+                nTaskSpan1.style.backgroundColor = "blue";
+            }else{
+                nTaskSpan1.style.backgroundColor = "gray";
+            }
         }
         else if(rsp[0]=="nTask2"){
-            nTaskSpan2.innerText = parseInt(rsp[1]);
+            nTaskSpan2.value = parseInt(rsp[1]);
+            if(nTaskSpan2.value == 0){
+                nTaskSpan2.style.backgroundColor = "red";
+            }else if(nTaskSpan2.value > 0){
+                nTaskSpan2.style.backgroundColor = "blue";
+            }else{
+                nTaskSpan2.style.backgroundColor = "gray";
+            }
         }
         else if(rsp[0]=="nQueue1"){
-            nQueueSpan1.innerText = parseInt(rsp[1]);
+            nQueueSpan1.value = parseInt(rsp[1]);
+            if(nQueueSpan1.value == 0){
+                nQueueSpan1.style.backgroundColor = "red";
+            }else if(nQueueSpan1.value > 0){
+                nQueueSpan1.style.backgroundColor = "blue";
+            }else{
+                nQueueSpan1.style.backgroundColor = "gray";
+            }
         }
         else if(rsp[0]=="nQueue2"){
-            nQueueSpan2.innerText = parseInt(rsp[1]);
+            nQueueSpan2.value = parseInt(rsp[1]);
+            if(nQueueSpan2.value == 0){
+                nQueueSpan2.style.backgroundColor = "red";
+            }else if(nQueueSpan2.value > 0){
+                nQueueSpan2.style.backgroundColor = "blue";
+            }else{
+                nQueueSpan2.style.backgroundColor = "gray";
+            }
         }
         if(rsp[0]=="selftrigger"){
             // feeselfhitButton.disabled = false;
@@ -630,12 +678,13 @@ expandables.forEach((expandable) =>{
     storageDir.value = './output'
     // event 显示
     const DPTotalEventSpan = doc.querySelector('#DPTotalEvent');
+    DPTotalEventSpan.value = '';
     const DPCurrentEventIDSpan = doc.querySelector('#DPCurrentEventID');
+    DPCurrentEventIDSpan.value = '';
     const DPEventRateSpan = doc.querySelector('#DPEventRate')
-    DPEventRateSpan.innerText = '-';
-    //
+    DPEventRateSpan.value = '';
     const DPNTaskSpan = doc.querySelector('#DPNTasks');
-    DPNTaskSpan.innerText = '-';
+    DPNTaskSpan.value = '';
     // 设置主机地址的默认值
     const hostAddressInput = doc.querySelector('#Host_IP');
     // 设置端口的默认值
@@ -650,6 +699,7 @@ expandables.forEach((expandable) =>{
     const EventStopButton = doc.querySelector('#DP_stop_event');
 
     const outputFileIDSpan = doc.querySelector('#outputFileID');
+    outputFileIDSpan.value = '';
 
     const ParameterButton = doc.querySelector('#DP_ParameterButton');
     const ParameterEventsInput = doc.querySelector('#DP_ParameterEventsInput');
@@ -738,35 +788,22 @@ expandables.forEach((expandable) =>{
     }
     function parameterGenerate(){
         wsSend('setDataProcessorParameterEvents ' + ParameterEventsInput.value);
-        // ParameterButton.disabled = true;
         ParameterButton.style.backgroundColor = "gray";
     }
     function turnOnRawEventSave(){
         wsSend('turnOnRawEventSave');
-        // RawEventStartButton.disabled = true;
         RawEventStartButton.style.backgroundColor = 'gray';
-        // RawEventStopButton.disabled = false;
-        // RawEventStopButton.style.backgroundColor = '';
     }
     function turnOffRawEventSave(){
         wsSend('turnOffRawEventSave')
-        // RawEventStartButton.disabled = false;
-        // RawEventStartButton.style.backgroundColor = '';
-        // RawEventStopButton.disabled = true;
         RawEventStopButton.style.backgroundColor = 'gray';
     }
     function turnOnEventSave(){
         wsSend('turnOnEventSave')
-        // EventStartButton.disabled = true;
         EventStartButton.style.backgroundColor = 'gray';
-        // EventStopButton.disabled = false;
-        // EventStopButton.style.backgroundColor = '';
     }
     function turnOffEventSave(){
         wsSend('turnOffEventSave')
-        // EventStartButton.disabled = false;
-        // EventStartButton.style.backgroundColor = '';
-        // EventStopButton.disabled = true;
         EventStopButton.style.backgroundColor = 'gray';
     }
     function setRawEventFilePath(e){
@@ -873,22 +910,11 @@ expandables.forEach((expandable) =>{
         connection = true;
         DPState = -1;
         updateGUI();
-        // RawEventProcessorButtons.forEach((button) => {
-        //     button.disabled = false;
-        // });
-        // DPConnectionButton.style.backgroundColor = '#00FF00';
-        // DPConnectionButton.disabled=true;
-        // DPInitButton.style.backgroundColor = 'yellow';
         wsSend('register')
     }
     function handleClose (e) {
         connection = false;
         DPState = -2;
-        // RawEventProcessorButtons.forEach((button) => {
-        //     button.disabled = true;
-        //     button.style.backgroundColor='';
-        // });
-        // DPConnectionButton.disabled=false;
         delete ws;
         ws = null;
         updateGUI();
@@ -897,11 +923,6 @@ expandables.forEach((expandable) =>{
         // setTimeout(connect,3000)
         connection = false;
         DPState = -2;
-        // RawEventProcessorButtons.forEach((button) => {
-        //     button.disabled = true;
-        //     button.style.backgroundColor='';
-        // });
-        // DPConnectionButton.disabled=false;
         delete ws;
         ws = null;
         updateGUI();
@@ -909,10 +930,24 @@ expandables.forEach((expandable) =>{
     function handleMessage (e) {
         var rsp = e.data.split(" ");
         if(rsp[0]=="DataProcessorTotalEvent"){
-            DPTotalEventSpan.innerText = parseInt(rsp[1]);
+            DPTotalEventSpan.value = parseInt(rsp[1]);
+            if(DPTotalEventSpan.value == 0){
+                DPTotalEventSpan.style.backgroundColor = "red";
+            }else if(DPTotalEventSpan.value > 0){
+                DPTotalEventSpan.style.backgroundColor = "blue";
+            }else{
+                DPTotalEventSpan.style.backgroundColor = "gray";
+            }
         }
         else if(rsp[0]=="DataProcessorCurrentEventID"){
-            DPCurrentEventIDSpan.innerText = parseInt(rsp[1]);
+            DPCurrentEventIDSpan.value = parseInt(rsp[1]);
+            if(DPCurrentEventIDSpan.value == 0){
+                DPCurrentEventIDSpan.style.backgroundColor = "red";
+            }else if(DPCurrentEventIDSpan.value > 0){
+                DPCurrentEventIDSpan.style.backgroundColor = "blue";
+            }else{
+                DPCurrentEventIDSpan.style.backgroundColor = "gray";
+            }
         }
         else if(rsp[0]=="DataProcessorParameterEvents"){
             ParaterEventsSpan.innerText = parseInt(rsp[1]);
@@ -923,7 +958,14 @@ expandables.forEach((expandable) =>{
             }
         }
         else if(rsp[0]=="DataProcessorNTask"){
-            DPNTaskSpan.innerText = parseInt(rsp[1]);
+            DPNTaskSpan.value = parseInt(rsp[1]);
+            if(DPNTaskSpan.value == 0){
+                DPNTaskSpan.style.backgroundColor = "red";
+            }else if(DPNTaskSpan.value > 0){
+                DPNTaskSpan.style.backgroundColor = "blue";
+            }else{
+                DPNTaskSpan.style.backgroundColor = "gray";
+            }
         }
         else if(rsp[0]=="DataProcessorIsSaveRawEvent"){
             if(parseInt(rsp[1]) == 0){
@@ -944,7 +986,12 @@ expandables.forEach((expandable) =>{
             }
         }
         else if(rsp[0]=="DataProcessorCurrentFileID"){
-            outputFileIDSpan.innerText = parseInt(rsp[1]);
+            outputFileIDSpan.value = parseInt(rsp[1]);
+            if(outputFileIDSpan.value > 0){
+                outputFileIDSpan.style.backgroundColor = "blue";
+            }else{
+                outputFileIDSpan.style.backgroundColor = "gray";
+            }
         }
         else if(rsp[0]=="DataProcessorState"){
             DPState = parseInt(rsp[1]);
@@ -1045,11 +1092,16 @@ expandables.forEach((expandable) =>{
     setInterval(dump, 1000);
     var DPEventNumber = 0;
     function estimateEventRate(){
-        DPCurrentEventNumber=parseInt(DPTotalEventSpan.innerText);
+        DPCurrentEventNumber=parseInt(DPTotalEventSpan.value);
         Interval = parseInt(DPRateIntervalInput.value);
         if(DPEventNumber>0){
             rate = (DPCurrentEventNumber-DPEventNumber)/Interval;
-            DPEventRateSpan.innerText = parseFloat(rate).toFixed(2);
+            DPEventRateSpan.value = parseFloat(rate).toFixed(2);
+            if(rate == 0){
+                DPEventRateSpan.style.backgroundColor = "red";
+            }else{
+                DPEventRateSpan.style.backgroundColor = "blue";
+            }
         }
         DPEventNumber= DPCurrentEventNumber;
         DPRateIntervalButton.disabled = false;
@@ -1074,9 +1126,11 @@ expandables.forEach((expandable) =>{
     const StartButton = doc.querySelector('#QA_start');
     const StopButton = doc.querySelector('#QA_stop');
     const QATotalEventSpan = doc.querySelector('#QATotalEvent');
+    QATotalEventSpan.value = '';
     const QACurrentEventIDSpan = doc.querySelector('#QACurrentEventID');
+    QACurrentEventIDSpan.value = '';
     const QAEventRateSpan = doc.querySelector('#QAEventRate');
-    QAEventRateSpan.innerText='-';
+    QAEventRateSpan.value = '';
     const hostAddressInput = doc.querySelector('#Host_IP');
     const hostPortInput = doc.querySelector('#Host_Port');
     const HttpServerPort = document.querySelector('#HttpServerPort');
@@ -1088,7 +1142,7 @@ expandables.forEach((expandable) =>{
     QARateIntervalInput.value = '10';
     const QARateIntervalButton = doc.querySelector('#QA_RateInterval');
     const QAMemoryUsageSpan = doc.querySelector('#MemoryUsage');
-    QAMemoryUsageSpan.innerText='-';
+    QAMemoryUsageSpan.value = '';
 
     QAState = -2;
 
@@ -1172,12 +1226,6 @@ expandables.forEach((expandable) =>{
         connection = true;
         QAState = -1;
         updateGUI();
-        // Buttons.forEach((button) => {
-        //     button.disabled = false;
-        // });
-	    // ConnectionButton.style.backgroundColor = '#00FF00';
-        // ConnectionButton.disabled = true;
-        // InitButton.style.backgroundColor = 'yellow';
         wsSend('register')
     }
     function handleClose (e) {
@@ -1198,13 +1246,34 @@ expandables.forEach((expandable) =>{
 	    // console.log('message', e);
         var rsp = e.data.split(" ");
         if(rsp[0]=="OnlineQATotalEvent"){
-            QATotalEventSpan.innerText = parseInt(rsp[1]);
+            QATotalEventSpan.value = parseInt(rsp[1]);
+            if(QATotalEventSpan.value == 0){
+                QATotalEventSpan.style.backgroundColor = "red";
+            }else if(QATotalEventSpan.value > 0){
+                QATotalEventSpan.style.backgroundColor = "blue";
+            }else{
+                QATotalEventSpan.style.backgroundColor = "gray";
+            }
         }
         else if(rsp[0]=="OnlineQACurrentEventID"){
-            QACurrentEventIDSpan.innerText = parseInt(rsp[1]);
+            QACurrentEventIDSpan.value = parseInt(rsp[1]);
+            if(QACurrentEventIDSpan.value == 0){
+                QACurrentEventIDSpan.style.backgroundColor = "red";
+            }else if(QACurrentEventIDSpan.value > 0){
+                QACurrentEventIDSpan.style.backgroundColor = "blue";
+            }else{
+                QACurrentEventIDSpan.style.backgroundColor = "gray";
+            }
         }
         else if(rsp[0]=="ResourceInfo"){
-            QAMemoryUsageSpan.innerText = parseInt(rsp[3]);
+            QAMemoryUsageSpan.value = parseInt(rsp[3]);
+            if(parseInt(rsp[3])>90){
+                QAMemoryUsageSpan.style.backgroundColor = "red";
+            }else if(parseInt(rsp[3])>70){
+                QAMemoryUsageSpan.style.backgroundColor = "yellow";
+            }else{
+                QAMemoryUsageSpan.style.backgroundColor = "blue";
+            }
         }
         else if(rsp[0] == "OnlineQAState"){
             QAState = parseInt(rsp[1]);
@@ -1288,11 +1357,16 @@ expandables.forEach((expandable) =>{
 
     var QAEventNumber = 0;
     function estimateEventRate(){
-        QACurrentEventNumber=parseInt(QATotalEventSpan.innerText);
+        QACurrentEventNumber=parseInt(QATotalEventSpan.value);
         Interval = parseInt(QARateIntervalInput.value);
         if(QAEventNumber>0){
             rate = (QACurrentEventNumber-QAEventNumber)/Interval;
-            QAEventRateSpan.innerText = parseFloat(rate).toFixed(2);
+            QAEventRateSpan.value = parseFloat(rate).toFixed(2);
+            if(rate == 0){
+                QAEventRateSpan.style.backgroundColor = "red";
+            }else{
+                QAEventRateSpan.style.backgroundColor = "blue";
+            }
         }
         QAEventNumber= QACurrentEventNumber;
         QARateIntervalButton.disabled = false;
