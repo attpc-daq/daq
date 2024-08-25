@@ -940,7 +940,14 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
         if self.onlineQA is None:
             return
         self.onlineQA.clearPlots()
-
+    # async def on_cmd_getOnlineQAList(self, websocket, cmd_list, client_key):
+    #     await websocket.send("OnlineQAList "+self.onlineQA.getList())
+    
+    # async def on_cmd_getOnlineQA(self, websocket, cmd_list, client_key):
+    #     if len(cmd_list)==1:
+    #         return
+    #     str = self.onlineQA.get(cmd_list[1])
+    #     await websocket.send(str)
     # async def on_cmd_shutdown(self, websocket, cmd_list, client_key):
     #     await websocket.close()
     #     asyncio.get_event_loop().stop()

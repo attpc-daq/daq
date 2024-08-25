@@ -130,6 +130,15 @@ int PacketDecoder::Fill(char _dataByte){
               rawEvent->reset();
               return 0;
             }
+            if(size(rawEvent->channels)>1024){
+              cout<<"channels size error: "<<size(rawEvent->channels)<<endl;
+              firstEvent = true;
+              firstPacket = true;
+              packetType = 0;
+              rawEvent->reset();
+              return -1;
+            }
+            // cout<<"channels size "<<size(rawEvent->channels)<<endl;
             // if(rawEvent->event_id>100000)cout<<"event id "<<rawEvent->event_id<<" CH "<<rawEvent->NChannel<<endl;
             // cout<<"event id "<<rawEvent->event_id<<"  PID: "<<getpid()<<" thread id: "<<std::this_thread::get_id()<<endl;
             return 1;//finish a event

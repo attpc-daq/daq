@@ -42,8 +42,6 @@ public:
 
   void clearPlots();
   void resetSHM();
-  string get(const char* name);
-  string getList();
   void setpad_numQA(long num);//num: 0~2047 num=row*64+column
   void setpad_numQA(long row, long column);//row: 0~31 column: 0~63
 
@@ -67,23 +65,23 @@ struct shmseg {
 
   TH1I* event_id = NULL;
 
-  // TH2D* track_2D_ZX = NULL;
-  // TH2D* track_2D_ZY = NULL;
-  // TH2D* track_2D_XY = NULL;
-  // TH3D* track_3D = NULL;
-  // TH1D* Mesh_Energy_Spectrum = NULL;
-  // TH1D* Mesh_ADC_Spectrum = NULL;
-  // TH1D* Mesh_charge_Spectrum = NULL;
-  // TH1D* Pad_ADC = NULL;
+  TH2D* track_2D_ZX = NULL;
+  TH2D* track_2D_ZY = NULL;
+  TH2D* track_2D_XY = NULL;
+  TH3D* track_3D = NULL;
+  TH1D* Mesh_Energy_Spectrum = NULL;
+  TH1D* Mesh_ADC_Spectrum = NULL;
+  TH1D* Mesh_charge_Spectrum = NULL;
+  TH1D* Pad_ADC = NULL;
   TH1I* event_time = NULL;
-  // TMultiGraph* mg = NULL;
-  // TGraph* gr[2048];
-  // const int colorindex[12] = {
-  //     kBlack, kRed-4, kGreen, kBlue-4, kYellow, kMagenta-3,
-  //     kCyan, kOrange, kTeal-6, kAzure, kViolet, kPink+9
-  // };
+  TMultiGraph* mg = NULL;
+  TGraph* gr[2048];
+  const int colorindex[12] = {
+      kBlack, kRed-4, kGreen, kBlue-4, kYellow, kMagenta-3,
+      kCyan, kOrange, kTeal-6, kAzure, kViolet, kPink+9
+  };
 
-  // int pad_numQA = 0;
+  int pad_numQA = 0;
 
   EventConverter converter;
   int status_not_started = 0;
@@ -91,6 +89,6 @@ struct shmseg {
   int status_running = 2;
   int status_stopping = 3;
   int status_stopped = 4;
-  // mutex lock;
+  mutex lock;
 };
 #endif

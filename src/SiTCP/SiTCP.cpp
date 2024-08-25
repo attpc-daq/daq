@@ -308,7 +308,7 @@ void SiTCP::DecodeLoop(LockFreeQueue<LockFreeQueue<TBufferFile*>*> *queue){
     while(shmp->dataDecodStatus == status_running){
         string name = shmp->dir+to_string(decFileID)+".a";
         if (std::filesystem::exists(name)){
-            if(shmp->nQueues>=10){
+            if(shmp->nQueues>=2){//TODO:
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
                 continue;
             }

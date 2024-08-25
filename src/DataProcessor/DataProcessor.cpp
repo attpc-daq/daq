@@ -235,7 +235,7 @@ void DataProcessor::rawEventCombinator(LockFreeQueue<RawEvent*> *subRawEvent1Que
             continue;
         }
         //
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));//TODO: debug
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));//TODO: debug
         if(eventCount == 0){
             rawEventQueue = new  LockFreeQueue<RawEvent*>();
             while(true){
