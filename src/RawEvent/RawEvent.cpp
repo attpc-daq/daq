@@ -5,7 +5,7 @@ using namespace std;
 ClassImp(RawEvent);
 
 RawEvent::RawEvent(){
-    event_id = -1;
+    event_id  = 0;
     timestamp = 0;
     hit_count = 0;
     channels.reserve(2048);
@@ -33,7 +33,7 @@ void RawEvent::AddChannel(const Channel& ch){
 }
 void RawEvent::reset(){
     channels.clear();
-    event_id = -1;
+    event_id  = 0;
     timestamp = 0;
     hit_count = 0;
 }

@@ -254,50 +254,50 @@ void SiTCP::DAQLoop(){
     char socketBuffer[socketBufferSize];
     while(shmp->dataAcquisitionStatus == status_running){
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        // sleep(1);
-        // if(sockfd<0){
-        //     sockfd = connectDevice();
-        // }
-        // if(sockfd<0){
-        //     sleep(1);
-        //     std::cout<<"Can Not Connect to SiTCP, Retrying in 1 second..."<<endl;
-        //     continue;
-        // }
-        // length = recv(sockfd, socketBuffer, socketBufferSize, 0);
-        // if(length <=0 ){
-        //     std::cout<<"sitcp get data length "<<length<<endl;
-        //     shmp->rate = length;
-        //     continue;
-        // }
-        // daqCount++;
-        // dataSize += length;
-        // if(daqCount >= nDaq4Count){
-        //     now.Set();
-        //     elapsed = now - start_time;
-        //     double t = static_cast<double>(elapsed.AsDouble());
-        //     if(t == 0){
-        //         nDaq4Count++;
-        //     }else{
-        //         shmp->rate = dataSize /(1024*1024 * t);//MB/s
-        //         start_time.Set();
-        //         dataSize = 0;
-        //         daqCount = 0;
-        //     }
-        // }
-        // if(!file.is_open()){
-        //     if(shmp->writeBuffer)createFile();
-        // }
-        // if(file.is_open()){
-        //     file.write(socketBuffer, length);
-        //     fileSize += length;
-        //     if(fileSize > shmp->fileMaxSize){
-        //         closeFile();
-        //         fileSize = 0;
-        //     }
-        // }
+        sleep(1);
+        if(sockfd<0){
+            sockfd = connectDevice();
+        }
+        if(sockfd<0){
+            sleep(1);
+            std::cout<<"Can Not Connect to SiTCP, Retrying in 1 second..."<<endl;
+            continue;
+        }
+        length = recv(sockfd, socketBuffer, socketBufferSize, 0);
+        if(length <=0 ){
+            std::cout<<"sitcp get data length "<<length<<endl;
+            shmp->rate = length;
+            continue;
+        }
+        daqCount++;
+        dataSize += length;
+        if(daqCount >= nDaq4Count){
+            now.Set();
+            elapsed = now - start_time;
+            double t = static_cast<double>(elapsed.AsDouble());
+            if(t == 0){
+                nDaq4Count++;
+            }else{
+                shmp->rate = dataSize /(1024*1024 * t);//MB/s
+                start_time.Set();
+                dataSize = 0;
+                daqCount = 0;
+            }
+        }
+        if(!file.is_open()){
+            if(shmp->writeBuffer)createFile();
+        }
+        if(file.is_open()){
+            file.write(socketBuffer, length);
+            fileSize += length;
+            if(fileSize > shmp->fileMaxSize){
+                closeFile();
+                fileSize = 0;
+            }
+        }
     }
-    // if(file.is_open()) closeFile();
-    // disconnectDevice();
+    if(file.is_open()) closeFile();
+    disconnectDevice();
     shmp->rate = 0;
     shmp->dataAcquisitionStatus = status_stopped;
 }
@@ -308,11 +308,15 @@ void SiTCP::DecodeLoop(LockFreeQueue<LockFreeQueue<TBufferFile*>*> *queue){
     while(shmp->dataDecodStatus == status_running){
         string name = shmp->dir+to_string(decFileID)+".a";
         if (std::filesystem::exists(name)){
-            if(shmp->nQueues>=2){//TODO:
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
-                continue;
-            }
-            // cout<<"decoding file: "<<name<<endl;
+            // if(shmp->nQueues>=2){//TODO:
+            //     std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            //     continue;
+            // }
+            // if(shmp->nTasks>=2){//TODO:
+            //     std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            //     continue;
+            // }
+            cout<<"decoding file: "<<name<<endl;
             shmp->nTasks++;
             new thread(&SiTCP::DecodeTask, this, decFileID, queue);
             decFileID++;
@@ -335,24 +339,20 @@ void SiTCP::DecodeTask(int id, LockFreeQueue<LockFreeQueue<TBufferFile*>*> *queu
     }
     shmp->nQueues = queue->getSize();
     PacketDecoder decoder;
-    if(id==0)decoder.setFirstEvent(true);
     ifstream file;
     string dir = shmp->dir;
     string filename = dir+to_string(id)+".b";
     rename((dir+to_string(id)+".a").c_str(), filename.c_str());
     file.open(filename.c_str(), std::ios::binary);
     char byte;
-    bool endmark;
     while(file.read(&byte,1) && (shmp->dataDecodStatus == status_running)){
         int state = decoder.Fill(byte);
-        endmark = false;
         if(state >0) {
             RawEvent* ptr = decoder.getRawEvent();
             TBufferFile* bufferFile = new TBufferFile(TBuffer::kWrite, 1024*1024*20);
             bufferFile->WriteObject(ptr);
-            delete ptr;
+            ptr->reset();
             bufferQueue->push(bufferFile);
-            endmark = true;
         }
     }
     file.close();
@@ -376,13 +376,12 @@ void SiTCP::DecodeTask(int id, LockFreeQueue<LockFreeQueue<TBufferFile*>*> *queu
     }
     file.open(filename.c_str(), std::ios::binary);
     while(file.read(&byte,1) && (shmp->dataDecodStatus == status_running)){
-        if(endmark)break;
-        int state = decoder.Fill(byte);
+        int state = decoder.Fill(byte, true);
         if(state >0) {
             RawEvent* ptr = decoder.getRawEvent();
             TBufferFile* bufferFile = new TBufferFile(TBuffer::kWrite, 1024*1024*20);
             bufferFile->WriteObject(ptr);
-            delete ptr;
+            ptr->reset();
             bufferQueue->push(bufferFile);
             break ;
         }
@@ -391,8 +390,8 @@ void SiTCP::DecodeTask(int id, LockFreeQueue<LockFreeQueue<TBufferFile*>*> *queu
     bufferQueue->stop();
     file.close();
     std::filesystem::path filepath= filename.c_str();
-    // std::filesystem::remove(filepath);
-    rename(filename.c_str(),(dir+to_string(id+10)+".a").c_str());//TODO: for debug
+    std::filesystem::remove(filepath);
+    // rename(filename.c_str(),(dir+to_string(id+4)+".a").c_str());//TODO: for debug
     shmp->nTasks--;
 }
 void SiTCP::sendToSiTCP(const char* msg){

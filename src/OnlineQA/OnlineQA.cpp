@@ -23,7 +23,7 @@ OnlineQA::OnlineQA(int id){
       perror("Online Shared memory attach error");
     }
     shmp->status = 0;
-    event_id = new TH1I("event id","event_id",1000,0,1000);
+    event_id = new TH1I("event id","event_id",1000,3000,4000);
 
     Pad_ADC = new TH1D("Pad_ADC","Pad_ADC",8192,0,8191);//ADC码值
     Pad_ADC->GetXaxis()->SetTitle("channels");
@@ -168,7 +168,7 @@ void OnlineQA::TServLoop(){
             //
             shmp->clearPlots = 0;
         }
-        usleep(100000);
+        usleep(10000);
     }
     delete TServ;
 }
@@ -281,6 +281,7 @@ void OnlineQA::fill(RawEvent *revt, Event* evt){
     }
     int i = 0;
     for(auto ch = revt->channels.begin(); ch != revt->channels.end(); ++ch){
+        // if(ch->event_id>100000)cout<<"error"<<endl;
         gr[i] = new TGraph(1024,time_x,ch->waveform);
         gr[i]->GetXaxis()->SetTitle("Time (ns)");
         gr[i]->GetYaxis()->SetTitle("ADC");

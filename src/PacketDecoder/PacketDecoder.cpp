@@ -8,102 +8,81 @@
 using namespace std;
 
 PacketDecoder::PacketDecoder(){
-  packetType = 0;
+  packetType = notPacket;
   packetSize = 0;
   packetPose = 0;
-  firstPacket = true;
-  firstEvent = false;
-  firstHead = true;
+  firstEvent = true;
   waveformFillStatusCode = 0;
-
-  rawEvent = NULL;
-  // rawEvent = new RawEvent();
-  // rawEvent->event_id = 0;
-
-  fillStatusCode = 0;
-  findpacket = 0;
-  findwhat = 0b11111111;
-  
-  current_event_id = -1;
-  // temp_event_id = -1;
-  _timestamp = 0;
-  temp_timestamp = 0;
-  
-  // rawEvent->reset();
+  rawEvent = new RawEvent();
+  current_event_id = 0;
+  timestamp = 0;
 }
 
 PacketDecoder::~PacketDecoder(){
-  if(rawEvent != NULL) delete rawEvent;
+  delete rawEvent;
 }
 
-int PacketDecoder::Fill(char _dataByte){
-  if(rawEvent == NULL){
-    rawEvent = new RawEvent();
-  }
+int PacketDecoder::Fill(char _dataByte, bool debug){
   char dataByte[10];
   dataByte[5] = _dataByte;
   switch(packetType){
-    case 0:
+    case notPacket:
       if(static_cast<unsigned int>(dataByte[5]) == 0x5a ) {
+        //match packet header
         packetPose = 1;
-        packetType = 1;
+        packetType = unknownPacket;
       }
       break;
-    case 1:
+    case unknownPacket:
       packetSize = (static_cast<unsigned int>(dataByte[5])&0b00011111)<<8;
       packetPose++;
       if((static_cast<unsigned int>(dataByte[5]) &0xE0) == 0x40){
-        packetType = 2;
+        packetType = headerPacket;
         break;
       }else if((static_cast<unsigned int>(dataByte[5]) &0xE0) == 0x0){
-        packetType = 3;
+        packetType = bodyPacket;
         break;
       }else if((static_cast<unsigned int>(dataByte[5]) &0xE0) == 0x20){
-        packetType = 4;
+        packetType = endPacket;
         break;
       }else{
-        packetType = 0;
+        //miss match
+        packetType = notPacket;
         if(static_cast<unsigned int>(dataByte[5]) == 0x5a ) {
           packetPose = 1;
-          packetType = 1;
-          cout<<"head error: false head"<<endl;
+          packetType = unknownPacket;
         }
         break;
       }
-    case 2:
+    case headerPacket:
       packetPose++;
       switch (packetPose){
         case 3:
           packetSize += static_cast<unsigned int>(dataByte[5]);
           if(packetSize != 20){
-            cout<<"packet size error: head:"<<packetSize<<endl;
-            firstEvent = true;
-            firstPacket = true;
-            packetType = 0;
-            rawEvent->reset();
-            return -1;
+            cout<<"packet size error: head:"<<packetSize<<" event id "<<rawEvent->event_id<<endl;
           }
           break;
         case 4:
           FEE_ID = static_cast<unsigned int>(dataByte[5])&0b00111111;
         case 5://timestamp 47-40 bits
-          _timestamp = 0;
-          _timestamp = (_timestamp<<8) |(static_cast<uint64_t>(dataByte[5]) & 0xff);
+          timestamp = 0;
+          timestamp = (timestamp<<8) |(static_cast<uint64_t>(dataByte[5]) & 0xff);
           break;
         case 6://timestamp 39-32 bits
-          _timestamp = (_timestamp<<8) |(static_cast<uint64_t>(dataByte[5]) & 0xff);
+          timestamp = (timestamp<<8) |(static_cast<uint64_t>(dataByte[5]) & 0xff);
           break;
         case 7://timestamp 31-24 bits
-          _timestamp = (_timestamp<<8) |(static_cast<uint64_t>(dataByte[5]) & 0xff);
+          timestamp = (timestamp<<8) |(static_cast<uint64_t>(dataByte[5]) & 0xff);
           break;
         case 8://timestamp 23-16 bits
-          _timestamp = (_timestamp<<8) |(static_cast<uint64_t>(dataByte[5]) & 0xff);
+          timestamp = (timestamp<<8) |(static_cast<uint64_t>(dataByte[5]) & 0xff);
           break;
         case 9://timestamp 15-8 bits
-          _timestamp = (_timestamp<<8) |(static_cast<uint64_t>(dataByte[5]) & 0xff);
+          timestamp = (timestamp<<8) |(static_cast<uint64_t>(dataByte[5]) & 0xff);
           break;
         case 10://timestamp 7-0 bits
-          _timestamp = (_timestamp<<8) |(static_cast<uint64_t>(dataByte[5]) & 0xff);
+          timestamp = (timestamp<<8) |(static_cast<uint64_t>(dataByte[5]) & 0xff);
           break;
         case 11://event id 31-24 bits
           current_event_id = 0;
@@ -117,39 +96,8 @@ int PacketDecoder::Fill(char _dataByte){
           break;
         case 14://event id 7-0 bits
           current_event_id = (current_event_id<<8) |(static_cast<uint64_t>(dataByte[5]) & 0xff);
-          if(firstPacket){
-            firstPacket = false;
-            rawEvent->event_id = current_event_id;
-            rawEvent->timestamp = _timestamp;
-          }
-          if(current_event_id != rawEvent->event_id){
-            firstPacket = true;
-            if(firstEvent){
-              firstEvent = false;
-              // cout<<"First event error: "<<current_event_id<<" "<<rawEvent->event_id<<endl;
-              rawEvent->reset();
-              return 0;
-            }
-            if(size(rawEvent->channels)>1024){
-              cout<<"channels size error: "<<size(rawEvent->channels)<<endl;
-              firstEvent = true;
-              firstPacket = true;
-              packetType = 0;
-              rawEvent->reset();
-              return -1;
-            }
-            // cout<<"channels size "<<size(rawEvent->channels)<<endl;
-            // if(rawEvent->event_id>100000)cout<<"event id "<<rawEvent->event_id<<" CH "<<rawEvent->NChannel<<endl;
-            // cout<<"event id "<<rawEvent->event_id<<"  PID: "<<getpid()<<" thread id: "<<std::this_thread::get_id()<<endl;
-            return 1;//finish a event
-          }
           break;
         case 15://hit count
-          if(firstPacket){
-            firstPacket = false;
-            rawEvent->event_id = current_event_id;
-            rawEvent->timestamp = _timestamp;
-          }
           break;
         case 16://reserved
           break;
@@ -160,22 +108,28 @@ int PacketDecoder::Fill(char _dataByte){
         case 19://CRC-32[15-8]
           break;
         case 20://CRC-32[7-0]
-          packetType = 0;
+          packetType = notPacket;
+          if(current_event_id != rawEvent->event_id){
+            if(firstEvent){
+              rawEvent->reset();
+              firstEvent = false;
+              return 0;
+            }
+            if(rawEvent->event_id == 0){
+              return 0;
+            }
+            return 1;//finish a event
+          }
           break;
       }
       break;
-    case 3:
+    case bodyPacket:
       packetPose++;
       switch(packetPose){
         case 3:
           packetSize += static_cast<unsigned int>(dataByte[5]);
           if(packetSize != 2060){
-            cout<<"packetSize error, Body:"<<packetSize<<endl;
-            firstEvent = true;
-            firstPacket = true;
-            packetType = 0;
-            rawEvent->reset();
-            return -1;
+            cout<<"packetSize error, Body:"<<packetSize<<" event id "<<rawEvent->event_id<<endl;
           }
           break;
         case 4:
@@ -190,21 +144,20 @@ int PacketDecoder::Fill(char _dataByte){
           packetPose--;
           if(waveformFillStatusCode%2 == 0){
             channel.waveform[waveformFillStatusCode/2] = static_cast<unsigned int>(dataByte[5])&0b1111;//TODO:与channel数据类型相关
-            if((static_cast<unsigned int>(dataByte[5])&0b11110000)!= 0b10000){
-              firstEvent = true;
-              firstPacket = true;
-              packetType = 0;
-              rawEvent->reset();
-              cout<<"ADC data error"<<endl;
-              return -1;
-            }
+            // if((static_cast<unsigned int>(dataByte[5])&0b11110000)!= 0b10000){
+            //   cout<<"ADC data error"<<endl;
+            // }
           }else{
             channel.waveform[waveformFillStatusCode/2] = (channel.waveform[waveformFillStatusCode/2]<<8) | (static_cast<unsigned int>(dataByte[5])&0b11111111);//TODO:与channel数据类型相关
           }
           waveformFillStatusCode++;
           if(waveformFillStatusCode == 2048){
+            if(rawEvent->event_id != current_event_id){
+              rawEvent->event_id = current_event_id;
+              rawEvent->timestamp = timestamp;
+            }
             channel.event_id = current_event_id;
-            channel.timestamp = _timestamp;
+            channel.timestamp = timestamp;
             rawEvent->AddChannel(channel);
             packetPose++;
             waveformFillStatusCode = 0;
@@ -221,22 +174,17 @@ int PacketDecoder::Fill(char _dataByte){
         case 12://CRC-32[15-8]
           break;
         case 13://CRC-32[7-0]
-          packetType = 0;
+          packetType = notPacket;
           break;
       }
       break;
-    case 4:
+    case endPacket:
       packetPose++;
       switch(packetPose){
         case 3:
           packetSize += static_cast<unsigned int>(dataByte[5]);
           if(packetSize != 12){
-            cout<<"packet size error, End:"<<packetSize<<endl;
-            firstEvent = true;
-            firstPacket = true;
-            packetType = 0;
-            rawEvent->reset();
-            return -1;
+            cout<<"packet size error, End:"<<packetSize<<" event id "<<rawEvent->event_id<<endl;
           }
           break;
         case 4://FEE ID
@@ -256,7 +204,7 @@ int PacketDecoder::Fill(char _dataByte){
         case 11://CRC-32[15-8] 
           break;
         case 12://CRC-32[7-0]
-          packetType = 0;
+          packetType = notPacket;
           break;
       }
       break;
@@ -264,7 +212,5 @@ int PacketDecoder::Fill(char _dataByte){
   return 0;
 }
 RawEvent* PacketDecoder::getRawEvent(){
-  RawEvent* ptr = rawEvent;
-  rawEvent = NULL;
-  return ptr;
+  return rawEvent;
 }

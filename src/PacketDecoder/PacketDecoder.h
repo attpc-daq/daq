@@ -13,38 +13,28 @@ using namespace std;
 class PacketDecoder {
 public:
   PacketDecoder();
-
   virtual ~PacketDecoder();
-
-  int Fill(char dataByte);
-
-  void setFirstEvent(bool isFirstEvent){firstEvent = isFirstEvent;}
-  
+  int Fill(char dataByte, bool debug=false);
   RawEvent* getRawEvent();
-  
-  // uint64_t temp_event_id;
-  
-  uint64_t temp_timestamp;
 
 private:
   RawEvent *rawEvent;
   uint64_t current_event_id;
-  uint64_t _timestamp;
-  uint packetType;
+  uint64_t timestamp;
+  bool firstEvent;
+  uint FEE_ID;
+  int waveformFillStatusCode;
+  enum kPacket{
+    notPacket = 0,
+    unknownPacket = 1,
+    headerPacket = 2,
+    bodyPacket = 3,
+    endPacket = 4
+  };
+  kPacket packetType;
   uint packetSize;
   uint packetPose;
-  bool firstPacket;
-  bool firstEvent;
-  bool firstHead;
 
-  uint FEE_ID;
-  //UPDATE: 新增3个判断符
-
-  uint findpacket;
-  uint findwhat;
-  int fillStatusCode;
-  int waveformFillStatusCode;
   Channel channel;
-
 };
 #endif
