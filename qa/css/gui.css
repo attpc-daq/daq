@@ -1,0 +1,60 @@
+  .messagearea {
+    top: 20px;
+    left: 20px;
+    right: 20px;
+    bottom: 20px;
+    margin: auto;
+    width: 99%;
+    height: 80vh;
+    border: 3px solid black;
+  }
+  .green-border {
+    border: 2px solid green;
+    padding: 10px;
+    width: fit-content;
+    margin-bottom: 10px;
+  }
+  .expandable {
+    float:left;
+    width:90%;
+    margin: 0 auto;
+    text-align: left;
+    /* border: 1px solid black; */
+    margin-top:5px;
+    margin-bottom:5px;
+    margin-left: 5%;
+  }
+  
+  .expandable .header {
+    cursor: pointer;
+    background-color: #eee;
+  }
+  
+  .expandable .content {
+    height: 0;
+    overflow: hidden;
+    transition: height 0.5s;
+    background-color: rgb(218, 226, 233);
+  }
+
+  .toggle-icon {
+    display: inline-block;
+    margin-left: 5px;
+    vertical-align: middle;
+    font-size: 12px;
+    font-weight: bold;
+  }
+  .toggle-icon i {
+    transition: transform 0.2s ease;
+  }
+  .toggle-icon.active i {
+    transform: rotate(180deg);
+  }
+  .toggle{
+    float:right;
+    margin-right: 1%;
+  }
+  .title{
+    display: inline-block;
+    width:80px;
+  }
