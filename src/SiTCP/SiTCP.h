@@ -59,10 +59,12 @@ public:
     string getIP(){return shmp->FEEAddressStr;}
     int getPort(){return shmp->FEEPort;}
     int getNQueues();
+    void setDebug(bool debug);
 
 private:
     static vector<SiTCP*> instances;
     struct shmseg {
+        bool kDebug;
         atomic_int status;
         atomic_int nTasks;
         float rate;
@@ -94,11 +96,10 @@ private:
     bool firstFile = true;
 
     int fileMaxSize = 16*1024*1024;
-    // char* socketBuffer=NULL;
     void createFile();
     void closeFile();
     ofstream file;
-    // string dir;
+
     int64_t daqFileID;
     int64_t decFileID;
     int64_t maxFileID = std::numeric_limits<int64_t>::max();
@@ -118,9 +119,6 @@ private:
     condition_variable cv;
 
     void DAQLoop();
-    // void DecodeLoop(LockFreeQueue<BufferTP<RawEvent>*> *queue);
-    // void DecodeTask(int id, LockFreeQueue<BufferTP<RawEvent>*> *queue);
-    // void DataSenderLoop(LockFreeQueue<BufferTP<RawEvent>*> *queue);
     void DecodeLoop(LockFreeQueue<LockFreeQueue<TBufferFile*>*> *queue);
     void DecodeTask(int id, LockFreeQueue<LockFreeQueue<TBufferFile*>*> *queue);
     void DataSenderLoop(LockFreeQueue<LockFreeQueue<TBufferFile*>*> *queue);

@@ -10,7 +10,8 @@
 #include "TTimer.h"
 #include <TROOT.h>
 
-EventQA::EventQA(){
+EventQA::EventQA(bool debug){
+    kDebug = debug;
     ROOT::EnableThreadSafety();
     status = 0;
     totalEvent = 0;

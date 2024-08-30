@@ -1,5 +1,6 @@
 #include "OnlineQA.h"
 #include <iostream>
+#include <fstream>
 #include "TRandom3.h"
 #include "TFile.h"
 #include "TList.h"
@@ -14,7 +15,7 @@ OnlineQA::OnlineQA(int id){
     ROOT::EnableThreadSafety();
     keyID = id;
     key_t shmkey = ftok(".", keyID);
-    shmid = shmget(shmkey, sizeof(struct shmseg)+256, 0644|IPC_CREAT);
+    shmid = shmget(shmkey, sizeof(struct shmseg)+128, 0644|IPC_CREAT);
     if (shmid == -1) {
       perror("Online QA Shared memory error");
     }
@@ -23,7 +24,7 @@ OnlineQA::OnlineQA(int id){
       perror("Online Shared memory attach error");
     }
     shmp->status = 0;
-    event_id = new TH1I("event id","event_id",1000,3000,4000);
+    event_id = new TH1I("event id","event_id",100000,0,100000);
 
     Pad_ADC = new TH1D("Pad_ADC","Pad_ADC",8192,0,8191);//ADC码值
     Pad_ADC->GetXaxis()->SetTitle("channels");
@@ -31,14 +32,14 @@ OnlineQA::OnlineQA(int id){
     event_time = new TH1I("trigger rate","trigger rate",250,0,1000);//unit: us
     event_time->GetXaxis()->SetTitle("timestamp (us)");
     event_time->GetYaxis()->SetTitle("rawEvent counts");
-    Mesh_Energy_Spectrum = new TH1D("Mesh_Energy_Spectrum","Mesh_Energy_Spectrum",10000,0,100);//unit: MeV
+    Mesh_Energy_Spectrum = new TH1D("Mesh_Energy_Spectrum","Mesh_Energy_Spectrum",100000,0,100);//unit: MeV
     Mesh_Energy_Spectrum->GetXaxis()->SetTitle("energy(MeV)");
     Mesh_Energy_Spectrum->GetYaxis()->SetTitle("counts");
     Mesh_ADC_Spectrum = new TH1D("Mesh_ADC_Spectrum","Mesh_ADC_Spectrum",8192,0,8191);
     Mesh_ADC_Spectrum->GetXaxis()->SetTitle("channels");
     Mesh_ADC_Spectrum->GetYaxis()->SetTitle("counts");
-    Mesh_charge_Spectrum = new TH1D("Mesh_charge_Spectrum","Mesh_charge_Spectrum",1250,0,500);//unit: pC
-    // Mesh_charge_Spectrum = new TH1D("Mesh_charge_Spectrum","Mesh_charge_Spectrum",500,0,1);//unit: pC
+    // Mesh_charge_Spectrum = new TH1D("Mesh_charge_Spectrum","Mesh_charge_Spectrum",1250,0,500);//unit: pC
+    Mesh_charge_Spectrum = new TH1D("Mesh_charge_Spectrum","Mesh_charge_Spectrum",1500,0,3);//unit: pC
     Mesh_charge_Spectrum->GetXaxis()->SetTitle("charge (pc)");
     Mesh_charge_Spectrum->GetYaxis()->SetTitle("counts");
     const Int_t XNbins=32;
@@ -175,6 +176,10 @@ void OnlineQA::TServLoop(){
 void OnlineQA::dataReceiver(){
     string host = shmp->dataHost;
     int port = shmp->dataPort;
+    ifstream file(shmp->jsonFilePath);
+    string content((istreambuf_iterator<char>(file)),(istreambuf_iterator<char>()));
+    file.close();
+    converter.updateSettings(content.c_str());
     AutoSocket* autoSocket= new AutoSocket(port,host.c_str());
     while(shmp->status == status_running){
         TObject * obj = autoSocket->get(RawEvent::Class());
@@ -193,6 +198,9 @@ void OnlineQA::dataReceiver(){
         }
     }
 }
+void OnlineQA::setDebug(bool debug){
+    shmp->kDebug = debug;
+}
 void OnlineQA::setDataPort(int port,const char* host){
     shmp->dataPort=port;
     memset(shmp->dataHost, 0, sizeof(shmp->dataHost));
@@ -201,12 +209,12 @@ void OnlineQA::setDataPort(int port,const char* host){
 void OnlineQA::setTHttpServerPort(int port){
     shmp->THttpServerPort = port;
 }
+void OnlineQA::setJsonFilePath(const char* path){
+    memset(shmp->jsonFilePath, 0, sizeof(shmp->jsonFilePath));
+    strncpy(shmp->jsonFilePath,path,strlen(path));
+}
 void OnlineQA::clearPlots(){
     shmp->clearPlots = 1;
-}
-
-void OnlineQA::updateSettings(const char* msg){
-    converter.updateSettings(msg);
 }
 
 void OnlineQA::fill(RawEvent *revt, Event* evt){
@@ -282,6 +290,7 @@ void OnlineQA::fill(RawEvent *revt, Event* evt){
     int i = 0;
     for(auto ch = revt->channels.begin(); ch != revt->channels.end(); ++ch){
         // if(ch->event_id>100000)cout<<"error"<<endl;
+        // if(print_flag)cout<<ch->event_id<<" "<<ch->FEE_id<<" "<<ch->channel_id<<" "<<ch->timestamp<<endl;
         gr[i] = new TGraph(1024,time_x,ch->waveform);
         gr[i]->GetXaxis()->SetTitle("Time (ns)");
         gr[i]->GetYaxis()->SetTitle("ADC");

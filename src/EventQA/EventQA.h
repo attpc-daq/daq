@@ -27,7 +27,7 @@ using namespace std;
 
 class EventQA {
 public:
-  EventQA();
+  EventQA(bool debug = false);
   virtual ~EventQA();
   void start();
   void stop();
@@ -60,6 +60,7 @@ public:
   bool getAutoFileMode(){return autoFileMode;}
 
 private:
+  bool kDebug;
   RawEvent *rawEvent;
   Event *event;
   TFile* file=NULL;

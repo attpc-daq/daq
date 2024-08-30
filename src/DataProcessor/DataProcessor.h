@@ -66,10 +66,11 @@ public:
   void setElectronicFile(const char* E_file);
   void setMicromegasFile(const char* M_file);
   void resetSHM();
+  void setDebug(bool debug);
   
-
 private:
   struct shmseg {
+    bool kDebug;
     atomic_int nRawEventProcessor;
     atomic_bool kRawEventSave;
     atomic_bool kEventSave;

@@ -47,7 +47,7 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
     '''
     websocket handler 响应GUI命令
     '''
-    def __init__(self):
+    def __init__(self, debug):
         super(DAQHandler, self).__init__()
         self.sitcp = [None,None]
         self.dataProcessor = None
@@ -55,6 +55,8 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
         self.onlineQA = None
         self.logger = None
         self.outputDir = './output/'
+        self.debug = debug
+
         #update: by whk
         # self.Wvalue = 30.0 #unit: eV
         # self.Vdrift = 10.0 #unit: mm/ns
@@ -117,6 +119,7 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
         if self.sitcp[0] is None:
             self.sitcp[0] = ROOT.SiTCP(1)
             self.sitcp[0].resetSHM()
+            self.sitcp[0].setDebug(self.debug)
             self.sitcp[0].setServerAddress(cmd_list[1], int(cmd_list[2]))
             self.sitcp[0].setDir(cmd_list[3])
             self.sitcp[0].setDataPort(8010)
@@ -126,6 +129,7 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
         if self.sitcp[1] is None:
             self.sitcp[1] = ROOT.SiTCP(2)
             self.sitcp[1].resetSHM()
+            self.sitcp[1].setDebug(self.debug)
             self.sitcp[1].setServerAddress(cmd_list[4], int(cmd_list[5]))
             self.sitcp[1].setDir(cmd_list[6])
             self.sitcp[1].setDataPort(8011)
@@ -598,6 +602,7 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
     async def on_cmd_initDataProcessor(self, websocket, cmd_list, client_key):
         self.dataProcessor = ROOT.DataProcessor()
         self.dataProcessor.resetSHM()
+        self.dataProcessor.setDebug(self.debug)
         self.dataProcessor.setDir(cmd_list[1])
         self.dataProcessor.setDataPort(8010,"localhost",8011,"localhost")
         self.dataProcessor.setDataPort4QA(8012)
@@ -736,7 +741,7 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
         if file is None:
             print("Error: eventParameters.json for QA not found!")
             return
-        self.eventQA = ROOT.EventQA()
+        self.eventQA = ROOT.EventQA(self.debug)
         self.eventQA.setTHttpServerPort(int(cmd_list[1]))
         self.eventQA.setDir(cmd_list[2])
         self.eventQA.setpad_numQA(int(cmd_list[3]),int(cmd_list[4]))
@@ -890,16 +895,18 @@ class DAQHandler(GUISocket.Utils.WebsocketHander):
     async def on_cmd_initOnlineQA(self, websocket, cmd_list, client_key):
         if self.onlineQA is not None:
             return
-        file = open(cmd_list[2], 'r')
-        settingJson = file.read()
-        if file is None:
-            print("Error: eventParameters.json for Online QA not found!")
-            return
+        # file = open(cmd_list[2], 'r')
+        # settingJson = file.read()
+        # if file is None:
+        #     print("Error: eventParameters.json for Online QA not found!")
+        #     return
         self.onlineQA = ROOT.OnlineQA()
         self.onlineQA.resetSHM()
+        self.onlineQA.setDebug(self.debug)
         self.onlineQA.setTHttpServerPort(int(cmd_list[1]))
         self.onlineQA.setDataPort(8012,"0.0.0.0")
-        self.onlineQA.updateSettings(settingJson)
+        self.onlineQA.setJsonFilePath(cmd_list[2])
+        # self.onlineQA.updateSettings(settingJson)
     
     async def on_cmd_getOnlineQAState(self, websocket, cmd_list, client_key):
         rsp = "OnlineQAState"
@@ -982,10 +989,11 @@ def main():
     '''
         入口函数, 可以指定websocket端口号, 用于GUI的访问
     '''
-    handler = DAQHandler()
     parser = argparse.ArgumentParser()
     parser.add_argument('--port', default=8000, help='The socket port from GUI connect to DAQ server')
+    parser.add_argument('--debug', action='store_true')
     args = parser.parse_args()
+    handler = DAQHandler(args.debug)
     GUISocket.start(handler,args.port)
 
 if __name__ == "__main__":

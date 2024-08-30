@@ -35,7 +35,7 @@ public:
   void setTHttpServerPort(int port=8008);
   void setDataPort(int port=8012,const char* host="0.0.0.0");
 
-  void updateSettings(const char* msg);
+  void setJsonFilePath(const char* path);
   int getState(){return shmp->status;}
   uint64_t getTotalEvent(){return shmp->totalEvent;}
   uint64_t getCurrentEventID(){return shmp->currentEventID;}
@@ -44,9 +44,11 @@ public:
   void resetSHM();
   void setpad_numQA(long num);//num: 0~2047 num=row*64+column
   void setpad_numQA(long row, long column);//row: 0~31 column: 0~63
-
+  void setDebug(bool debug);
+  
 private:
 struct shmseg {
+    bool kDebug;
     atomic_int clearPlots;
     atomic_int status;
     atomic_int totalEvent;
@@ -54,6 +56,7 @@ struct shmseg {
     atomic_int THttpServerPort;
     atomic_int dataPort;
     char dataHost[20];
+    char jsonFilePath[256];
   };
   int shmid;
   struct shmseg *shmp;

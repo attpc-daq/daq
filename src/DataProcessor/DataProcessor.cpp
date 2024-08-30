@@ -15,7 +15,7 @@ DataProcessor::DataProcessor(int id){
     ROOT::EnableThreadSafety();
     keyID = id;
     key_t shmkey = ftok(".", keyID);
-    shmid = shmget(shmkey, sizeof(struct shmseg)+256, 0644|IPC_CREAT);
+    shmid = shmget(shmkey, sizeof(struct shmseg)+128, 0644|IPC_CREAT);
     if (shmid == -1) {
       perror("DataProcessor Shared memory error");
     }
@@ -112,6 +112,10 @@ int DataProcessor::getCurrentEventID(){
 }
 int DataProcessor::getNRawEventProcessor(){
     return shmp->nRawEventProcessor;
+}
+void DataProcessor::setDebug(bool debug){
+    cout<<"dp debug"<<endl;
+    shmp->kDebug = debug;
 }
 void DataProcessor::setDir(const char* dir){
     memset(shmp->dir, 0, sizeof(shmp->dir));//TODO:
@@ -235,7 +239,7 @@ void DataProcessor::rawEventCombinator(LockFreeQueue<RawEvent*> *subRawEvent1Que
             continue;
         }
         //
-        // std::this_thread::sleep_for(std::chrono::milliseconds(10));//TODO: debug
+        if(shmp->kDebug) std::this_thread::sleep_for(std::chrono::milliseconds(100));
         if(eventCount == 0){
             rawEventQueue = new  LockFreeQueue<RawEvent*>();
             while(true){
