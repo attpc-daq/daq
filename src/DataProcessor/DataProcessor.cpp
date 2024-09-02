@@ -114,7 +114,6 @@ int DataProcessor::getNRawEventProcessor(){
     return shmp->nRawEventProcessor;
 }
 void DataProcessor::setDebug(bool debug){
-    cout<<"dp debug"<<endl;
     shmp->kDebug = debug;
 }
 void DataProcessor::setDir(const char* dir){
@@ -168,35 +167,91 @@ void DataProcessor::subRawEvent1Receiver(LockFreeQueue<RawEvent*> *queue){
     string host = shmp->dataHost1;
     int port = shmp->dataPort1;
     AutoSocket* autoSocket= new AutoSocket(port,host.c_str());
+    RawEvent * obj = NULL;
+    RawEvent * objNext = NULL;
     while(shmp->status == status_running){
-        if(queue->getSize()>20){
+        if(queue->getSize()>100){
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
             continue;
         }
-        TObject * obj = autoSocket->get(RawEvent::Class());
+        if(obj == NULL) obj = (RawEvent *) autoSocket->get(RawEvent::Class());
         if(obj == NULL){
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
             continue;
         }
-        queue->push((RawEvent*)obj);
+        if(objNext == NULL) objNext = (RawEvent *) autoSocket->get(RawEvent::Class());
+        if(objNext == NULL){
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            continue;
+        }
+        // cout<<"sub1:"<<obj->event_id<<" "<<objNext->event_id<<endl;
+        if(obj->event_id < objNext->event_id){
+            queue->push(obj);
+            obj = objNext;
+            objNext = NULL;
+        // }else if(obj->event_id == objNext->event_id){
+        //     objNext->Add(obj);
+        //     cout<<"event1 adding:"<<objNext->event_id<<"channels:"<<size(objNext->channels)<<"+"<<size(obj->channels)<<endl;
+        //     delete obj;
+        }else{
+            // cout<<"Warning: ignore wrong rawEvent(sub1) id:"<<obj->event_id
+            // <<" ch:"<<size(obj->channels)
+            // <<" Next:"<<objNext->event_id
+            // <<" ch:"<<size(objNext->channels)
+            // <<endl;
+            delete objNext;
+            objNext = NULL;
+        }
+        // obj = objNext;
+        // objNext = NULL;
     }
+    if(obj != NULL)delete obj;
+    if(objNext != NULL) delete objNext;
 }
 void DataProcessor::subRawEvent2Receiver(LockFreeQueue<RawEvent*> *queue){
     string host = shmp->dataHost2;
     int port = shmp->dataPort2;
     AutoSocket* autoSocket= new AutoSocket(port,host.c_str());
+    RawEvent * obj = NULL;
+    RawEvent * objNext = NULL;
     while(shmp->status == status_running){
-        if(queue->getSize()>20){
+        if(queue->getSize()>100){
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
             continue;
         }
-        TObject * obj = autoSocket->get(RawEvent::Class());
+        if(obj == NULL) obj = (RawEvent *) autoSocket->get(RawEvent::Class());
         if(obj == NULL){
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
             continue;
         }
-        queue->push((RawEvent*)obj);
+        if(objNext == NULL) objNext = (RawEvent *) autoSocket->get(RawEvent::Class());
+        if(objNext == NULL){
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            continue;
+        }
+        // cout<<"sub2:"<<obj->event_id<<" "<<objNext->event_id<<endl;
+        if(obj->event_id < objNext->event_id){
+            queue->push(obj);
+            obj = objNext;
+            objNext = NULL;
+        // }else if(obj->event_id == objNext->event_id){
+        //     objNext->Add(obj);
+        //     cout<<"event2 adding:"<<objNext->event_id<<"channels:"<<size(objNext->channels)<<"+"<<size(obj->channels)<<endl;
+        //     delete obj;
+        }else{
+            // cout<<"Warning: ignore wrong rawEvent(sub2) id:"<<obj->event_id
+            // <<" ch:"<<size(obj->channels)
+            // <<" Next:"<<objNext->event_id
+            // <<" ch:"<<size(objNext->channels)
+            // <<endl;
+            delete objNext;
+            objNext = NULL;
+        }
+        // obj = objNext;
+        // objNext = NULL;
     }
+    if(obj != NULL)delete obj;
+    if(objNext != NULL) delete objNext;
 }
 void DataProcessor::rawEventCombinator(LockFreeQueue<RawEvent*> *subRawEvent1Queue, 
                                        LockFreeQueue<RawEvent*> *subRawEvent2Queue,
@@ -215,6 +270,7 @@ void DataProcessor::rawEventCombinator(LockFreeQueue<RawEvent*> *subRawEvent1Que
             if(!(subRawEvent2Queue->pop(subRawEvent2))) subRawEvent2=NULL;
         }
         if(subRawEvent1 == NULL || subRawEvent2 == NULL ) continue;
+        // cout<<"sub1:"<<subRawEvent1->event_id<<" ch:"<<size(subRawEvent1->channels)<<" ptr "<<subRawEvent1<<" sub2:"<<subRawEvent2->event_id<<" ch:"<<size(subRawEvent2->channels)<<" ptr "<<subRawEvent2<<endl;
         if(subRawEvent1->event_id==subRawEvent2->event_id){
             rawEvent = subRawEvent1;
             rawEvent->Add(subRawEvent2);
@@ -232,6 +288,7 @@ void DataProcessor::rawEventCombinator(LockFreeQueue<RawEvent*> *subRawEvent1Que
             subRawEvent1 = NULL;
         }
         shmp->totalEvent++;
+        // cout<<"--->comb event:"<<rawEvent->event_id<<" ch:"<<size(rawEvent->channels)<<" ptr "<<rawEvent<<endl;
         //
         if(shmp->nMakePar>0){
             makePar(rawEvent);
@@ -239,7 +296,7 @@ void DataProcessor::rawEventCombinator(LockFreeQueue<RawEvent*> *subRawEvent1Que
             continue;
         }
         //
-        if(shmp->kDebug) std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        if(shmp->kDebug) std::this_thread::sleep_for(std::chrono::milliseconds(10));
         if(eventCount == 0){
             rawEventQueue = new  LockFreeQueue<RawEvent*>();
             while(true){

@@ -72,6 +72,7 @@ Event* EventConverter::convert(RawEvent &REvt){
     event->timestamp = REvt.timestamp;
     event->WValue = WValue;
     event->Vdrift = Vdrift;
+    event->mark_count = REvt.mark_count;
     for(auto iter = REvt.channels.begin(); iter != REvt.channels.end(); ++iter){
         if(iter->FEE_id>=32 || iter->channel_id>64)continue;
         Pad pad;

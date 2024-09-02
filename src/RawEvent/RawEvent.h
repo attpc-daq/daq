@@ -17,6 +17,7 @@ public:
   uint64_t event_id;
   uint64_t timestamp;
   uint hit_count;
+  int mark_count;//此变量记录原始数据中的head-end数量。 =0正常事件，>0 可能有channel丢失并计入到下一个事件，<0 可能有前一个事件的channel混入
   void AddChannel(Channel* ch);
   void AddChannel(const Channel& ch);
   void reset();

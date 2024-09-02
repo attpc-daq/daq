@@ -19,6 +19,7 @@ public:
   void AddPad(const Pad& pad);
   uint64_t event_id;
   uint64_t timestamp;
+  int mark_count;
   float WValue; //unit: eV
   float Vdrift; //unit: mm/ns
   vector<Pad> pads;

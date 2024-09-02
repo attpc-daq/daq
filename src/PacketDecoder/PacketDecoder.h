@@ -16,11 +16,13 @@ public:
   virtual ~PacketDecoder();
   int Fill(char dataByte, bool debug=false);
   RawEvent* getRawEvent();
-
+  bool isFilling();
+  string filename;
 private:
+  int eventMarkCount;
   RawEvent *rawEvent;
-  uint64_t current_event_id;
-  uint64_t timestamp;
+  uint64_t event_id, new_event_id;
+  uint64_t timestamp, new_timestamp;
   bool firstEvent;
   uint FEE_ID;
   int waveformFillStatusCode;

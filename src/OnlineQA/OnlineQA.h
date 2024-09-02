@@ -69,6 +69,7 @@ struct shmseg {
   TH1I* event_id = NULL;
 
   TH2D* track_2D_ZX = NULL;
+  TH2D* padcount = NULL;
   TH2D* track_2D_ZY = NULL;
   TH2D* track_2D_XY = NULL;
   TH3D* track_3D = NULL;

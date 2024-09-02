@@ -9,6 +9,7 @@ Event::Event(){
     timestamp = 0;
     WValue = 30.0;
     Vdrift = 0;
+    mark_count = 0;
     pads.reserve(2048);
 }
 Event::~Event(){}
@@ -19,6 +20,7 @@ Event& Event::operator=(const Event& other){
     event_id = other.event_id;
     WValue = other.WValue;
     Vdrift = other.Vdrift;
+    mark_count = other.mark_count;
     pads = other.pads;
     return *this;
 }
@@ -34,4 +36,5 @@ void Event::reset(){
     timestamp = 0;
     WValue = 30.0;
     Vdrift = 0;
+    mark_count = 0;
 }

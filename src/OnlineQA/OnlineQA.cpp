@@ -15,7 +15,7 @@ OnlineQA::OnlineQA(int id){
     ROOT::EnableThreadSafety();
     keyID = id;
     key_t shmkey = ftok(".", keyID);
-    shmid = shmget(shmkey, sizeof(struct shmseg)+128, 0644|IPC_CREAT);
+    shmid = shmget(shmkey, sizeof(struct shmseg)+256, 0644|IPC_CREAT);
     if (shmid == -1) {
       perror("Online QA Shared memory error");
     }
@@ -24,7 +24,7 @@ OnlineQA::OnlineQA(int id){
       perror("Online Shared memory attach error");
     }
     shmp->status = 0;
-    event_id = new TH1I("event id","event_id",100000,0,100000);
+    event_id = new TH1I("event id","event_id",2000000,0,2000000);
 
     Pad_ADC = new TH1D("Pad_ADC","Pad_ADC",8192,0,8191);//ADC码值
     Pad_ADC->GetXaxis()->SetTitle("channels");
@@ -67,6 +67,9 @@ OnlineQA::OnlineQA(int id){
     track_2D_ZX = new TH2D("track_2D_ZX","track_2D_ZX",ZNbins,ZEdge,XNbins,XEdge);
     track_2D_ZX->GetXaxis()->SetTitle("Z [mm]");
     track_2D_ZX->GetYaxis()->SetTitle("X [mm]");
+    padcount = new TH2D("padcount","padcount",ZNbins,ZEdge,XNbins,XEdge);
+    padcount->GetXaxis()->SetTitle("Z [mm]");
+    padcount->GetYaxis()->SetTitle("X [mm]");
     track_2D_ZY = new TH2D("track_2D_ZY","track_2D_ZY",ZNbins,ZEdge,YNbins,YEdge);
     track_2D_ZY->GetXaxis()->SetTitle("Z [mm]");
     track_2D_ZY->GetYaxis()->SetTitle("Y [mm]");
@@ -90,6 +93,7 @@ OnlineQA::~OnlineQA(){
     shmctl(shmid, IPC_RMID, NULL);
     delete event_id;
     delete track_2D_ZX;
+    delete padcount;
     delete track_2D_ZY;
     delete track_2D_XY;
     delete track_3D;
@@ -222,6 +226,8 @@ void OnlineQA::fill(RawEvent *revt, Event* evt){
     event_time->Fill(revt->channels[0].timestamp*8.33/1000.);
     event_id->Fill(revt->event_id);
     
+    // if(event->pads.size()>15)return;
+
     int time_x[1024]; //ns, 25ns per bin
     for(int i=0;i<1024;i++)time_x[i]=i*25;
     
@@ -246,7 +252,7 @@ void OnlineQA::fill(RawEvent *revt, Event* evt){
     t0_ref = t0_ref/event->pads.size();
     
     for(auto pad = event->pads.begin(); pad!= event->pads.end(); pad++){
-        // if(event->pads.size()>9||event->pads.size()<2)continue;
+        // if(event->pads.size()>12||event->pads.size()<2)continue;
 	    int padrow = pad->padRow;
             int padcol = pad->padColumn;
             int adc = pad->adc;
@@ -276,6 +282,7 @@ void OnlineQA::fill(RawEvent *revt, Event* evt){
             // track_2D_XY->Fill(point.x(),point.y(),charge);
             // track_3D->Fill(point.z(),point.x(),point.y(),charge);
             track_2D_ZX->Fill(point.z(),point.x(),adc);
+            padcount->Fill(point.z(),point.x(),1);
             track_2D_ZY->Fill(point.z(),point.y(),adc);
             track_2D_XY->Fill(point.x(),point.y(),adc);
             track_3D->Fill(point.z(),point.x(),point.y(),adc);
@@ -288,18 +295,21 @@ void OnlineQA::fill(RawEvent *revt, Event* evt){
         }
     }
     int i = 0;
+    // cout<<"===============================event_id: "<<revt->event_id<<endl;
+    // bool print_flag =false;
     for(auto ch = revt->channels.begin(); ch != revt->channels.end(); ++ch){
-        // if(ch->event_id>100000)cout<<"error"<<endl;
+        // if(ch->event_id<=0||ch->event_id>1000000)print_flag=true;
         // if(print_flag)cout<<ch->event_id<<" "<<ch->FEE_id<<" "<<ch->channel_id<<" "<<ch->timestamp<<endl;
         gr[i] = new TGraph(1024,time_x,ch->waveform);
         gr[i]->GetXaxis()->SetTitle("Time (ns)");
         gr[i]->GetYaxis()->SetTitle("ADC");
-        gr[i]->SetName(Form( "channel-%i:%i",ch->channel_id,i));
-        gr[i]->SetTitle(Form("channel-%i:%i",ch->channel_id,i));
+        gr[i]->SetName(Form( "channel-%i:%i",ch->FEE_id,ch->channel_id));
+        gr[i]->SetTitle(Form("channel-%i:%i",ch->FEE_id,ch->channel_id));
         mg->Add(gr[i],"PL");
         i++;
     }
     // cout<<"=================>>>mesh_energy: "<<mesh_energy<<endl;
+    // cout<<"=================>>>mesh_charge: "<<mesh_charge<<endl;
     Mesh_charge_Spectrum->Fill(mesh_charge*1E+15/6.24150975E+18/1E+3);//mesh_charge*1E+15/6.24150975E+18 unit:fc
     Mesh_ADC_Spectrum->Fill(mesh_charge*1E+15/6.24150975E+18*0.75/10*4096/4000);//mesh_charge*1E+15/6.24150975E+18 unit:fc  假设ADC量程为4V=4000mV，精度为12bit  主放增益为10，前放增益为0.75mv/fc
     Mesh_Energy_Spectrum->Fill(mesh_energy);//unit: MeV

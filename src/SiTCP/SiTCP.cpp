@@ -314,11 +314,11 @@ void SiTCP::DecodeLoop(LockFreeQueue<LockFreeQueue<TBufferFile*>*> *queue){
         if (std::filesystem::exists(name)){
             if(shmp->kDebug){
                 if(shmp->nQueues>=2){
-                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
                     continue;
                 }
                 if(shmp->nTasks>=2){
-                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
                     continue;
                 }
             }
@@ -349,6 +349,7 @@ void SiTCP::DecodeTask(int id, LockFreeQueue<LockFreeQueue<TBufferFile*>*> *queu
     string filename = dir+to_string(id)+".b";
     rename((dir+to_string(id)+".a").c_str(), filename.c_str());
     file.open(filename.c_str(), std::ios::binary);
+    // decoder.filename = filename;
     char byte;
     while(file.read(&byte,1) && (shmp->dataDecodStatus == status_running)){
         int state = decoder.Fill(byte);
@@ -380,7 +381,10 @@ void SiTCP::DecodeTask(int id, LockFreeQueue<LockFreeQueue<TBufferFile*>*> *queu
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     file.open(filename.c_str(), std::ios::binary);
+    // decoder.filename = filename;
+    int tailCount = 0;
     while(file.read(&byte,1) && (shmp->dataDecodStatus == status_running)){
+        // if(!decoder.isFilling()) break;
         int state = decoder.Fill(byte);
         if(state >0) {
             RawEvent* ptr = decoder.getRawEvent();
@@ -388,15 +392,19 @@ void SiTCP::DecodeTask(int id, LockFreeQueue<LockFreeQueue<TBufferFile*>*> *queu
             bufferFile->WriteObject(ptr);
             ptr->reset();
             bufferQueue->push(bufferFile);
-            break ;
+            tailCount++;
+            // break ;
         }
-        if(state <0) break;
+        if(tailCount == 2)break;
+        // if(state <0) break;
+    }
+    if(tailCount < 2 && shmp->dataDecodStatus == status_running){
+        cout<<"Warning: buffer file size too small. Found tails(should be 2): "<<tailCount<<endl;
     }
     bufferQueue->stop();
     file.close();
     std::filesystem::path filepath= filename.c_str();
     std::filesystem::remove(filepath);
-    // rename(filename.c_str(),(dir+to_string(id+4)+".a").c_str());//TODO: for debug
     shmp->nTasks--;
 }
 void SiTCP::sendToSiTCP(const char* msg){
