@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" /> -->
+  <link type="text/css" rel="stylesheet" href="./css/all.min.css" />
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link type="text/css" rel="stylesheet" href="css/gui.css">
+  <title>Document</title>
+</head>
+<body id="body">
+  <div id="main">
+    <div class="expandable" id="Host">
+        <div class="header">
+            <div class="title">主机</div>
+            <div class="toggle">
+                <span class="toggle-icon"><i class="fas fa-angle-down"></i></span>
+            </div>
+        </div>
+        <div class="content">
+            <div>
+                <span>主机网址:</span>
+                <input type="text" placeholder="主机地址" id="Host_IP">
+		        <input type="text" placeholder="端口" id="Host_Port">
+                <button id="shutdown">关闭主机程序</button>
+            </div>
+	        <div>
+                <span>串口测试:</span>
+                <button id="serial_test">测试</button>
+	        </div>
+        </div>
+    </div>
+    <div class="expandable" id="sensors">
+        <div class="header">
+            <div class="title">传感器</div>
+            <button id="sensors_connect">连接</button>
+            <button id="sensors_init">初始化</button>
+            <button id="sensors_shutdown">关闭</button>
+            <button id="sensors_start">运行</button>
+	        <button id="sensors_stop">停止</button>
+            <span>Pressure : </span>
+            <span id="Pressure_Data" class="number" style="color:blue">-</span>
+            <span>Pa;  </span>
+            <span>GasFlow : </span>
+            <span id="GasFlow_Data" class="number" style="color:blue">-</span>
+            <span>mL/min;  </span>
+            <span>Temperature : </span>
+            <span id="Temperature_Data" class="number" style="color:blue">-</span>
+            <span>°C;  </span>
+            <span>Humidity : </span>
+            <span id="Humidity_Data" class="number" style="color:blue">-</span>
+            <span>%RH  </span>
+            <div class="toggle">
+                <span class="toggle-icon"><i class="fas fa-angle-down"></i></span>
+            </div>
+        </div>
+        <div class="content">
+            <div>
+                <span>数据存储位置: </span>
+                <input id="storageDir" type="text" placeholder="文件存储位置"  style="margin-bottom: 5px;width: 500px;">
+            </div>
+            <div>
+                <span>数据存储最大时长(分钟): </span>
+                <input id="rootPeriod" type="text" placeholder="文件存储最大时长(分钟)"  style="margin-bottom: 5px;width: 500px;">
+                <button id="rootPeriodSet">Set</button>
+            </div>
+            <div>
+                <span>温湿度传感器设备:</span>
+                <input id="temperature_humidityDevice" type="text" placeholder="/dev/ttyUSB0" style="margin-bottom: 5px;width: 200px;">
+            </div>
+            <div>
+                <span>压力传感器设备:</span>
+                <input id="pressureDevice" type="text" placeholder="/dev/ttyUSB1" style="margin-bottom: 5px;width: 200px;">
+            </div>
+            <div>
+                <span>MFC:</span>
+                <input id="MFCDevice" type="text" placeholder="/dev/ttyUSB2" style="margin-bottom: 5px;width: 200px;">
+            </div>
+            <div>
+                <span>TPC实验气压值:</span>
+                <input id="targetpressure" type="text" placeholder="实验气压 (unit: Pa)" style="margin-bottom: 5px;width: 150px;">
+                <button id="targetpressureSet">Set</button>
+            </div>
+            <div>
+                <span>TPC实验气体流量值:</span>
+                <input id="targetgasflow" type="text" placeholder="实验气流量 (unit: mL/min)" style="margin-bottom: 5px;width: 150px;">
+                <button id="targetgasflowSet">Set</button>
+            </div>
+            <div>
+                <span>压力报警阈值:</span>
+                <input id="pressureLowerLimit" type="text" placeholder="下限" style="margin-bottom: 5px;width: 100px;">
+                <button id="pressureLowerLimitSet">Set</button>
+                <input id="pressureUpperLimit" type="text" placeholder="上限" style="margin-bottom: 5px;width: 100px;">
+                <button id="pressureUpperLimitSet">Set</button>
+            </div>
+            <div>
+                <span>压力绘图范围:</span>
+                <input id="pressurePlotMin" type="text" placeholder="下限" style="margin-bottom: 5px;width: 100px;">
+                <button id="pressurePlotMinSet">Set</button>
+                <input id="pressurePlotMax" type="text" placeholder="上限" style="margin-bottom: 5px;width: 100px;">
+                <button id="pressurePlotMaxSet">Set</button>
+                <input id="pressureDataLength" type="text" placeholder="数据长度" style="margin-bottom: 5px;width: 100px;">
+                <button id="pressureDataLengthSet">Set</button>
+            </div>
+            <div>
+                <span>警报发送方式:</span>
+                <div>
+                    <input id="DutyEMail" type="text" placeholder="邮件地址" style="margin-bottom: 5px;width: 300px;">
+                    <button id="DutyEMailAdd">Add</button>
+                    <button id="DutyEMailRemove">Remove</button>
+                    <span id="MailList" class="number" style="color:blue">-</span>
+                </div>
+                <div>
+                    <input id="DutyPhone" type="text" placeholder="手机号码" style="margin-bottom: 5px;width: 300px;">
+                    <button id="DutyPhoneAdd">Add</button>
+                    <button id="DutyPhoneRemove">Remove</button>
+                    <span id="PhoneList" class="number" style="color:blue">-</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div>
+        <canvas id="pressure_MFCflowChart" width="400" height="100"></canvas>
+    </div>
+    <div>
+        <canvas id="temperature_humidityChart" width="400" height="100"></canvas>
+    </div>
+  </div>
+  <audio id="alarmSound">
+  <source src="audio/alarm.mp3" type="audio/mpeg">
+  <source src="audio/alarm.ogg" type="audio/ogg">
+  </audio>
+  <!-- <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> -->
+  <script src="./js/chart.js"></script>
+  <script src="./js/index.js"></script>
+  
+</body>
+</html>
