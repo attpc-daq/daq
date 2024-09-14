@@ -10,6 +10,6 @@ target_link_libraries(RawEvent PUBLIC ROOT::RIO ROOT::Net)
 
 ROOT_GENERATE_DICTIONARY(RawEvent_dict Channel.h RawEvent.h LINKDEF Linkdef.h MODULE RawEvent)
 
-install(TARGETS RawEvent DESTINATION lib)
+install(TARGETS RawEvent DESTINATION /usr/lib)
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/Channel.h ${CMAKE_CURRENT_SOURCE_DIR}/RawEvent.h DESTINATION include)
-install(FILES ${PROJECT_BINARY_DIR}/libRawEvent.rootmap ${PROJECT_BINARY_DIR}/libRawEvent_rdict.pcm DESTINATION lib)
+install(FILES ${PROJECT_BINARY_DIR}/libRawEvent.rootmap ${PROJECT_BINARY_DIR}/libRawEvent_rdict.pcm DESTINATION /usr/lib)

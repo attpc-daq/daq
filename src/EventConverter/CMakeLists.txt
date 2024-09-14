@@ -8,5 +8,5 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 add_library(EventConverter SHARED EventConverter.cpp)
 target_link_libraries(EventConverter PUBLIC ROOT::RIO ROOT::Net Event RawEvent)
 
-install(TARGETS EventConverter DESTINATION lib)
+install(TARGETS EventConverter DESTINATION /usr/lib)
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/EventConverter.h DESTINATION include)

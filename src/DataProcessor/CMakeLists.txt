@@ -11,6 +11,6 @@ target_link_libraries(DataProcessor PUBLIC ROOT::RIO ROOT::Net Event RawEvent Ev
 add_executable(DataProcessorExec main.cpp)
 target_link_libraries(DataProcessorExec PUBLIC DataProcessor)
 
-install(TARGETS DataProcessor DESTINATION lib)
+install(TARGETS DataProcessor DESTINATION /usr/lib)
 install(TARGETS DataProcessorExec DESTINATION bin)
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/DataProcessor.h DESTINATION include)

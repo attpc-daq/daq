@@ -10,6 +10,6 @@ target_link_libraries(Event PUBLIC ROOT::RIO ROOT::Net)
 
 ROOT_GENERATE_DICTIONARY(Event_dict Pad.h Event.h LINKDEF Linkdef.h MODULE Event)
 
-install(TARGETS Event DESTINATION lib)
+install(TARGETS Event DESTINATION /usr/lib)
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/Pad.h ${CMAKE_CURRENT_SOURCE_DIR}/Event.h DESTINATION include)
-install(FILES ${PROJECT_BINARY_DIR}/libEvent.rootmap ${PROJECT_BINARY_DIR}/libEvent_rdict.pcm DESTINATION lib)
+install(FILES ${PROJECT_BINARY_DIR}/libEvent.rootmap ${PROJECT_BINARY_DIR}/libEvent_rdict.pcm DESTINATION /usr/lib)

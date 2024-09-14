@@ -11,6 +11,6 @@ add_executable(SiTCPExec main.cpp)
 target_link_libraries(SiTCP PUBLIC ROOT::RIO ROOT::Net RawEvent PacketDecoder AutoSocket)
 target_link_libraries(SiTCPExec PUBLIC SiTCP)
 
-install(TARGETS SiTCP DESTINATION lib)
+install(TARGETS SiTCP DESTINATION /usr/lib)
 install(TARGETS SiTCPExec DESTINATION bin)
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/SiTCP.h DESTINATION include)

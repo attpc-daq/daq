@@ -8,5 +8,5 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 add_library(PacketDecoder SHARED PacketDecoder.cpp)
 target_link_libraries(PacketDecoder PUBLIC ROOT::RIO ROOT::Net RawEvent)
 
-install(TARGETS PacketDecoder DESTINATION lib)
+install(TARGETS PacketDecoder DESTINATION /usr/lib)
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/PacketDecoder.h DESTINATION include)

@@ -30,7 +30,7 @@ expandables.forEach((expandable) =>{
     //===========================主机程序控制部分===========================
     const hostAddressInput = doc.querySelector('#Host_IP');
     const hostPortInput = doc.querySelector('#Host_Port');
-    const shutdownButton = doc.querySelector('#shutdown');
+    const restartButton = doc.querySelector('#restartContainer');
     var ws = null
     let userName = 'Client'
     let passWord = ''
@@ -46,16 +46,16 @@ expandables.forEach((expandable) =>{
 	    bindEvent()
     }
     function bindEvent() {
-        shutdownButton.addEventListener('click',shutdown,false);
+        restartButton.addEventListener('click',restart,false);
     }
-    function shutdown(e){
-        shutdownButton.style.backgroundColor = 'red';
+    function restart(e){
+        //restartButton.style.backgroundColor = 'red';
         connect();
     }
     connection = false;
     function connect(e) {
         if (!ws){
-                ws = new WebSocket('ws:'+hostAddressInput.value+':'+hostPortInput.value);
+                ws = new WebSocket('ws:'+hostAddressInput.value+':'+"8080");
                 ws.addEventListener('open', handleOpen, false);
                 ws.addEventListener('close', handleClose, false);
                 ws.addEventListener('error', handleError, false);
@@ -71,28 +71,32 @@ expandables.forEach((expandable) =>{
     function handleOpen (e) {
 	//wsSend('register')
         connection = true;
-        shutdownButton.disabled = true;
-        shutdownButton.style.backgroundColor = '#00FF00';
-        wsSend('shutdown')
+        restartButton.disabled = true;
+        //restartButton.style.backgroundColor = '#00FF00';
+        wsSend('restart')
     }
     function handleClose (e) {
         if(connection){
             connection = false;
-            shutdownButton.disabled = false;
-            shutdownButton.style.backgroundColor = '';
+            restartButton.disabled = false;
+            //restartButton.style.backgroundColor = '';
         }
         delete ws;
         ws = null;
     }
     function handleError (e) {
         connection = false;
-        shutdownButton.disabled = false;
-        shutdownButton.style.backgroundColor = '';
+        restartButton.disabled = false;
+        //restartButton.style.backgroundColor = '';
         delete ws;
         ws = null;
     }
     function handleMessage (e) {
         var rsp = e.data.split(" ");
+	if(rsp[0]=="done"){
+            restartButton.disabled = false;
+	    ws.close();
+	}
         //console.log(rsp);
     }
     init()

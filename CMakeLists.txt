@@ -5,8 +5,8 @@ set(GUISocketDir src/GUISocket)
 
 # set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
 
-install(DIRECTORY ${GUISocketDir} DESTINATION "/usr/local/lib/python3.10/dist-packages/")
-
+#install(DIRECTORY ${GUISocketDir} DESTINATION "/usr/local/lib/python3.10/dist-packages")
+install(DIRECTORY ${GUISocketDir} DESTINATION "/usr/lib/python3/dist-packages")
 # add_compile_options(-fno-elide-constructors)
 #set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")   # 设置可执行文件的输出目录
 

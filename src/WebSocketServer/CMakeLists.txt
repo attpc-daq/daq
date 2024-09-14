@@ -11,5 +11,5 @@ add_library(WebSocketServer SHARED WebSocketServer.cpp)
 
 target_link_libraries(WebSocketServer PRIVATE ${Boost_LIBRARIES})
 
-install(TARGETS WebSocketServer DESTINATION lib)
+install(TARGETS WebSocketServer DESTINATION /usr/lib)
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/WebSocketServer.h DESTINATION include)

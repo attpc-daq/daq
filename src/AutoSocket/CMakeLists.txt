@@ -8,5 +8,5 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 add_library(AutoSocket SHARED AutoSocket.cpp)
 target_link_libraries(AutoSocket PUBLIC ROOT::RIO ROOT::Net)
 
-install(TARGETS AutoSocket DESTINATION lib)
+install(TARGETS AutoSocket DESTINATION /usr/lib)
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/AutoSocket.h DESTINATION include)

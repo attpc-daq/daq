@@ -11,5 +11,5 @@ add_library(DAQHandler SHARED DAQHandler.cpp)
 
 target_link_libraries(DAQHandler PRIVATE ${Boost_LIBRARIES} SiTCP DataProcessor EventQA)
 
-install(TARGETS DAQHandler DESTINATION lib)
+install(TARGETS DAQHandler DESTINATION /usr/lib)
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/DAQHandler.h DESTINATION include)
