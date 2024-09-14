@@ -1,0 +1,55 @@
+# 使用 rootproject/root 作为基础镜像
+FROM rootproject/root:latest
+
+# 更新包管理器并安装 Python
+RUN apt-get update && \
+    apt-get install -y build-essential python3 python3-pip libvdt-dev libboost-all-dev && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN pip3 install websockets --break-system-packages
+RUN pip3 install psutil --break-system-packages
+
+ENV CPLUS_INCLUDE_PATH=/opt/root/include
+ENV LD_LIBRARY_PATH=/usr/local/lib:/opt/root/lib:$LD_LIBRARY_PATH
+ENV CMAKE_VERSION=3.26.4
+ENV CMAKE_URL=https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz
+
+RUN wget ${CMAKE_URL} -O /tmp/cmake.tar.gz && \
+    tar -xzf /tmp/cmake.tar.gz -C /opt && \
+    ln -s /opt/cmake-${CMAKE_VERSION}-linux-x86_64/bin/cmake /usr/local/bin/cmake && \
+    ln -s /opt/cmake-${CMAKE_VERSION}-linux-x86_64/bin/ctest /usr/local/bin/ctest && \
+    ln -s /opt/cmake-${CMAKE_VERSION}-linux-x86_64/bin/cpack /usr/local/bin/cpack && \
+    rm /tmp/cmake.tar.gz
+
+RUN cmake --version
+
+# 将 /workspace 设置为工作目录
+WORKDIR /workspace
+COPY src/AutoSocket/AutoSocket.h /usr/local/include/
+COPY src/BufferTP/BufferTP.h /usr/local/include/
+COPY src/DAQHandler/DAQHandler.h /usr/local/include/
+COPY src/DataProcessor/DataProcessor.h /usr/local/include/
+COPY src/Event/Event.h /usr/local/include/
+COPY src/Event/Pad.h /usr/local/include/
+COPY src/EventConverter/EventConverter.h /usr/local/include/
+COPY src/EventQA/EventQA.h /usr/local/include/
+COPY src/LockFreeQueue/LockFreeQueue.h /usr/local/include/
+COPY src/OnlineQA/OnlineQA.h /usr/local/include/
+COPY src/PacketDecoder/PacketDecoder.h /usr/local/include/
+COPY src/ParameterGenerator/ParameterGenerator.h /usr/local/include/
+COPY src/RawEvent/RawEvent.h /usr/local/include/
+COPY src/RawEvent/Channel.h /usr/local/include/
+COPY src/SiTCP/SiTCP.h /usr/local/include/
+COPY src/TMessageBufferTP/TMessageBufferTP.h /usr/local/include/
+COPY src/WebSocketServer/WebSocketServer.h /usr/local/include/
+
+COPY . /workspace
+
+RUN mkdir build &&\
+    cd build &&\
+    cmake .. &&\
+    make &&\
+    make install
+
+CMD ["python", "main.py","--debug"]

@@ -1,0 +1,39 @@
+version: '3'
+services:
+  tpc_main:
+    container_name: tpc_main_container
+    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile_main
+    ports:
+      - 8000:8000
+      - 8008:8008
+    volumes:
+      - ./:/workspace
+    tty: true
+    command: ["python3", "main.py", "--debug"]
+
+  tpc_gui:
+    container_name: tpc_gui_container
+    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile_gui
+    ports:
+      - 80:80
+
+  tpc_master:
+    container_name: tpc_master_container
+    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile_master
+    ports:
+      - 8080:8080
+    volumes:
+      -  /var/run/docker.sock:/var/run/docker.sock
+      - ./:/workspace
+    tty: true
+    command: ["python3", "master.py"]
+    

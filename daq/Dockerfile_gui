@@ -1,0 +1,6 @@
+FROM docker.m.daocloud.io/nginx
+
+COPY gui /usr/share/nginx/html
+COPY qa /usr/share/nginx/html/qa
+COPY slow_control /usr/share/nginx/html/slow_control
+

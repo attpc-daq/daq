@@ -1,0 +1,19 @@
+FROM docker.m.daocloud.io/ubuntu
+
+# 更新包管理器并安装 Python
+RUN apt-get update && \
+    apt-get install -y build-essential python3 python3-pip libvdt-dev libboost-all-dev && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN pip3 install websockets --break-system-packages
+RUN pip3 install psutil --break-system-packages
+RUN pip3 install docker --break-system-packages
+RUN pip3 install numpy --break-system-packages
+
+
+# 将 /workspace 设置为工作目录
+WORKDIR /workspace
+
+COPY src/GUISocket /usr/lib/python3/dist-packages/GUISocket
+COPY . /workspace
